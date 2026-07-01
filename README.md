@@ -35,6 +35,36 @@
 | [docs/06-versioning-release.md](docs/06-versioning-release.md) | SemVer, 태깅, 릴리스, 롤백 |
 | [docs/07-contributing.md](docs/07-contributing.md) | 기여 규칙, 커밋 컨벤션, 리뷰 |
 
+## 데모 앱 실행 (개발자)
+
+이 저장소에는 라이브러리와 함께 동작을 확인할 수 있는 **관리자 데모 앱**(React + Vite + Tailwind)이 포함되어 있습니다.
+
+```bash
+npm install
+npm run dev        # 개발 서버 (http://localhost:5173)
+npm run build      # 타입체크 + 프로덕션 빌드
+npm run typecheck  # 타입만 검사
+```
+
+데모 화면: 사이드바 내비게이션, 대시보드 지표 카드, 사용자 관리 테이블(검색·삭제),
+사용자 추가 모달(폼 검증), 라이트/다크 테마 토글.
+
+### 구현된 컴포넌트 (`src/lib`)
+
+| 컴포넌트 | 설명 |
+| --- | --- |
+| `AdminShell` | 사이드바 + 상단바 + 콘텐츠 공통 레이아웃 |
+| `DataTable` | 제네릭 목록 테이블 (loading/empty/error 상태) |
+| `Button` | primary/secondary/danger/ghost, loading |
+| `Input` | 레이블·힌트·에러를 A11y 속성과 연결 |
+| `Modal` | ESC/오버레이 닫기, 포커스 이동·복귀 |
+| `Card` / `StatCard` | 콘텐츠 컨테이너 / 지표 카드 |
+| `Badge` | 의미색 상태 배지 |
+| `EmptyState` | 빈 데이터 안내 |
+| `Icons` | 인라인 SVG 아이콘 (외부 CDN 미사용) |
+
+디자인 토큰은 `src/lib/tokens.css`의 CSS 변수(`--au-*`)가 원천이며, 소비 시스템은 `:root`에서 덮어써 테마를 조정합니다.
+
 ## 빠른 시작 (소비 시스템 관점)
 
 ```bash

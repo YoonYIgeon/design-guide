@@ -1,0 +1,28 @@
+@import "./lib/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--au-color-bg);
+    color: var(--au-color-text);
+    font-family: var(--au-font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 접근성: 키보드 포커스 링 (docs/04-ui-guidelines.md) */
+  :focus-visible {
+    outline: 2px solid var(--au-color-primary);
+    outline-offset: 2px;
+  }
+}
