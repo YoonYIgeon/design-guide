@@ -8,42 +8,19 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { AdminShell, Button, LoginForm, type NavItem } from "./lib";
-import {
-  IconDashboard,
-  IconFileText,
-  IconSettings,
-  IconShield,
-  IconUsers,
-} from "./lib/icons";
 import { DashboardPage, type UserRow } from "./pages/DashboardPage";
-import { PostsPage } from "./pages/PostsPage";
-import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { useAlert, useAuth, useToast } from "./providers";
+import { createAppRoutes, toNavItems, toTitleMap } from "./routes";
 
 /**
  * 데모/프리뷰 하네스.
  * - 라우팅·인증·데이터는 이 하네스(컨테이너)의 책임입니다.
+ * - 라우트 정의는 src/routes.tsx 의 "객체 배열"에 모아두고, 여기서는 그 배열로부터
+ *   내비게이션·타이틀·<Route> 목록을 파생합니다.
  * - 라이브러리(src/lib)는 라우터/데이터를 모르는 프레젠테이션 전용이며,
  *   AdminShell 은 activeKey/onNavigate props 로 라우터와 연결됩니다.
  *   (docs/08-presentational-only.md)
  */
-
-// 내비게이션 키를 라우트 경로로 사용
-const NAV: NavItem[] = [
-  { key: "/", label: "대시보드", icon: <IconDashboard width={18} height={18} /> },
-  { key: "/users", label: "사용자", icon: <IconUsers width={18} height={18} /> },
-  { key: "/posts", label: "게시글", icon: <IconFileText width={18} height={18} /> },
-  { key: "/audit", label: "감사 로그", icon: <IconShield width={18} height={18} /> },
-  { key: "/settings", label: "설정", icon: <IconSettings width={18} height={18} /> },
-];
-
-const TITLES: Record<string, string> = {
-  "/": "대시보드",
-  "/users": "사용자",
-  "/posts": "게시글",
-  "/audit": "감사 로그",
-  "/settings": "설정",
-};
 
 // 표시용 정적 예시 데이터 (프리뷰 전용)
 const EXAMPLE_USERS: UserRow[] = [
@@ -88,10 +65,14 @@ function LoginScreen({
 
 /** 인증된 사용자용 셸 레이아웃. 라우터 상태를 AdminShell props 로 연결. */
 function ProtectedLayout({
+  nav,
+  titles,
   dark,
   onToggleTheme,
   onLogout,
 }: {
+  nav: NavItem[];
+  titles: Record<string, string>;
   dark: boolean;
   onToggleTheme: () => void;
   onLogout: () => void;
@@ -102,10 +83,10 @@ function ProtectedLayout({
   return (
     <AdminShell
       brand="사내 관리자"
-      nav={NAV}
+      nav={nav}
       activeKey={location.pathname}
       onNavigate={(key) => navigate(key)}
-      title={TITLES[location.pathname] ?? ""}
+      title={titles[location.pathname] ?? ""}
       user={{ name: "관리자", role: "시스템 관리자" }}
       actions={
         <>
@@ -214,6 +195,11 @@ export default function App() {
     />
   );
 
+  // 라우트 단일 원천(src/routes.tsx)에서 내비게이션·타이틀·<Route> 목록을 파생.
+  const routes = createAppRoutes({ dashboard });
+  const nav = toNavItems(routes);
+  const titles = toTitleMap(routes);
+
   return (
     <Routes>
       {/* 로그인 (인증 상태면 대시보드로) */}
@@ -236,17 +222,21 @@ export default function App() {
       <Route
         element={
           authed ? (
-            <ProtectedLayout dark={dark} onToggleTheme={toggleTheme} onLogout={handleLogout} />
+            <ProtectedLayout
+              nav={nav}
+              titles={titles}
+              dark={dark}
+              onToggleTheme={toggleTheme}
+              onLogout={handleLogout}
+            />
           ) : (
             <Navigate to="/login" replace />
           )
         }
       >
-        <Route path="/" element={dashboard} />
-        <Route path="/users" element={<PlaceholderPage label="사용자" />} />
-        <Route path="/posts" element={<PostsPage />} />
-        <Route path="/audit" element={<PlaceholderPage label="감사 로그" />} />
-        <Route path="/settings" element={<PlaceholderPage label="설정" />} />
+        {routes.map((route) => (
+          <Route key={route.path} path={route.path} element={route.element} />
+        ))}
       </Route>
 
       {/* 그 외 경로 */}
