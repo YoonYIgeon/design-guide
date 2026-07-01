@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { AdminShell, Button, type NavItem } from "./lib";
 import {
   IconDashboard,
@@ -9,6 +10,9 @@ import {
 import { DashboardPage } from "./pages/DashboardPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { LoginPage } from "./pages/LoginPage";
+import { useMe } from "./api/hooks";
+import { getToken, setToken } from "./api/client";
+import type { SessionUser } from "./api/auth";
 
 const NAV: NavItem[] = [
   { key: "dashboard", label: "대시보드", icon: <IconDashboard width={18} height={18} /> },
@@ -24,20 +28,38 @@ const TITLES: Record<string, string> = {
   settings: "설정",
 };
 
-interface SessionUser {
-  name: string;
-  role: string;
-}
-
 export default function App() {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [active, setActive] = useState("dashboard");
   const [dark, setDark] = useState(false);
+
+  // 저장된 토큰이 있으면 세션 복원
+  const me = useMe();
+  useEffect(() => {
+    if (me.data) setUser(me.data);
+  }, [me.data]);
 
   function toggleTheme() {
     const next = !dark;
     setDark(next);
     document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
+  }
+
+  function handleLogout() {
+    setToken(null);
+    setUser(null);
+    setActive("dashboard");
+    queryClient.clear();
+  }
+
+  // 토큰 검증(세션 복원) 중에는 깜빡임 방지용 스플래시
+  if (!user && getToken() && me.isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg text-text-muted">
+        <span className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
+      </div>
+    );
   }
 
   // 미인증 상태: 로그인 화면만 노출
@@ -58,14 +80,7 @@ export default function App() {
           <Button variant="secondary" size="sm" onClick={toggleTheme}>
             {dark ? "라이트" : "다크"}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setUser(null);
-              setActive("dashboard");
-            }}
-          >
+          <Button variant="ghost" size="sm" onClick={handleLogout}>
             로그아웃
           </Button>
         </>

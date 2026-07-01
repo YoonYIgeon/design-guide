@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Badge,
   Button,
@@ -10,37 +10,36 @@ import {
   type Column,
 } from "../lib";
 import { IconPlus, IconSearch, IconTrash, IconUsers } from "../lib/icons";
+import { useCreateUser, useDeleteUser, useUsers } from "../api/hooks";
+import { toErrorMessage } from "../api/client";
+import type { User } from "../api/users";
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: "관리자" | "운영자" | "뷰어";
-  status: "활성" | "정지";
-  lastLogin: string;
+/** 입력값 디바운스 (검색어가 바뀔 때마다 서버 호출이 폭주하지 않도록). */
+function useDebounced<T>(value: T, ms = 300): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebounced(value), ms);
+    return () => window.clearTimeout(t);
+  }, [value, ms]);
+  return debounced;
 }
 
-const SEED: User[] = [
-  { id: 1, name: "김하늘", email: "haneul.kim@corp.local", role: "관리자", status: "활성", lastLogin: "2026-06-30 14:22" },
-  { id: 2, name: "이도윤", email: "doyoon.lee@corp.local", role: "운영자", status: "활성", lastLogin: "2026-06-30 09:11" },
-  { id: 3, name: "박서준", email: "seojun.park@corp.local", role: "뷰어", status: "정지", lastLogin: "2026-05-18 17:40" },
-  { id: 4, name: "최유나", email: "yuna.choi@corp.local", role: "운영자", status: "활성", lastLogin: "2026-06-29 21:03" },
-];
-
 export function DashboardPage() {
-  const [users, setUsers] = useState<User[]>(SEED);
   const [query, setQuery] = useState("");
+  const debouncedQuery = useDebounced(query);
+
+  // 통계는 전체 목록 기준, 테이블은 검색 결과 기준 (react-query 가 각각 캐시)
+  const allUsers = useUsers("");
+  const listUsers = useUsers(debouncedQuery);
+  const createUser = useCreateUser();
+  const deleteUser = useDeleteUser();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "" });
-  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return users;
-    return users.filter(
-      (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
-    );
-  }, [users, query]);
+  const total = allUsers.data ?? [];
+  const activeCount = total.filter((u) => u.status === "활성").length;
 
   const columns: Column<User>[] = [
     {
@@ -67,7 +66,7 @@ export function DashboardPage() {
         <Badge tone={u.status === "활성" ? "success" : "danger"}>{u.status}</Badge>
       ),
     },
-    { key: "lastLogin", header: "최근 로그인", align: "left" },
+    { key: "lastLogin", header: "최근 로그인" },
     {
       key: "actions",
       header: "",
@@ -77,7 +76,8 @@ export function DashboardPage() {
           variant="ghost"
           size="sm"
           aria-label={`${u.name} 삭제`}
-          onClick={() => setUsers((prev) => prev.filter((x) => x.id !== u.id))}
+          disabled={deleteUser.isPending}
+          onClick={() => deleteUser.mutate(u.id)}
           className="h-8 w-8 p-0 text-text-muted hover:text-danger"
         >
           <IconTrash width={16} height={16} />
@@ -86,36 +86,34 @@ export function DashboardPage() {
     },
   ];
 
-  function handleAdd() {
-    setSaving(true);
-    // 실제 소비 시스템에서는 사내 API 호출로 대체합니다.
-    window.setTimeout(() => {
-      setUsers((prev) => [
-        {
-          id: prev.length ? Math.max(...prev.map((p) => p.id)) + 1 : 1,
-          name: form.name || "이름없음",
-          email: form.email || "unknown@corp.local",
-          role: "뷰어",
-          status: "활성",
-          lastLogin: "-",
-        },
-        ...prev,
-      ]);
-      setSaving(false);
-      setModalOpen(false);
-      setForm({ name: "", email: "" });
-    }, 500);
+  function openModal() {
+    setForm({ name: "", email: "" });
+    setFormError(null);
+    setModalOpen(true);
   }
 
-  const activeCount = users.filter((u) => u.status === "활성").length;
+  function handleAdd() {
+    setFormError(null);
+    if (!form.name.trim() || !form.email.trim()) {
+      setFormError("이름과 이메일을 입력하세요.");
+      return;
+    }
+    createUser.mutate(
+      { name: form.name.trim(), email: form.email.trim() },
+      {
+        onSuccess: () => setModalOpen(false),
+        onError: (err) => setFormError(toErrorMessage(err, "사용자 추가에 실패했습니다.")),
+      },
+    );
+  }
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       {/* 요약 지표 */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="전체 사용자" value={users.length} icon={<IconUsers />} delta={{ value: "2", direction: "up" }} />
-        <StatCard label="활성 사용자" value={activeCount} delta={{ value: "1", direction: "up" }} />
-        <StatCard label="정지 사용자" value={users.length - activeCount} delta={{ value: "1", direction: "down" }} />
+        <StatCard label="전체 사용자" value={allUsers.isLoading ? "…" : total.length} icon={<IconUsers />} />
+        <StatCard label="활성 사용자" value={allUsers.isLoading ? "…" : activeCount} />
+        <StatCard label="정지 사용자" value={allUsers.isLoading ? "…" : total.length - activeCount} />
         <StatCard label="오늘 로그인" value={12} />
       </div>
 
@@ -133,7 +131,7 @@ export function DashboardPage() {
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-            <Button variant="primary" size="md" onClick={() => setModalOpen(true)}>
+            <Button variant="primary" size="md" onClick={openModal}>
               <IconPlus width={16} height={16} />
               사용자 추가
             </Button>
@@ -144,9 +142,11 @@ export function DashboardPage() {
         <div className="p-4">
           <DataTable
             columns={columns}
-            rows={filtered}
+            rows={listUsers.data ?? []}
             rowKey={(u) => u.id}
-            emptyText={query ? "검색 결과가 없습니다." : "등록된 사용자가 없습니다."}
+            loading={listUsers.isLoading}
+            error={listUsers.isError ? toErrorMessage(listUsers.error, "목록을 불러오지 못했습니다.") : null}
+            emptyText={debouncedQuery ? "검색 결과가 없습니다." : "등록된 사용자가 없습니다."}
           />
         </div>
       </Card>
@@ -158,10 +158,10 @@ export function DashboardPage() {
         onClose={() => setModalOpen(false)}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setModalOpen(false)} disabled={saving}>
+            <Button variant="secondary" onClick={() => setModalOpen(false)} disabled={createUser.isPending}>
               취소
             </Button>
-            <Button variant="primary" onClick={handleAdd} loading={saving}>
+            <Button variant="primary" onClick={handleAdd} loading={createUser.isPending}>
               추가
             </Button>
           </>
@@ -184,6 +184,11 @@ export function DashboardPage() {
             value={form.email}
             onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
           />
+          {formError && (
+            <div role="alert" className="rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
+              {formError}
+            </div>
+          )}
         </div>
       </Modal>
     </div>

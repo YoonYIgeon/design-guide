@@ -65,6 +65,27 @@ npm run typecheck  # 타입만 검사
 
 디자인 토큰은 `src/lib/tokens.css`의 CSS 변수(`--au-*`)가 원천이며, 소비 시스템은 `:root`에서 덮어써 테마를 조정합니다.
 
+### 데이터 계층 (axios + react-query)
+
+API 호출은 `src/api`에 모여 있습니다.
+
+| 파일 | 역할 |
+| --- | --- |
+| `api/client.ts` | axios 인스턴스, Bearer 토큰 인터셉터, 401 처리, 에러 메시지 추출 |
+| `api/auth.ts` · `api/users.ts` | 엔드포인트별 타입·호출 함수 |
+| `api/hooks.ts` | react-query 훅 (`useLogin`/`useMe`/`useUsers`/`useCreateUser`/`useDeleteUser`) |
+| `api/mock.ts` | 데모용 목 백엔드 (axios 어댑터) — 실서비스에서는 비활성화 |
+
+환경변수(`.env.example` 참고):
+
+```bash
+VITE_API_BASE_URL=/api      # 사내 API 주소(격리망)
+VITE_ENABLE_MOCK=true       # 데모=true, 실서비스=false (실제 HTTP 호출)
+```
+
+> 실 API 서버가 준비되면 `VITE_ENABLE_MOCK=false`, `VITE_API_BASE_URL`만 바꾸면
+> 호출 코드(`api.get/post/...`)와 화면은 그대로 실서버로 연결됩니다.
+
 ## 빠른 시작 (소비 시스템 관점)
 
 ```bash

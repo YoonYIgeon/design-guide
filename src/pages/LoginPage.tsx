@@ -1,20 +1,20 @@
 import { useState, type FormEvent } from "react";
 import { Button, Input } from "../lib";
 import { IconShield } from "../lib/icons";
+import { useLogin } from "../api/hooks";
+import { setToken, toErrorMessage } from "../api/client";
+import type { SessionUser } from "../api/auth";
 
 export interface LoginPageProps {
   brand?: string;
-  onSuccess: (user: { name: string; role: string }) => void;
+  onSuccess: (user: SessionUser) => void;
 }
-
-// 데모용 로컬 검증. 실제 소비 시스템에서는 사내 인증 API 호출로 대체합니다.
-const DEMO = { id: "admin", pw: "admin1234" };
 
 export function LoginPage({ brand = "사내 관리자", onSuccess }: LoginPageProps) {
   const [id, setId] = useState("");
   const [pw, setPw] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { mutate, isPending } = useLogin();
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -25,16 +25,16 @@ export function LoginPage({ brand = "사내 관리자", onSuccess }: LoginPagePr
       return;
     }
 
-    setLoading(true);
-    // 실제 환경: 사내 인증 서버 응답으로 대체
-    window.setTimeout(() => {
-      if (id.trim() === DEMO.id && pw === DEMO.pw) {
-        onSuccess({ name: "관리자", role: "시스템 관리자" });
-      } else {
-        setError("아이디 또는 비밀번호가 올바르지 않습니다.");
-        setLoading(false);
-      }
-    }, 500);
+    mutate(
+      { id: id.trim(), password: pw },
+      {
+        onSuccess: (res) => {
+          setToken(res.token);
+          onSuccess(res.user);
+        },
+        onError: (err) => setError(toErrorMessage(err, "로그인에 실패했습니다.")),
+      },
+    );
   }
 
   return (
@@ -88,7 +88,7 @@ export function LoginPage({ brand = "사내 관리자", onSuccess }: LoginPagePr
             </div>
           )}
 
-          <Button type="submit" variant="primary" loading={loading} className="w-full">
+          <Button type="submit" variant="primary" loading={isPending} className="w-full">
             로그인
           </Button>
 
