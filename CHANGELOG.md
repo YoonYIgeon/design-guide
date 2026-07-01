@@ -12,8 +12,11 @@
   - 데모 대시보드(지표 카드 + 사용자 관리 테이블 + 추가 모달).
 - 로그인 페이지 추가: 아이디/비밀번호 입력, 검증·에러 표시, 로딩 상태.
   인증 상태에 따라 로그인 ↔ 관리자 콘솔 전환 및 로그아웃 버튼 연결.
-- 데이터 계층을 axios + TanStack Query(react-query)로 구성.
-  - `src/api`: axios 클라이언트(토큰 인터셉터/401 처리), `auth`·`users` API, react-query 훅.
-  - 로그인/세션 복원/사용자 목록·검색·생성·삭제를 실제 HTTP 호출로 수행.
-  - 백엔드 없이 데모가 돌도록 axios 어댑터 레벨 목(mock)을 제공하고
-    `VITE_ENABLE_MOCK=false`/`VITE_API_BASE_URL` 로 실 API 전환(`.env.example`).
+### Changed
+- **프레젠테이션 전용 원칙 확립**: 라이브러리 컴포넌트는 데이터와 분리하고 그리기만 담당.
+  - axios + react-query 데이터 계층(`src/api`)·목 백엔드·`.env.example` 제거.
+  - `LoginForm`을 프레젠테이션 전용 컴포넌트로 추가(값은 props, 제출은 `onSubmit`).
+  - `DashboardPage`를 props/callback 기반 뷰로 리팩터링(데이터·패칭 없음).
+  - `src/App.tsx`는 정적 예시 데이터만 주입하는 프리뷰 하네스로 정리.
+  - 원칙 문서 `docs/08-presentational-only.md` 추가, README·UI 가이드·기여 가이드에 반영.
+- primary 색상을 브랜드 값 `rgb(0, 72, 77)`로 변경(다크 테마는 대비를 위한 밝은 틴트).

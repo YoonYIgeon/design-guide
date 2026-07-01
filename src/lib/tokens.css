@@ -6,8 +6,8 @@
  */
 :root {
   /* 색상 (의미 기반) */
-  --au-color-primary: #2563eb;
-  --au-color-primary-hover: #1d4ed8;
+  --au-color-primary: rgb(0, 72, 77);
+  --au-color-primary-hover: rgb(0, 56, 60);
   --au-color-danger: #dc2626;
   --au-color-danger-hover: #b91c1c;
   --au-color-success: #16a34a;
@@ -39,8 +39,8 @@
 
 /* 다크 테마 */
 [data-theme="dark"] {
-  --au-color-primary: #3b82f6;
-  --au-color-primary-hover: #60a5fa;
+  --au-color-primary: rgb(45, 156, 163);
+  --au-color-primary-hover: rgb(74, 184, 191);
   --au-color-danger: #ef4444;
   --au-color-danger-hover: #f87171;
   --au-color-success: #22c55e;

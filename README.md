@@ -16,10 +16,11 @@
 
 ## 핵심 원칙
 
-1. **Git이 진실의 원천(Single Source of Truth)** — 배포·버전·롤백 모두 Git 태그/커밋 기준.
-2. **외부 의존 최소화** — 런타임/빌드 의존성은 격리 환경에서 재현 가능해야 함(벤더링 또는 내부 미러 우선).
-3. **하위 호환 우선** — 소비 시스템이 여러 개일 수 있으므로 파괴적 변경은 SemVer와 마이그레이션 가이드로 관리.
-4. **문서가 곧 계약** — 컴포넌트 API와 디자인 규칙은 `docs/`에 명시하고, 코드와 함께 리뷰.
+1. **프레젠테이션 전용(UI-only)** — 모든 컴포넌트는 "그리는 역할"만 한다. 데이터 패칭·상태·비즈니스 로직과 엮이지 않는다. 값은 props 로 받고, 상호작용은 callback 으로 내보낸다. → [docs/08-presentational-only.md](docs/08-presentational-only.md)
+2. **Git이 진실의 원천(Single Source of Truth)** — 배포·버전·롤백 모두 Git 태그/커밋 기준.
+3. **외부 의존 최소화** — 런타임/빌드 의존성은 격리 환경에서 재현 가능해야 함(벤더링 또는 내부 미러 우선).
+4. **하위 호환 우선** — 소비 시스템이 여러 개일 수 있으므로 파괴적 변경은 SemVer와 마이그레이션 가이드로 관리.
+5. **문서가 곧 계약** — 컴포넌트 API와 디자인 규칙은 `docs/`에 명시하고, 코드와 함께 리뷰.
 
 ---
 
@@ -34,6 +35,7 @@
 | [docs/05-git-workflow.md](docs/05-git-workflow.md) | 브랜치 전략, 수시 업데이트/배포 워크플로우 |
 | [docs/06-versioning-release.md](docs/06-versioning-release.md) | SemVer, 태깅, 릴리스, 롤백 |
 | [docs/07-contributing.md](docs/07-contributing.md) | 기여 규칙, 커밋 컨벤션, 리뷰 |
+| [docs/08-presentational-only.md](docs/08-presentational-only.md) | **프레젠테이션 전용 원칙** (데이터와 분리, props/callback 계약) |
 
 ## 데모 앱 실행 (개발자)
 
@@ -47,7 +49,10 @@ npm run typecheck  # 타입만 검사
 ```
 
 데모 화면: 사이드바 내비게이션, 대시보드 지표 카드, 사용자 관리 테이블(검색·삭제),
-사용자 추가 모달(폼 검증), 라이트/다크 테마 토글.
+사용자 추가 모달, 로그인 폼, 라이트/다크 테마 토글.
+
+> `src/App.tsx`·`src/pages/**`는 **라이브러리가 아니라 프리뷰 하네스**입니다.
+> 여기서 쓰는 데이터는 네트워크가 아닌 **정적 예시**이며, 라이브러리 컴포넌트는 데이터를 모릅니다.
 
 ### 구현된 컴포넌트 (`src/lib`)
 
@@ -61,30 +66,35 @@ npm run typecheck  # 타입만 검사
 | `Card` / `StatCard` | 콘텐츠 컨테이너 / 지표 카드 |
 | `Badge` | 의미색 상태 배지 |
 | `EmptyState` | 빈 데이터 안내 |
+| `LoginForm` | 프레젠테이션 전용 로그인 폼 (onSubmit 으로 값만 전달) |
 | `Icons` | 인라인 SVG 아이콘 (외부 CDN 미사용) |
 
+모든 컴포넌트는 **props 로 값을 받고 callback 으로 상호작용을 내보내는** 프레젠테이션 전용입니다.
 디자인 토큰은 `src/lib/tokens.css`의 CSS 변수(`--au-*`)가 원천이며, 소비 시스템은 `:root`에서 덮어써 테마를 조정합니다.
 
-### 데이터 계층 (axios + react-query)
+### 데이터 연결은 소비 시스템의 몫
 
-API 호출은 `src/api`에 모여 있습니다.
+이 라이브러리는 **데이터를 가져오지 않습니다.** HTTP 호출·상태 관리·비즈니스 로직은
+소비 시스템(컨테이너)에서 처리하고, 결과를 컴포넌트에 props 로 주입합니다.
 
-| 파일 | 역할 |
-| --- | --- |
-| `api/client.ts` | axios 인스턴스, Bearer 토큰 인터셉터, 401 처리, 에러 메시지 추출 |
-| `api/auth.ts` · `api/users.ts` | 엔드포인트별 타입·호출 함수 |
-| `api/hooks.ts` | react-query 훅 (`useLogin`/`useMe`/`useUsers`/`useCreateUser`/`useDeleteUser`) |
-| `api/mock.ts` | 데모용 목 백엔드 (axios 어댑터) — 실서비스에서는 비활성화 |
-
-환경변수(`.env.example` 참고):
-
-```bash
-VITE_API_BASE_URL=/api      # 사내 API 주소(격리망)
-VITE_ENABLE_MOCK=true       # 데모=true, 실서비스=false (실제 HTTP 호출)
+```tsx
+// 소비 시스템(컨테이너) — 데이터는 여기서 (예: react-query + axios)
+function UsersContainer() {
+  const { data, isLoading, error } = useUsers();
+  const del = useDeleteUser();
+  return (
+    <DashboardPage
+      users={data ?? []}
+      loading={isLoading}
+      error={error ? "목록을 불러오지 못했습니다." : null}
+      onDeleteUser={(id) => del.mutate(id)}
+      /* ... */
+    />
+  );
+}
 ```
 
-> 실 API 서버가 준비되면 `VITE_ENABLE_MOCK=false`, `VITE_API_BASE_URL`만 바꾸면
-> 호출 코드(`api.get/post/...`)와 화면은 그대로 실서버로 연결됩니다.
+자세한 계약과 Do/Don't 는 [docs/08-presentational-only.md](docs/08-presentational-only.md) 참고.
 
 ## 빠른 시작 (소비 시스템 관점)
 

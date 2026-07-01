@@ -7,6 +7,7 @@ export { Badge, type BadgeProps } from "./components/Badge";
 export { Card, type CardProps } from "./components/Card";
 export { StatCard, type StatCardProps } from "./components/StatCard";
 export { Input, type InputProps } from "./components/Input";
+export { LoginForm, type LoginFormProps } from "./components/LoginForm";
 export { EmptyState, type EmptyStateProps } from "./components/EmptyState";
 export { DataTable, type DataTableProps, type Column } from "./components/DataTable";
 export { Modal, type ModalProps } from "./components/Modal";
