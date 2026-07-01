@@ -20,3 +20,7 @@
   - `src/App.tsx`는 정적 예시 데이터만 주입하는 프리뷰 하네스로 정리.
   - 원칙 문서 `docs/08-presentational-only.md` 추가, README·UI 가이드·기여 가이드에 반영.
 - primary 색상을 브랜드 값 `rgb(0, 72, 77)`로 변경(다크 테마는 대비를 위한 밝은 틴트).
+- 라우팅 추가(react-router-dom): 로그인 `/login`, 대시보드 `/`, `/users`·`/audit`·`/settings`.
+  - 미인증 시 보호 경로 접근/딥링크를 `/login` 으로 리다이렉트, 로그인/로그아웃 시 경로 전환.
+  - 라우팅은 프리뷰 하네스(`src/App.tsx`)에만 두고, `AdminShell` 은 `activeKey`/`onNavigate`
+    props 로만 라우터와 연결(프레젠테이션 전용 원칙 유지).
