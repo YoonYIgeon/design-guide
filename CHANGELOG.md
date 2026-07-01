@@ -24,3 +24,9 @@
   - 미인증 시 보호 경로 접근/딥링크를 `/login` 으로 리다이렉트, 로그인/로그아웃 시 경로 전환.
   - 라우팅은 프리뷰 하네스(`src/App.tsx`)에만 두고, `AdminShell` 은 `activeKey`/`onNavigate`
     props 로만 라우터와 연결(프레젠테이션 전용 원칙 유지).
+- 로그인 자동 로그인 + 쿠키 세션 추가.
+  - `LoginForm` 에 "자동 로그인" 체크박스 추가(값은 `onSubmit` 의 `remember` 로 전달, 로직 없음).
+  - 하네스 `src/auth.ts`: `token`/`refreshToken` 쿠키 저장·복원. 앱 로드 시 쿠키가 있으면 자동 로그인,
+    로그아웃 시 쿠키 제거. `remember` 로 지속(30일)/세션 쿠키 결정.
+- 패키지 매니저를 **yarn 전용**으로 전환: `packageManager` 지정, `package-lock.json` 제거·gitignore,
+  문서 명령을 yarn 으로 변경, 규칙을 `CLAUDE.md` 에 명문화.

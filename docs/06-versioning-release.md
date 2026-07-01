@@ -46,7 +46,7 @@ git tag -a v1.5.0 -m "release: v1.5.0"
 git push origin v1.5.0
 ```
 
-7. (폐쇄망 대비) `npm pack` 산출물(tgz)을 릴리스 아티팩트로 보관.
+7. (폐쇄망 대비) `yarn pack` 산출물(tgz)을 릴리스 아티팩트로 보관.
 
 ## 태깅 규칙
 

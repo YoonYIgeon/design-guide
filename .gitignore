@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# 패키지 매니저는 yarn 만 사용 (npm 락파일 금지) — CLAUDE.md 참고
+package-lock.json
+
 # Build output (dist 커밋 정책은 docs/07-contributing.md 참고)
 # dist/  # 정책 A(소스 배포)를 택하면 주석 해제
 

@@ -4,6 +4,7 @@
   "description": "격리 사내 시스템용 관리자 페이지 UI 라이브러리 (React + Tailwind)",
   "private": false,
   "type": "module",
+  "packageManager": "yarn@1.22.22",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",

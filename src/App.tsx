@@ -16,6 +16,7 @@ import {
 } from "./lib/icons";
 import { DashboardPage, type UserRow } from "./pages/DashboardPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
+import { clearTokens, hasSession, saveTokens } from "./auth";
 
 /**
  * 데모/프리뷰 하네스.
@@ -49,7 +50,11 @@ const EXAMPLE_USERS: UserRow[] = [
 ];
 
 /** 로그인 화면 (경로: /login). */
-function LoginScreen({ onLogin }: { onLogin: () => void }) {
+function LoginScreen({
+  onLogin,
+}: {
+  onLogin: (payload: { id: string; password: string; remember: boolean }) => void;
+}) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-4">
       <div className="w-full max-w-sm">
@@ -110,7 +115,8 @@ function ProtectedLayout({
 
 export default function App() {
   const navigate = useNavigate();
-  const [authed, setAuthed] = useState(false);
+  // 자동 로그인: 쿠키에 유효한 세션(token/refreshToken)이 있으면 인증 상태로 시작
+  const [authed, setAuthed] = useState(() => hasSession());
   const [dark, setDark] = useState(false);
 
   const [users, setUsers] = useState<UserRow[]>(EXAMPLE_USERS);
@@ -140,12 +146,19 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
   }
 
-  function handleLogin() {
+  function handleLogin(payload: { id: string; password: string; remember: boolean }) {
+    // 실제 소비 시스템에서는 인증 서버 응답의 token/refreshToken 을 저장합니다.
+    // 여기서는 데모용 토큰을 쿠키에 저장하고, remember 로 지속/세션 여부를 결정합니다.
+    saveTokens(
+      { token: "demo-access-token", refreshToken: "demo-refresh-token" },
+      payload.remember,
+    );
     setAuthed(true);
     navigate("/", { replace: true });
   }
 
   function handleLogout() {
+    clearTokens();
     setAuthed(false);
     navigate("/login", { replace: true });
   }

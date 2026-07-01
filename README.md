@@ -41,11 +41,13 @@
 
 이 저장소에는 라이브러리와 함께 동작을 확인할 수 있는 **관리자 데모 앱**(React + Vite + Tailwind)이 포함되어 있습니다.
 
+> **패키지 매니저는 yarn 을 사용합니다(필수). npm 을 쓰지 마세요.** → [CLAUDE.md](CLAUDE.md)
+
 ```bash
-npm install
-npm run dev        # 개발 서버 (http://localhost:5173)
-npm run build      # 타입체크 + 프로덕션 빌드
-npm run typecheck  # 타입만 검사
+yarn install
+yarn dev        # 개발 서버 (http://localhost:5173)
+yarn build      # 타입체크 + 프로덕션 빌드
+yarn typecheck  # 타입만 검사
 ```
 
 데모 화면: 사이드바 내비게이션, 대시보드 지표 카드, 사용자 관리 테이블(검색·삭제),
@@ -112,7 +114,7 @@ function UsersContainer() {
 ```bash
 # 내부 Git URL을 의존성으로 추가 (예: package.json)
 #   "@company/admin-ui": "git+https://git.internal.company/design-guide.git#v1.4.0"
-npm install
+yarn install
 ```
 
 자세한 연동 방법은 [docs/03-getting-started.md](docs/03-getting-started.md)를 참고하세요.

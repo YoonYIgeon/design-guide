@@ -16,10 +16,10 @@
 ```
 
 ```bash
-npm install
+yarn install
 ```
 
-- 업데이트 시 태그만 바꾸고(`#v1.4.0` → `#v1.5.0`) `npm install`.
+- 업데이트 시 태그만 바꾸고(`#v1.4.0` → `#v1.5.0`) `yarn install`.
 - 롤백은 이전 태그로 되돌리면 끝.
 - **브랜치명(`#main`)을 참조하지 마세요.** 재현성이 깨지고 예기치 않은 변경이 유입됩니다.
 
@@ -37,7 +37,7 @@ cd vendor/admin-ui && git checkout v1.4.0
 
 ```bash
 # 반입 가능한 릴리스 아티팩트(tgz)를 로컬에 두고 설치
-npm install ./artifacts/company-admin-ui-1.4.0.tgz
+yarn add ./artifacts/company-admin-ui-1.4.0.tgz
 ```
 
 ## 사용 예시
@@ -80,6 +80,6 @@ export function UsersPage() {
 
 1. [릴리스 노트/CHANGELOG](06-versioning-release.md) 확인 (특히 파괴적 변경).
 2. 태그/서브모듈 커밋 갱신.
-3. `npm install` 후 타입 에러·경고 확인.
+3. `yarn install` 후 타입 에러·경고 확인.
 4. 주요 관리자 화면 스모크 테스트.
 5. 문제 시 이전 태그로 즉시 롤백.
