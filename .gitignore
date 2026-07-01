@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build output (dist 커밋 정책은 docs/07-contributing.md 참고)
+# dist/  # 정책 A(소스 배포)를 택하면 주석 해제
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env / 로컬 설정 (비밀정보 커밋 금지)
+.env
+.env.*
+!.env.example
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Test / coverage
+coverage/
