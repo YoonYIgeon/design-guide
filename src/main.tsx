@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import { createQueryClient } from "./api/queryClient";
+import { AlertProvider, AuthProvider, ToastProvider } from "./providers";
 import "./index.css";
 
 const root = document.getElementById("root");
@@ -16,7 +17,14 @@ createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <App />
+        {/* 하네스 레벨 프로바이더: 인증 상태 / 확인·알림 / 토스트 */}
+        <AuthProvider>
+          <AlertProvider>
+            <ToastProvider>
+              <App />
+            </ToastProvider>
+          </AlertProvider>
+        </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,

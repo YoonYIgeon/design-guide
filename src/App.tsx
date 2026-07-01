@@ -18,7 +18,7 @@ import {
 import { DashboardPage, type UserRow } from "./pages/DashboardPage";
 import { PostsPage } from "./pages/PostsPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
-import { clearTokens, hasSession, saveTokens } from "./auth";
+import { useAlert, useAuth, useToast } from "./providers";
 
 /**
  * 데모/프리뷰 하네스.
@@ -119,8 +119,10 @@ function ProtectedLayout({
 
 export default function App() {
   const navigate = useNavigate();
-  // 자동 로그인: 쿠키에 유효한 세션(token/refreshToken)이 있으면 인증 상태로 시작
-  const [authed, setAuthed] = useState(() => hasSession());
+  // 인증 상태·토큰 저장/복원은 AuthProvider(하네스)가 담당합니다.
+  const { authed, login, logout } = useAuth();
+  const toast = useToast();
+  const { confirm } = useAlert();
   const [dark, setDark] = useState(false);
 
   const [users, setUsers] = useState<UserRow[]>(EXAMPLE_USERS);
@@ -152,19 +154,24 @@ export default function App() {
 
   function handleLogin(payload: { id: string; password: string; remember: boolean }) {
     // 실제 소비 시스템에서는 인증 서버 응답의 token/refreshToken 을 저장합니다.
-    // 여기서는 데모용 토큰을 쿠키에 저장하고, remember 로 지속/세션 여부를 결정합니다.
-    saveTokens(
+    // 여기서는 데모용 토큰을 저장하고, remember 로 지속/세션 여부를 결정합니다.
+    login(
       { token: "demo-access-token", refreshToken: "demo-refresh-token" },
       payload.remember,
     );
-    setAuthed(true);
     navigate("/", { replace: true });
+    toast.success("로그인되었습니다.");
   }
 
-  function handleLogout() {
-    clearTokens();
-    setAuthed(false);
+  async function handleLogout() {
+    const ok = await confirm("로그아웃하시겠습니까?", {
+      title: "로그아웃",
+      confirmText: "로그아웃",
+    });
+    if (!ok) return;
+    logout();
     navigate("/login", { replace: true });
+    toast.info("로그아웃되었습니다.");
   }
 
   const dashboard = (
@@ -173,7 +180,7 @@ export default function App() {
       stats={stats}
       query={query}
       onQueryChange={setQuery}
-      onCreateUser={(payload) =>
+      onCreateUser={(payload) => {
         setUsers((prev) => [
           {
             id: prev.length ? Math.max(...prev.map((p) => p.id)) + 1 : 1,
@@ -184,9 +191,19 @@ export default function App() {
             lastLogin: "-",
           },
           ...prev,
-        ])
-      }
-      onDeleteUser={(id) => setUsers((prev) => prev.filter((u) => u.id !== id))}
+        ]);
+        toast.success("사용자를 추가했습니다.");
+      }}
+      onDeleteUser={async (id) => {
+        const target = users.find((u) => u.id === id);
+        const ok = await confirm(
+          `'${target?.name ?? "이 사용자"}' 계정을 삭제하시겠습니까? 되돌릴 수 없습니다.`,
+          { title: "사용자 삭제", tone: "danger", confirmText: "삭제" },
+        );
+        if (!ok) return;
+        setUsers((prev) => prev.filter((u) => u.id !== id));
+        toast.success("사용자를 삭제했습니다.");
+      }}
     />
   );
 
