@@ -56,8 +56,12 @@ const EXAMPLE_USERS: UserRow[] = [
 /** 로그인 화면 (경로: /login). */
 function LoginScreen({
   onLogin,
+  loading,
+  error,
 }: {
   onLogin: (payload: { id: string; password: string; remember: boolean }) => void;
+  loading?: boolean;
+  error?: string;
 }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-4">
@@ -66,6 +70,8 @@ function LoginScreen({
           brand="사내 관리자"
           subtitle="격리망 관리자 콘솔에 로그인하세요."
           onSubmit={onLogin}
+          loading={loading}
+          error={error}
           footer={
             <p className="text-center text-xs text-text-muted">
               데모 프리뷰 — 아무 값이나 입력해 진입할 수 있습니다.
@@ -119,8 +125,8 @@ function ProtectedLayout({
 
 export default function App() {
   const navigate = useNavigate();
-  // 인증 상태·토큰 저장/복원은 AuthProvider(하네스)가 담당합니다.
-  const { authed, login, logout } = useAuth();
+  // 인증 상태·토큰 저장/복원·로그인 API 호출은 AuthProvider(하네스)가 담당합니다.
+  const { authed, login, logout, loggingIn, loginError } = useAuth();
   const toast = useToast();
   const { confirm } = useAlert();
   const [dark, setDark] = useState(false);
@@ -152,15 +158,16 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
   }
 
-  function handleLogin(payload: { id: string; password: string; remember: boolean }) {
-    // 실제 소비 시스템에서는 인증 서버 응답의 token/refreshToken 을 저장합니다.
-    // 여기서는 데모용 토큰을 저장하고, remember 로 지속/세션 여부를 결정합니다.
-    login(
-      { token: "demo-access-token", refreshToken: "demo-refresh-token" },
-      payload.remember,
-    );
-    navigate("/", { replace: true });
-    toast.success("로그인되었습니다.");
+  async function handleLogin(payload: { id: string; password: string; remember: boolean }) {
+    // 로그인 API 호출·토큰 저장은 AuthProvider(→ src/api/auth.*)가 담당합니다.
+    // 여기서는 성공 시 라우팅/토스트, 실패 시 토스트만 처리합니다(에러 메시지는 loginError 로 폼에 표시).
+    try {
+      await login({ id: payload.id, password: payload.password }, payload.remember);
+      navigate("/", { replace: true });
+      toast.success("로그인되었습니다.");
+    } catch {
+      toast.error("로그인에 실패했습니다.");
+    }
   }
 
   async function handleLogout() {
@@ -212,7 +219,17 @@ export default function App() {
       {/* 로그인 (인증 상태면 대시보드로) */}
       <Route
         path="/login"
-        element={authed ? <Navigate to="/" replace /> : <LoginScreen onLogin={handleLogin} />}
+        element={
+          authed ? (
+            <Navigate to="/" replace />
+          ) : (
+            <LoginScreen
+              onLogin={handleLogin}
+              loading={loggingIn}
+              error={loginError?.message}
+            />
+          )
+        }
       />
 
       {/* 보호 경로 (미인증이면 로그인으로) */}
