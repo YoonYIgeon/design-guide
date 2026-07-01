@@ -25,7 +25,9 @@ src/
 │  ├─ client.ts                 # axios 인스턴스 + 인터셉터(토큰/에러)
 │  ├─ queryClient.ts            # react-query QueryClient 팩토리
 │  ├─ posts.api.ts             # 예시 리소스: 타입 + 엔드포인트 함수
-│  └─ posts.queries.ts          # 예시 리소스: react-query 훅 + 쿼리 키
+│  ├─ posts.queries.ts          # 예시 리소스: react-query 훅 + 쿼리 키
+│  ├─ auth.api.ts              # 예시 리소스: 로그인 엔드포인트 + 응답→토큰 매핑
+│  └─ auth.queries.ts           # 예시 리소스: 로그인 useMutation 훅
 ├─ pages/
 │  └─ PostsPage.tsx             # 컨테이너 페이지 예시(훅 사용 + lib 로 그리기)
 └─ lib/components/
@@ -65,6 +67,36 @@ VITE_API_BASE_URL=https://admin-gateway.corp.local/api yarn dev
 ```
 
 > 동작 분기(`import.meta.env`)는 **데이터 계층**에만 둔다. 라이브러리 컴포넌트에는 절대 넣지 않는다.
+
+## 인증(로그인)도 같은 데이터 계층으로 (예시)
+
+로그인 역시 "서버 상태를 바꾸는 요청"이므로 게시글과 **동일한 패턴**으로 관리한다.
+
+```
+AuthProvider (하네스, src/providers)  ── useLoginMutation()
+        │                                   │
+        │                            auth.queries.ts (react-query useMutation)
+        │                                   │
+        │                            auth.api.ts (login → 응답을 토큰으로 매핑)
+        │                                   │
+        │                            client.ts (axios)
+        │
+        └─ 성공 시 saveTokens()로 쿠키 저장 + 인증 상태 전환 (src/auth.ts)
+```
+
+- `AuthProvider` 는 `QueryClientProvider` 하위에 있으므로 react-query 훅을 그대로 쓴다(로그인 진행/에러 상태 제공).
+- `App` 은 `LoginForm` 에 `loading`(`loggingIn`)·`error`(`loginError.message`)만 props 로 넘긴다(그리기만).
+
+**소비 시스템 연결 지점은 `auth.api.ts` 의 세 곳뿐이다.**
+
+| # | 대상 | 바꾸는 것 |
+| --- | --- | --- |
+| ① | `AUTH_LOGIN_PATH` | 로그인 엔드포인트 경로(URL). baseURL 은 `VITE_API_BASE_URL` |
+| ② | `LoginResponse` | 서버 로그인 응답 JSON 구조(필드명/중첩) |
+| ③ | `toTokens()` | 응답 → 앱 내부 `Tokens` 매핑 |
+
+> 데모 모드(`VITE_API_BASE_URL` 미설정)에서는 실제 호출 없이 발급을 흉내낸 토큰을 돌려준다.
+> 환경변수를 주입하면 동일 코드가 `AUTH_LOGIN_PATH` 로 실제 POST 한다.
 
 ## 새 리소스 추가하기 (소비 시스템)
 
