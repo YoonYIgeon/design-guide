@@ -36,6 +36,7 @@
 | [docs/06-versioning-release.md](docs/06-versioning-release.md) | SemVer, 태깅, 릴리스, 롤백 |
 | [docs/07-contributing.md](docs/07-contributing.md) | 기여 규칙, 커밋 컨벤션, 리뷰 |
 | [docs/08-presentational-only.md](docs/08-presentational-only.md) | **프레젠테이션 전용 원칙** (데이터와 분리, props/callback 계약) |
+| [docs/09-data-fetching.md](docs/09-data-fetching.md) | **데이터 패칭** (axios·react-query·react-markdown, API 관리/페이지 예시) |
 
 ## 데모 앱 실행 (개발자)
 
@@ -62,6 +63,7 @@ yarn typecheck  # 타입만 검사
 | --- | --- |
 | `/login` | 로그인 (미인증 진입점) |
 | `/` | 대시보드 (지표 + 사용자 관리) |
+| `/posts` | 게시글 (axios·react-query·react-markdown 데이터 패칭 예시) → [docs/09](docs/09-data-fetching.md) |
 | `/users` · `/audit` · `/settings` | 각 관리 화면 |
 
 미인증 상태로 보호 경로에 접근하면 `/login` 으로 리다이렉트됩니다. `AdminShell` 은 라우터를 모르며
@@ -79,6 +81,7 @@ yarn typecheck  # 타입만 검사
 | `Card` / `StatCard` | 콘텐츠 컨테이너 / 지표 카드 |
 | `Badge` | 의미색 상태 배지 |
 | `EmptyState` | 빈 데이터 안내 |
+| `Markdown` | 마크다운 → React 렌더링 (react-markdown, 토큰 스타일) |
 | `LoginForm` | 프레젠테이션 전용 로그인 폼 (onSubmit 으로 값만 전달) |
 | `Icons` | 인라인 SVG 아이콘 (외부 CDN 미사용) |
 

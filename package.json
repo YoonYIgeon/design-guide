@@ -43,6 +43,9 @@
     "vite": "^6.0.5"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.2",
+    "axios": "^1.13.1",
+    "react-markdown": "^9.1.0",
     "react-router-dom": "^7.18.1"
   }
 }

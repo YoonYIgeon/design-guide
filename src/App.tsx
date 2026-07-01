@@ -10,11 +10,13 @@ import {
 import { AdminShell, Button, LoginForm, type NavItem } from "./lib";
 import {
   IconDashboard,
+  IconFileText,
   IconSettings,
   IconShield,
   IconUsers,
 } from "./lib/icons";
 import { DashboardPage, type UserRow } from "./pages/DashboardPage";
+import { PostsPage } from "./pages/PostsPage";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { clearTokens, hasSession, saveTokens } from "./auth";
 
@@ -30,6 +32,7 @@ import { clearTokens, hasSession, saveTokens } from "./auth";
 const NAV: NavItem[] = [
   { key: "/", label: "대시보드", icon: <IconDashboard width={18} height={18} /> },
   { key: "/users", label: "사용자", icon: <IconUsers width={18} height={18} /> },
+  { key: "/posts", label: "게시글", icon: <IconFileText width={18} height={18} /> },
   { key: "/audit", label: "감사 로그", icon: <IconShield width={18} height={18} /> },
   { key: "/settings", label: "설정", icon: <IconSettings width={18} height={18} /> },
 ];
@@ -37,6 +40,7 @@ const NAV: NavItem[] = [
 const TITLES: Record<string, string> = {
   "/": "대시보드",
   "/users": "사용자",
+  "/posts": "게시글",
   "/audit": "감사 로그",
   "/settings": "설정",
 };
@@ -206,6 +210,7 @@ export default function App() {
       >
         <Route path="/" element={dashboard} />
         <Route path="/users" element={<PlaceholderPage label="사용자" />} />
+        <Route path="/posts" element={<PostsPage />} />
         <Route path="/audit" element={<PlaceholderPage label="감사 로그" />} />
         <Route path="/settings" element={<PlaceholderPage label="설정" />} />
       </Route>

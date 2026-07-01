@@ -11,6 +11,7 @@ export { LoginForm, type LoginFormProps } from "./components/LoginForm";
 export { EmptyState, type EmptyStateProps } from "./components/EmptyState";
 export { DataTable, type DataTableProps, type Column } from "./components/DataTable";
 export { Modal, type ModalProps } from "./components/Modal";
+export { Markdown, type MarkdownProps } from "./components/Markdown";
 export {
   AdminShell,
   type AdminShellProps,
