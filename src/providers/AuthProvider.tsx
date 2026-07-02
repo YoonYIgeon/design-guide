@@ -6,9 +6,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { clearTokens, hasSession, readTokens, saveTokens, type Tokens } from "../auth";
-import { useLoginMutation } from "../api/auth.queries";
-import type { LoginCredentials } from "../api/auth.api";
+import { login as loginRequest, type LoginCredentials } from "../api";
 
 /**
  * 인증 프로바이더 — 하네스(컨테이너) 레벨의 인증 상태 관리.
@@ -16,7 +16,7 @@ import type { LoginCredentials } from "../api/auth.api";
  * ⚠️ 라이브러리(src/lib)가 아니라 소비 시스템 쪽 코드입니다.
  *    인증/영속화(쿠키)는 프레젠테이션 전용 원칙상 라이브러리로 올리지 않고 여기서 다룹니다.
  *    저수준 토큰 저장/복원은 src/auth.ts 가, 그 위의 인증 상태(context)는 이 프로바이더가 담당합니다.
- *    로그인 HTTP 호출은 데이터 계층(src/api/auth.*)에 두고, 이 프로바이더는 react-query 뮤테이션을
+ *    로그인 HTTP 호출은 API 목록(src/api/index.ts)에 두고, 이 프로바이더는 useMutation 으로
  *    호출해 결과(토큰)를 쿠키에 저장하고 인증 상태로 전환하는 오케스트레이션만 담당합니다.
  *    라우팅 이동은 라우터를 아는 호출부(App)가 처리합니다.
  *    (docs/08-presentational-only.md, docs/09-data-fetching.md, src/auth.ts)
@@ -46,9 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 자동 로그인: 쿠키에 유효한 세션이 있으면 인증 상태로 시작합니다.
   const [authed, setAuthed] = useState(() => hasSession());
 
-  // 로그인 HTTP 는 데이터 계층의 react-query 뮤테이션에 위임합니다.
+  // 로그인 HTTP 는 API 목록(src/api)의 login 을 useMutation 으로 직접 호출합니다.
   // (mutateAsync/isPending/error 는 안정 참조라 그대로 의존성에 사용합니다.)
-  const { mutateAsync, isPending, error, reset } = useLoginMutation();
+  const { mutateAsync, isPending, error, reset } = useMutation<
+    Tokens,
+    Error,
+    LoginCredentials
+  >({ mutationFn: loginRequest });
 
   const login = useCallback(
     async (credentials: LoginCredentials, remember: boolean) => {

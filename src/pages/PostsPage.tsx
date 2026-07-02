@@ -1,13 +1,15 @@
 import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Badge, Button, Card, EmptyState, Input, Markdown, Modal } from "../lib";
 import { IconFileText, IconPlus } from "../lib/icons";
-import { usePost, usePosts, useCreatePost } from "../api/posts.queries";
+import { createPost, fetchPost, fetchPosts, postKeys } from "../api";
 
 /**
  * 컨테이너 페이지 예시 — axios + react-query + react-markdown 사용법 데모.
  *
  * 역할 분담(docs/08-presentational-only.md, docs/09-data-fetching.md):
- * - 데이터 패칭/상태는 이 하네스 페이지가 react-query 훅(../api/*)으로 관리한다.
+ * - 데이터 패칭은 이 하네스 페이지가 useQuery/useMutation 을 직접 호출해 관리한다.
+ *   엔드포인트 함수와 쿼리 키는 API 목록 한 파일(../api)에서 가져온다.
  * - 그리기는 라이브러리(src/lib)의 프레젠테이션 컴포넌트에 위임한다.
  *   (본문 마크다운은 <Markdown> 이 렌더링)
  *
@@ -18,9 +20,21 @@ export function PostsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ title: "", author: "", body: "" });
 
-  const list = usePosts();
-  const detail = usePost(selectedId);
-  const createPost = useCreatePost();
+  const queryClient = useQueryClient();
+  const list = useQuery({ queryKey: postKeys.list(), queryFn: fetchPosts });
+  // id 가 null 이면 요청하지 않습니다(enabled).
+  const detail = useQuery({
+    queryKey: postKeys.detail(selectedId ?? -1),
+    queryFn: () => fetchPost(selectedId as number),
+    enabled: selectedId != null,
+  });
+  // 생성 성공 시 목록 캐시를 무효화해 자동 갱신합니다(키는 항상 postKeys 사용).
+  const creation = useMutation({
+    mutationFn: createPost,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: postKeys.list() });
+    },
+  });
 
   function openModal() {
     setForm({ title: "", author: "", body: "" });
@@ -28,7 +42,7 @@ export function PostsPage() {
   }
 
   function submitModal() {
-    createPost.mutate(
+    creation.mutate(
       {
         title: form.title.trim() || "제목 없음",
         author: form.author.trim() || "익명",
@@ -138,8 +152,8 @@ export function PostsPage() {
             <Button variant="secondary" onClick={() => setModalOpen(false)}>
               취소
             </Button>
-            <Button variant="primary" onClick={submitModal} disabled={createPost.isPending}>
-              {createPost.isPending ? "저장 중…" : "저장"}
+            <Button variant="primary" onClick={submitModal} disabled={creation.isPending}>
+              {creation.isPending ? "저장 중…" : "저장"}
             </Button>
           </>
         }
@@ -169,9 +183,9 @@ export function PostsPage() {
               onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
             />
           </label>
-          {createPost.isError && (
+          {creation.isError && (
             <p className="text-sm text-danger">
-              저장에 실패했습니다: {createPost.error.message}
+              저장에 실패했습니다: {creation.error.message}
             </p>
           )}
         </div>
