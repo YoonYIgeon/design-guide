@@ -17,6 +17,7 @@
 ## 핵심 원칙
 
 1. **프레젠테이션 전용(UI-only)** — 모든 컴포넌트는 "그리는 역할"만 한다. 데이터 패칭·상태·비즈니스 로직과 엮이지 않는다. 값은 props 로 받고, 상호작용은 callback 으로 내보낸다. → [docs/08-presentational-only.md](docs/08-presentational-only.md)
+   - **유연한 합성** — 표시용 자리는 문자열이 아니라 `ReactNode` 로 받고, 기본 렌더가 있는 자리는 대체 슬롯을 연다. → [docs/11-flexible-composition.md](docs/11-flexible-composition.md)
 2. **Git이 진실의 원천(Single Source of Truth)** — 배포·버전·롤백 모두 Git 태그/커밋 기준.
 3. **외부 의존 최소화** — 런타임/빌드 의존성은 격리 환경에서 재현 가능해야 함(벤더링 또는 내부 미러 우선).
 4. **하위 호환 우선** — 소비 시스템이 여러 개일 수 있으므로 파괴적 변경은 SemVer와 마이그레이션 가이드로 관리.
@@ -38,6 +39,7 @@
 | [docs/08-presentational-only.md](docs/08-presentational-only.md) | **프레젠테이션 전용 원칙** (데이터와 분리, props/callback 계약) |
 | [docs/09-data-fetching.md](docs/09-data-fetching.md) | **데이터 패칭** (axios·react-query·react-markdown, API 관리/페이지 예시) |
 | [docs/10-form-inputs.md](docs/10-form-inputs.md) | **폼 입력 컴포넌트** (Select·Checkbox·Radio·FileUpload, 파일 업로드 API 동적 연동) |
+| [docs/11-flexible-composition.md](docs/11-flexible-composition.md) | **유연한 합성** (표시 자리는 `ReactNode`, 대체 슬롯, 구조화 객체 \| node) |
 
 ## 데모 앱 실행 (개발자)
 

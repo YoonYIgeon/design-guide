@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 ### Added
+- **유연한 합성 가이드** `docs/11-flexible-composition.md` 추가 — 표시용 자리는 `string` 대신 `ReactNode` 로 받고,
+  기본 렌더가 있는 자리는 대체 슬롯을 연다는 방침. README·CLAUDE.md 설계 원칙에 반영.
+- `AdminShell` 헤더 유연화: `brand` 를 `ReactNode` 로, 로고 자리 `logo` 슬롯 추가,
+  `user` 를 구조화 객체(`AdminShellUser`) 또는 커스텀 노드로 받도록 확장(`avatar` 로 이니셜 아바타 대체).
+- `LoginForm` `brand`·`subtitle` 을 `ReactNode` 로, 로고 자리 `logo` 슬롯 추가.
 - 프로젝트 초기 가이드 문서 세트 추가 (개요/아키텍처/시작하기/UI 가이드/Git 워크플로우/버저닝/기여).
 - React + TypeScript + Tailwind 기반 관리자 UI 라이브러리 및 데모 앱 추가.
   - 컴포넌트: `AdminShell`, `DataTable`, `Button`, `Input`, `Modal`, `Card`, `StatCard`, `Badge`, `EmptyState`, 인라인 `Icons`.
