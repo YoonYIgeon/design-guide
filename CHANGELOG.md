@@ -4,6 +4,8 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/) 를, 버전은 [SemVer](https://semver.org/lang/ko/) 를 따릅니다.
 
 ## [Unreleased]
+
+## [0.2.0] - 2026-07-02
 ### Added
 - `PromptDialog` 추가 — Modal + Input 위에 확인/취소를 얹은 프레젠테이션 전용 입력 다이얼로그.
   입력값은 순수 UI 상태로만 보유하고 `onSubmit(value)` 로 전달하며, 표시 자리(title/description/label/hint/error)는 `ReactNode` 로 받음.
