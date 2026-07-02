@@ -37,6 +37,7 @@
 | [docs/07-contributing.md](docs/07-contributing.md) | 기여 규칙, 커밋 컨벤션, 리뷰 |
 | [docs/08-presentational-only.md](docs/08-presentational-only.md) | **프레젠테이션 전용 원칙** (데이터와 분리, props/callback 계약) |
 | [docs/09-data-fetching.md](docs/09-data-fetching.md) | **데이터 패칭** (axios·react-query·react-markdown, API 관리/페이지 예시) |
+| [docs/10-form-inputs.md](docs/10-form-inputs.md) | **폼 입력 컴포넌트** (Select·Checkbox·Radio·FileUpload, 파일 업로드 API 동적 연동) |
 
 ## 데모 앱 실행 (개발자)
 
@@ -64,6 +65,7 @@ yarn typecheck  # 타입만 검사
 | `/login` | 로그인 (미인증 진입점) |
 | `/` | 대시보드 (지표 + 사용자 관리) |
 | `/posts` | 게시글 (axios·react-query·react-markdown 데이터 패칭 예시) → [docs/09](docs/09-data-fetching.md) |
+| `/forms` | 입력 폼 (Select·Checkbox·Radio·FileUpload + 파일 업로드 API 동적 연동) → [docs/10](docs/10-form-inputs.md) |
 | `/users` · `/audit` · `/settings` | 각 관리 화면 |
 
 미인증 상태로 보호 경로에 접근하면 `/login` 으로 리다이렉트됩니다. `AdminShell` 은 라우터를 모르며
@@ -77,6 +79,8 @@ yarn typecheck  # 타입만 검사
 | `DataTable` | 제네릭 목록 테이블 (loading/empty/error 상태) |
 | `Button` | primary/secondary/danger/ghost, loading |
 | `Input` | 레이블·힌트·에러를 A11y 속성과 연결 |
+| `Select` / `Checkbox` / `RadioGroup` | 선택형 입력 (레이블·힌트·에러·A11y, indeterminate 지원) |
+| `FileUpload` | 드래그&드롭 파일 업로드 (API 연동 시 업로드 결과 `{ url, name }` 반영) |
 | `Modal` | ESC/오버레이 닫기, 포커스 이동·복귀 |
 | `Card` / `StatCard` | 콘텐츠 컨테이너 / 지표 카드 |
 | `Badge` | 의미색 상태 배지 |

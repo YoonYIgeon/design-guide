@@ -58,6 +58,53 @@ export async function createPost(input: CreatePostInput): Promise<Post> {
   return data;
 }
 
+/* ──────────────────────────── 파일 업로드(Uploads) ──────────────────────────── */
+
+/**
+ * 서버 업로드 결과 — 업로드가 끝나면 접근 URL 과 파일명을 객체로 돌려줍니다.
+ * FileUpload 컴포넌트의 FileItem 은 이 값을 그대로 채워 넣습니다.
+ * (소비 시스템의 응답 필드명이 다르면 uploadFile() 매핑 한 곳만 고치면 됩니다.)
+ */
+export interface UploadResult {
+  /** 업로드된 파일의 접근 URL. */
+  url: string;
+  /** 저장된(혹은 원본) 파일명. */
+  name: string;
+  /** 바이트 크기. */
+  size: number;
+}
+
+export interface UploadOptions {
+  /** 업로드 진행률 콜백(0~100). 진행 막대 표시에 사용. */
+  onProgress?: (percent: number) => void;
+  /** 취소용 AbortSignal. */
+  signal?: AbortSignal;
+}
+
+/**
+ * 파일 한 건을 multipart/form-data 로 업로드하고 { url, name, size } 를 받습니다.
+ * 컨테이너(pages)는 FileUpload.onSelect 로 받은 File 을 이 함수로 업로드하고,
+ * 결과를 FileItem(status: "done", url, name)으로 반영합니다. (docs/09-data-fetching.md)
+ */
+export async function uploadFile(
+  file: File,
+  opts: UploadOptions = {},
+): Promise<UploadResult> {
+  if (demo.DEMO_MODE) return demo.uploadFile(file, opts);
+  const form = new FormData();
+  form.append("file", file);
+  const { data } = await apiClient.post<UploadResult>("/uploads", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+    signal: opts.signal,
+    onUploadProgress: (e) => {
+      if (opts.onProgress && e.total) {
+        opts.onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    },
+  });
+  return data;
+}
+
 /* ──────────────────────────── 인증(Auth) ──────────────────────────── */
 
 /*
