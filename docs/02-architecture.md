@@ -49,31 +49,29 @@
 
 ## 배포 산출물 형태
 
-권장 기본값은 **소스 배포 + 사전 빌드 산출물 동시 제공**입니다.
+**소스 배포 + 설치 시점 빌드**입니다. 패키지에는 아래가 포함됩니다(`files` 기준).
 
 | 형태 | 설명 | 사용처 |
 | --- | --- | --- |
-| `src/` | TS/JSX 원본 | 소비 시스템이 자체 번들링할 때 |
-| `dist/` | 사전 빌드된 ESM/CJS + 타입 선언 | 빌드 도구가 없거나 폐쇄망에서 즉시 사용 |
-| `tokens/` | 프레임워크 무관 토큰(JSON/CSS 변수) | 비 React 화면·테마 |
+| `src/lib/` | TS/JSX 원본 + `tokens.css` | 소비 시스템 Tailwind 가 클래스 스캔, 토큰 import |
+| `dist/` | ESM/CJS 번들 + 타입 선언 — **커밋하지 않고** 설치 시 `prepare`(`yarn build`)가 생성 | 컴포넌트 import |
+| `tailwind.preset.js` | 토큰 → Tailwind 유틸리티 매핑 프리셋 | 소비 시스템 `tailwind.config` |
 
-`package.json` 예시(권장):
+진입점 정의는 루트 `package.json` 이 원본입니다:
 
 ```jsonc
 {
-  "name": "@company/admin-ui",
-  "version": "1.4.0",
-  "main": "dist/index.cjs",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
   "exports": {
-    ".": { "import": "./dist/index.mjs", "require": "./dist/index.cjs" },
-    "./tokens": "./tokens/index.css"
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.mjs", "require": "./dist/index.cjs" },
+    "./styles": "./src/lib/tokens.css",   // 디자인 토큰(CSS 변수), "./tokens" 도 동일
+    "./tailwind-preset": "./tailwind.preset.js"
   },
-  "files": ["dist", "tokens", "src"],
   "peerDependencies": { "react": ">=18", "react-dom": ">=18" }
 }
 ```
+
+하네스(`src/pages`, `src/api`, `src/providers`, `src/App.tsx` 등)는 패키지에 **포함되지 않습니다**
+— 소비 시스템이 최초 1회 복사해 소유하는 템플릿입니다. ([03. 시작하기](03-getting-started.md))
 
 ## 보안 · 분리 고려사항
 

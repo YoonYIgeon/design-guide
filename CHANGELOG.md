@@ -30,6 +30,18 @@
     로그아웃 시 쿠키 제거. `remember` 로 지속(30일)/세션 쿠키 결정.
 - 패키지 매니저를 **yarn 전용**으로 전환: `packageManager` 지정, `package-lock.json` 제거·gitignore,
   문서 명령을 yarn 으로 변경, 규칙을 `CLAUDE.md` 에 명문화.
+- **패키지 소비 체계 구축(포크 대신 의존성 설치)**: 소비 시스템이 내부 Git 태그로
+  `yarn add` 해 사용하는 흐름을 실제로 동작하게 정비.
+  - vite 라이브러리 빌드 추가: `yarn build` 가 `src/lib/index.ts` → `dist/index.{mjs,cjs}` 번들
+    (+ `tsconfig.build.json` 으로 타입 선언 생성). 데모 앱 빌드는 `yarn build:demo`(dist-demo)로 분리.
+  - `prepare` 스크립트 추가 — git 의존성 설치 시점에 dist 자동 빌드(dist 는 gitignore, 커밋 안 함).
+  - Tailwind 테마(토큰 매핑)를 `tailwind.preset.js` 로 분리하고
+    `@company/admin-ui/tailwind-preset` 으로 export. `./styles`(=`./tokens`)는 `src/lib/tokens.css` 를 가리킴.
+  - 패키지 경계 정리: `files` 를 `dist`/`src/lib`/`tailwind.preset.js` 로 축소(하네스는 미포함),
+    하네스 전용 의존성(axios·react-query·react-router-dom)을 devDependencies 로 이동
+    (라이브러리 runtime 의존성은 react-markdown 만 유지).
+  - 문서 갱신: 시작하기(03)를 "패키지 설치 + 하네스 템플릿 최초 1회 복사" 흐름으로 재작성,
+    아키텍처(02)·릴리스(06)·기여(07)의 dist 정책을 "커밋 안 함 + 설치 시 빌드"로 확정.
 - **API 관리를 한 파일로 단순화**: 리소스별 `*.api.ts`/`*.queries.ts` 4개 파일을
   `src/api/index.ts`(타입 + 엔드포인트 함수 + 쿼리 키) 하나로 통합, 데모 스캐폴드는
   `src/api/demo.ts` 로 분리. 커스텀 훅 계층을 제거하고 컨테이너(pages/providers)가
