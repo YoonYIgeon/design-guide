@@ -31,5 +31,21 @@ export {
   type NavItem,
 } from "./components/AdminShell";
 
+// UI 상태 프로바이더 — 프레젠테이션 전용 원칙의 명시적 예외(순수 UI 상태만 관리).
+// (docs/08-presentational-only.md)
+export {
+  ToastProvider,
+  useToast,
+  type ToastApi,
+  type ToastOptions,
+} from "./providers/ToastProvider";
+export {
+  AlertProvider,
+  useAlert,
+  type AlertApi,
+  type AlertOptions,
+  type ConfirmOptions,
+} from "./providers/AlertProvider";
+
 export { cn } from "./utils/cn";
 export * as Icons from "./icons";

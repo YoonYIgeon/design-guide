@@ -7,9 +7,9 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { AdminShell, Button, LoginForm, type NavItem } from "./lib";
+import { AdminShell, Button, LoginForm, useAlert, useToast, type NavItem } from "./lib";
 import { DashboardPage, type UserRow } from "./pages/DashboardPage";
-import { useAlert, useAuth, useToast } from "./providers";
+import { useAuth } from "./providers";
 import { createAppRoutes, toNavItems, toTitleMap } from "./routes";
 
 /**

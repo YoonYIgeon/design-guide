@@ -7,15 +7,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { AlertDialog, type AlertTone } from "../lib";
+import { AlertDialog, type AlertTone } from "../components/AlertDialog";
 
 /**
- * 알림/확인 프로바이더 — 하네스(컨테이너) 레벨의 상태 관리.
+ * 알림/확인 프로바이더 — 라이브러리 제공 UI 상태 프로바이더.
  *
- * ⚠️ 라이브러리(src/lib)가 아니라 소비 시스템 쪽 코드입니다.
- *    프레젠테이션 전용 원칙상 열림 상태·Promise 해소 같은 로직은 여기에 두고,
- *    라이브러리는 그리기만(<AlertDialog>) 담당합니다.
- *    (docs/08-presentational-only.md)
+ * 프레젠테이션 전용 원칙의 명시적 예외(승격)입니다: 다이얼로그 열림 상태·Promise 해소는
+ * 데이터/비즈니스 로직이 아닌 **순수 UI 상태**이므로 라이브러리가 관리하고,
+ * 소비 시스템은 <AlertProvider> 로 감싼 뒤 useAlert() 만 호출합니다.
+ * 네트워크·인증·영속화는 여전히 다루지 않습니다. (docs/08-presentational-only.md)
  */
 
 export interface AlertOptions {

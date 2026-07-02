@@ -1,19 +1,7 @@
 /**
  * 하네스(컨테이너) 레벨 프로바이더 모음.
- * 상태/큐/인증 같은 로직을 담당하며, 라이브러리(src/lib)의 프레젠테이션 컴포넌트를 그립니다.
+ * 인증처럼 데이터·영속화와 엮인 로직만 여기(하네스)에 남습니다.
+ * 순수 UI 상태 프로바이더(Toast/Alert)는 라이브러리(src/lib)로 승격되었습니다.
  * (docs/08-presentational-only.md)
  */
-export {
-  ToastProvider,
-  useToast,
-  type ToastApi,
-  type ToastOptions,
-} from "./ToastProvider";
-export {
-  AlertProvider,
-  useAlert,
-  type AlertApi,
-  type AlertOptions,
-  type ConfirmOptions,
-} from "./AlertProvider";
 export { AuthProvider, useAuth, type AuthApi } from "./AuthProvider";
