@@ -90,6 +90,23 @@ export function UsersPage() {
 }
 ```
 
+토스트/확인 다이얼로그는 라이브러리 프로바이더로 바로 사용할 수 있습니다:
+
+```tsx
+import { ToastProvider, AlertProvider, useToast, useAlert } from "@company/admin-ui";
+
+// 앱 루트에서 한 번 감싸고
+<AlertProvider>
+  <ToastProvider>{children}</ToastProvider>
+</AlertProvider>;
+
+// 어디서든 호출
+const toast = useToast();
+const { confirm } = useAlert();
+toast.success("저장되었습니다.");
+if (await confirm("정말 삭제할까요?")) { /* … */ }
+```
+
 > 실제 export 목록은 `docs/04-ui-guidelines.md`와 소스의 `src/lib/index.ts`를 기준으로 합니다.
 
 ## 하네스 템플릿 복사 (최초 1회)
@@ -101,7 +118,7 @@ export function UsersPage() {
 | 복사 대상 | 역할 |
 | --- | --- |
 | `src/main.tsx`, `src/App.tsx`, `src/routes.tsx`, `src/index.css` | 앱 진입점·라우팅 |
-| `src/auth.ts`, `src/providers/**` | 인증 상태·토스트/알림 |
+| `src/auth.ts`, `src/providers/**` | 인증 상태 (토스트/알림 프로바이더는 라이브러리에 포함 — 복사 불필요) |
 | `src/api/**` | 데이터 계층 — API 목록 한 파일(`index.ts`) + axios 클라이언트 (docs/09) |
 | `src/pages/**` | 컨테이너 페이지 예시 |
 

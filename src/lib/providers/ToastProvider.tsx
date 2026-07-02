@@ -7,15 +7,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Toast, ToastViewport, type ToastPosition, type ToastTone } from "../lib";
+import { Toast, ToastViewport, type ToastPosition, type ToastTone } from "../components/Toast";
 
 /**
- * 토스트 프로바이더 — 하네스(컨테이너) 레벨의 상태/큐 관리.
+ * 토스트 프로바이더 — 라이브러리 제공 UI 상태 프로바이더.
  *
- * ⚠️ 라이브러리(src/lib)가 아니라 소비 시스템 쪽 코드입니다.
- *    프레젠테이션 전용 원칙상 큐·타이머 같은 상태 로직은 컴포넌트가 아닌 여기에 둡니다.
- *    라이브러리는 그리기만(<Toast>/<ToastViewport>) 담당합니다.
- *    (docs/08-presentational-only.md)
+ * 프레젠테이션 전용 원칙의 명시적 예외(승격)입니다: 토스트 큐·타이머는
+ * 데이터/비즈니스 로직이 아닌 **순수 UI 상태**이므로 라이브러리가 관리하고,
+ * 소비 시스템은 <ToastProvider> 로 감싼 뒤 useToast() 만 호출합니다.
+ * 네트워크·인증·영속화는 여전히 다루지 않습니다. (docs/08-presentational-only.md)
  */
 
 export interface ToastOptions {

@@ -4,7 +4,8 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import { createQueryClient } from "./api/queryClient";
-import { AlertProvider, AuthProvider, ToastProvider } from "./providers";
+import { AlertProvider, ToastProvider } from "./lib";
+import { AuthProvider } from "./providers";
 import "./index.css";
 
 const root = document.getElementById("root");

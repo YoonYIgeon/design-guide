@@ -30,6 +30,10 @@
     로그아웃 시 쿠키 제거. `remember` 로 지속(30일)/세션 쿠키 결정.
 - 패키지 매니저를 **yarn 전용**으로 전환: `packageManager` 지정, `package-lock.json` 제거·gitignore,
   문서 명령을 yarn 으로 변경, 규칙을 `CLAUDE.md` 에 명문화.
+- **UI 상태 프로바이더를 라이브러리로 승격**: `ToastProvider`(`useToast`)·`AlertProvider`(`useAlert`)를
+  하네스(`src/providers`)에서 라이브러리(`src/lib/providers`)로 이동해 패키지에서 바로 사용 가능.
+  토스트 큐·다이얼로그 열림 상태는 순수 UI 상태로 보고 프레젠테이션 전용 원칙의
+  명시적 예외로 docs/08 에 명문화(HTTP·영속화·라우팅 금지는 유지). 하네스에는 `AuthProvider` 만 남음.
 - **패키지 소비 체계 구축(포크 대신 의존성 설치)**: 소비 시스템이 내부 Git 태그로
   `yarn add` 해 사용하는 흐름을 실제로 동작하게 정비.
   - vite 라이브러리 빌드 추가: `yarn build` 가 `src/lib/index.ts` → `dist/index.{mjs,cjs}` 번들
