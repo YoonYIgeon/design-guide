@@ -37,6 +37,7 @@ export { Markdown, type MarkdownProps } from "./components/Markdown";
 export {
   AdminShell,
   type AdminShellProps,
+  type AdminShellUser,
   type NavItem,
 } from "./components/AdminShell";
 

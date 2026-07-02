@@ -5,8 +5,12 @@ import { Input } from "./Input";
 import { IconShield } from "../icons";
 
 export interface LoginFormProps {
-  brand?: string;
-  subtitle?: string;
+  /** 상단 제품명. 문자열 또는 임의의 노드(로고 등). */
+  brand?: ReactNode;
+  /** 제품명 아래 보조 문구. 문자열 또는 노드. */
+  subtitle?: ReactNode;
+  /** 상단 로고 자리. 기본 실드 아이콘을 대체합니다. */
+  logo?: ReactNode;
   /** 제출 중 여부(스피너/중복 제출 차단). 소비 시스템이 제어. */
   loading?: boolean;
   /** 표시할 에러 메시지. 값 판단은 소비 시스템이 함. */
@@ -33,6 +37,7 @@ export interface LoginFormProps {
 export function LoginForm({
   brand = "Admin Console",
   subtitle = "관리자 콘솔에 로그인하세요.",
+  logo,
   loading = false,
   error,
   showRemember = true,
@@ -53,8 +58,8 @@ export function LoginForm({
   return (
     <div className={cn("w-full max-w-sm", className)}>
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <IconShield width={26} height={26} />
+        <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
+          {logo ?? <IconShield width={26} height={26} />}
         </span>
         <h1 className="text-lg font-semibold text-text">{brand}</h1>
         <p className="text-sm text-text-muted">{subtitle}</p>
