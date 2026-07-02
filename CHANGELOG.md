@@ -30,3 +30,8 @@
     로그아웃 시 쿠키 제거. `remember` 로 지속(30일)/세션 쿠키 결정.
 - 패키지 매니저를 **yarn 전용**으로 전환: `packageManager` 지정, `package-lock.json` 제거·gitignore,
   문서 명령을 yarn 으로 변경, 규칙을 `CLAUDE.md` 에 명문화.
+- **API 관리를 한 파일로 단순화**: 리소스별 `*.api.ts`/`*.queries.ts` 4개 파일을
+  `src/api/index.ts`(타입 + 엔드포인트 함수 + 쿼리 키) 하나로 통합, 데모 스캐폴드는
+  `src/api/demo.ts` 로 분리. 커스텀 훅 계층을 제거하고 컨테이너(pages/providers)가
+  `useQuery`/`useMutation` 을 직접 호출하도록 변경(쿼리 키는 `*Keys` 헬퍼로만 생성).
+  `docs/09-data-fetching.md` 를 새 컨벤션으로 갱신.
