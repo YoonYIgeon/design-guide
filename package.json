@@ -14,38 +14,46 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
-    "./styles": "./dist/style.css"
+    "./styles": "./src/lib/tokens.css",
+    "./tokens": "./src/lib/tokens.css",
+    "./tailwind-preset": "./tailwind.preset.js"
   },
+  "sideEffects": [
+    "**/*.css"
+  ],
   "files": [
     "dist",
-    "src"
+    "src/lib",
+    "tailwind.preset.js"
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "build": "tsc --noEmit && vite build && tsc -p tsconfig.build.json",
+    "build:demo": "vite build --mode demo",
+    "preview": "yarn build:demo && vite preview --mode demo",
+    "typecheck": "tsc --noEmit",
+    "prepare": "yarn build"
   },
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18"
   },
   "devDependencies": {
+    "@tanstack/react-query": "^5.90.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "axios": "^1.13.1",
     "postcss": "^8.4.49",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^7.18.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
     "vite": "^6.0.5"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.90.2",
-    "axios": "^1.13.1",
-    "react-markdown": "^9.1.0",
-    "react-router-dom": "^7.18.1"
+    "react-markdown": "^9.1.0"
   }
 }
