@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 ### Added
+- `PromptDialog` 추가 — Modal + Input 위에 확인/취소를 얹은 프레젠테이션 전용 입력 다이얼로그.
+  입력값은 순수 UI 상태로만 보유하고 `onSubmit(value)` 로 전달하며, 표시 자리(title/description/label/hint/error)는 `ReactNode` 로 받음.
 - **유연한 합성 가이드** `docs/11-flexible-composition.md` 추가 — 표시용 자리는 `string` 대신 `ReactNode` 로 받고,
   기본 렌더가 있는 자리는 대체 슬롯을 연다는 방침. README·CLAUDE.md 설계 원칙에 반영.
 - `AdminShell` 헤더 유연화: `brand` 를 `ReactNode` 로, 로고 자리 `logo` 슬롯 추가,

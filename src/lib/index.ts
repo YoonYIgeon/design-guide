@@ -33,6 +33,7 @@ export {
   type AlertDialogProps,
   type AlertTone,
 } from "./components/AlertDialog";
+export { PromptDialog, type PromptDialogProps } from "./components/PromptDialog";
 export { Markdown, type MarkdownProps } from "./components/Markdown";
 export {
   AdminShell,

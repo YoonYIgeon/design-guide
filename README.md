@@ -84,6 +84,7 @@ yarn typecheck  # 타입만 검사
 | `Select` / `Checkbox` / `RadioGroup` | 선택형 입력 (레이블·힌트·에러·A11y, indeterminate 지원) |
 | `FileUpload` | 드래그&드롭 파일 업로드 (API 연동 시 업로드 결과 `{ url, name }` 반영) |
 | `Modal` | ESC/오버레이 닫기, 포커스 이동·복귀 |
+| `PromptDialog` | 값 하나를 입력받는 다이얼로그 (Modal+Input, `onSubmit(value)`) |
 | `Card` / `StatCard` | 콘텐츠 컨테이너 / 지표 카드 |
 | `Badge` | 의미색 상태 배지 |
 | `EmptyState` | 빈 데이터 안내 |
