@@ -3,12 +3,14 @@ import type { NavItem } from "./lib";
 import {
   IconDashboard,
   IconFileText,
+  IconInbox,
   IconSettings,
   IconShield,
   IconUsers,
 } from "./lib/icons";
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { PostsPage } from "./pages/PostsPage";
+import { FormsPage } from "./pages/FormsPage";
 
 /**
  * 앱 라우트 정의 — 라우팅의 단일 원천(single source of truth).
@@ -56,6 +58,12 @@ export function createAppRoutes({ dashboard }: RouteSlots): AppRoute[] {
       label: "게시글",
       icon: <IconFileText {...ICON_SIZE} />,
       element: <PostsPage />,
+    },
+    {
+      path: "/forms",
+      label: "입력 폼",
+      icon: <IconInbox {...ICON_SIZE} />,
+      element: <FormsPage />,
     },
     {
       path: "/audit",

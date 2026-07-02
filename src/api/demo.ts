@@ -1,4 +1,11 @@
-import type { CreatePostInput, LoginCredentials, LoginResponse, Post } from "./index";
+import type {
+  CreatePostInput,
+  LoginCredentials,
+  LoginResponse,
+  Post,
+  UploadOptions,
+  UploadResult,
+} from "./index";
 
 /**
  * 데모 모드 스캐폴드 — `VITE_API_BASE_URL` 이 없으면(=프리뷰) 실제 네트워크 대신
@@ -77,6 +84,34 @@ export function createPost(input: CreatePostInput): Promise<Post> {
   };
   demoPosts = [created, ...demoPosts];
   return demoDelay(created);
+}
+
+/**
+ * 파일 업로드 흉내: 실제 네트워크 대신 진행률을 몇 단계로 흘려보낸 뒤,
+ * 브라우저 로컬 objectURL 을 접근 URL 로 돌려줍니다(외부 호출 없음 = 격리망 준수).
+ * 실제 연동에서는 index.ts 의 apiClient 경로가 서버 URL 을 돌려줍니다.
+ */
+export function uploadFile(file: File, opts: UploadOptions = {}): Promise<UploadResult> {
+  return new Promise((resolve, reject) => {
+    let percent = 0;
+    const timer = setInterval(() => {
+      if (opts.signal?.aborted) {
+        clearInterval(timer);
+        reject(new DOMException("업로드가 취소되었습니다.", "AbortError"));
+        return;
+      }
+      percent = Math.min(100, percent + 20);
+      opts.onProgress?.(percent);
+      if (percent >= 100) {
+        clearInterval(timer);
+        resolve({
+          url: URL.createObjectURL(file),
+          name: file.name,
+          size: file.size,
+        });
+      }
+    }, 120);
+  });
 }
 
 /** 로그인 흉내: 아무 값이나 받아 발급된 것처럼 응답합니다(비밀번호 검증 없음). */
