@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-03
+### Added
+- `AdminShell` 사이드바 내비게이션 **중첩 메뉴(children) + 접기/펼치기** 지원.
+  - `NavItem` 에 `children?: NavItem[]` 추가 — 하위 메뉴가 있으면 접기/펼치기 가능한 그룹으로 렌더.
+  - 그룹 헤더는 이동하지 않고 펼침/접힘만 토글(이동은 자식 항목의 `onNavigate`). 펼침 상태는 순수 UI 상태로 보유하며, 활성 항목이 속한 그룹은 자동으로 펼침.
+  - `AdminShellProps.defaultOpenKeys?: string[]` 추가 — 초기에 펼쳐 둘 그룹 지정.
+
 ## [0.2.0] - 2026-07-02
 ### Added
 - `PromptDialog` 추가 — Modal + Input 위에 확인/취소를 얹은 프레젠테이션 전용 입력 다이얼로그.
