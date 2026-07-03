@@ -4,6 +4,11 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/) 를, 버전은 [SemVer](https://semver.org/lang/ko/) 를 따릅니다.
 
 ## [Unreleased]
+### Added
+- `DataTable` **페이지네이션(controlled)** 지원 — `pagination` prop 추가.
+  - `DataTablePagination`: `page`/`pageSize`/`total`/`onPageChange` (+ 선택 `pageSizeOptions`·`onPageSizeChange`).
+  - 행을 직접 자르지 않음(프레젠테이션 전용): `rows` 에는 항상 현재 페이지 행만 전달하고, 이동/크기 변경은 콜백으로만 냄. 하단에 "총 N건 · 범위", 페이지당 셀렉트(선택), 이전/다음, `X / Y` 표시.
+  - `DataTablePagination` 타입 export.
 
 ## [0.3.0] - 2026-07-03
 ### Added
