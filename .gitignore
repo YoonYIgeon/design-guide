@@ -10,6 +10,10 @@ package-lock.json
 dist/
 dist-demo/
 
+# 릴리스 아티팩트 — yarn pack 산출물은 커밋하지 않고 릴리스에 첨부합니다.
+# (docs/06-versioning-release.md)
+*.tgz
+
 # Logs
 *.log
 npm-debug.log*
