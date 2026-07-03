@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Badge, Button, Card, EmptyState, Input, Markdown, Modal } from "../lib";
+import { Badge, Button, Card, EmptyState, Input, Markdown, Modal, Textarea } from "../lib";
 import { IconFileText, IconPlus } from "../lib/icons";
 import { createPost, fetchPost, fetchPosts, postKeys } from "../api";
 
@@ -172,17 +172,17 @@ export function PostsPage() {
             value={form.author}
             onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
           />
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-text">
-              본문 <span className="text-text-muted">(마크다운)</span>
-            </span>
-            <textarea
-              className="min-h-[8rem] rounded-md border border-line bg-surface px-3 py-2 text-sm text-text outline-none focus:border-primary"
-              placeholder={"## 소제목\n- 항목 1\n- 항목 2"}
-              value={form.body}
-              onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
-            />
-          </label>
+          <Textarea
+            label={
+              <>
+                본문 <span className="font-normal text-text-muted">(마크다운)</span>
+              </>
+            }
+            className="min-h-[8rem]"
+            placeholder={"## 소제목\n- 항목 1\n- 항목 2"}
+            value={form.body}
+            onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
+          />
           {creation.isError && (
             <p className="text-sm text-danger">
               저장에 실패했습니다: {creation.error.message}
