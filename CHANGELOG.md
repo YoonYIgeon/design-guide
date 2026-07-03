@@ -5,6 +5,19 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-07-03
+### Added
+- `Textarea` 추가 — `Input` 과 동일한 API(`label`/`hint`/`error`/`required` + 접근성 배선)와
+  토큰 스타일을 가진 여러 줄 입력 컴포넌트. 라이브러리 공개 진입점(`src/lib/index.ts`)에서 export.
+- (데모) 공지사항 상세 화면 예시 `NoticeDetailPage` 추가 — 상태/색 배지·본문(줄바꿈 보존)·첨부파일
+  링크를 그리는 프레젠테이션 전용 상세 뷰와 샘플 주입 하네스.
+### Changed
+- (데모) `PostsPage` 모달 본문 입력을 raw `<textarea>` 에서 `Textarea` 컴포넌트로 교체(디자인 일관성).
+### Fixed
+- Tailwind 색상이 opacity 수식어(`bg-success/10`, `ring-primary/40`, `border-danger/30` 등)를
+  실제로 반영하도록 `tailwind.preset.js` 패치. 색 매핑을 함수형 + `color-mix` 로 바꿔, 통짜 `var()`
+  매핑 탓에 알파가 조용히 무시되던 문제를 해결(토큰 값·직접 참조·소비 시스템 오버라이드는 그대로 보존).
+
 ## [0.2.0] - 2026-07-02
 ### Added
 - `PromptDialog` 추가 — Modal + Input 위에 확인/취소를 얹은 프레젠테이션 전용 입력 다이얼로그.
