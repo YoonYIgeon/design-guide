@@ -4,6 +4,8 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/) 를, 버전은 [SemVer](https://semver.org/lang/ko/) 를 따릅니다.
 
 ## [Unreleased]
+
+## [0.4.0] - 2026-07-03
 ### Added
 - `DataTable` **페이지네이션(controlled)** 지원 — `pagination` prop 추가.
   - `DataTablePagination`: `page`/`pageSize`/`total`/`onPageChange` (+ 선택 `pageSizeOptions`·`onPageSizeChange`).
