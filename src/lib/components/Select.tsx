@@ -85,6 +85,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
 
     const rootRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement | null>(null);
+    const listRef = useRef<HTMLUListElement>(null);
     const optionRefs = useRef<(HTMLLIElement | null)[]>([]);
     // 타이핑 검색용 버퍼.
     const typeahead = useRef({ query: "", at: 0 });
@@ -124,6 +125,19 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       };
       document.addEventListener("mousedown", onPointerDown);
       return () => document.removeEventListener("mousedown", onPointerDown);
+    }, [open, close]);
+
+    // 바깥 영역 스크롤 시 닫기(트리거에 붙은 플로팅 메뉴가 다른 콘텐츠 위에 겹쳐
+    // 떠 보이는 것을 방지 — 네이티브 select 와 동일). 목록 내부 스크롤은 유지.
+    useEffect(() => {
+      if (!open) return;
+      const onScroll = (e: Event) => {
+        if (listRef.current?.contains(e.target as Node)) return;
+        close();
+      };
+      // scroll 이벤트는 버블링되지 않으므로 캡처 단계로 모든 조상 스크롤을 잡습니다.
+      window.addEventListener("scroll", onScroll, true);
+      return () => window.removeEventListener("scroll", onScroll, true);
     }, [open, close]);
 
     // 활성 옵션을 목록 스크롤 안으로 이동.
@@ -252,11 +266,12 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
 
           {open && (
             <ul
+              ref={listRef}
               id={listboxId}
               role="listbox"
               aria-labelledby={labelId}
               className={cn(
-                "absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md border border-line bg-surface py-1 shadow-2",
+                "absolute z-40 mt-1 max-h-60 w-full overflow-auto rounded-md border border-line bg-surface py-1 shadow-2",
                 "focus-visible:outline-none",
               )}
             >
