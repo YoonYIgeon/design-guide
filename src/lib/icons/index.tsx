@@ -106,6 +106,12 @@ export const IconFileText = (p: IconProps) => (
   </svg>
 );
 
+export const IconCheck = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+);
+
 export const IconCheckCircle = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
