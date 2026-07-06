@@ -11,6 +11,7 @@ export { Textarea, type TextareaProps } from "./components/Textarea";
 export { Select, type SelectProps, type SelectOption } from "./components/Select";
 export { Checkbox, type CheckboxProps } from "./components/Checkbox";
 export { RadioGroup, type RadioGroupProps, type RadioOption } from "./components/Radio";
+export { StepSelector, type StepSelectorProps } from "./components/StepSelector";
 export {
   FileUpload,
   type FileUploadProps,
