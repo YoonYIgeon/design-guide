@@ -4,9 +4,11 @@ import {
   Card,
   Checkbox,
   FileUpload,
+  Icons,
   Input,
   RadioGroup,
   Select,
+  StepSelector,
   useToast,
   type FileItem,
   type SelectOption,
@@ -46,6 +48,10 @@ export function FormsPage() {
   const [notify, setNotify] = useState("important");
   const [perms, setPerms] = useState({ read: true, write: false, delete: false });
   const [agree, setAgree] = useState(false);
+
+  // 스텝 셀렉터(다섯 단계) 상태 — 와인 감각 평가 예시.
+  const [sweetness, setSweetness] = useState(1);
+  const [tannin, setTannin] = useState(4);
 
   // 파일 업로드 상태
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -108,6 +114,7 @@ export function FormsPage() {
       .filter(([, on]) => on)
       .map(([k]) => k),
     agree,
+    taste: { sweetness, tannin },
     attachments: files
       .filter((f) => f.status === "done")
       .map((f) => ({ url: f.url, name: f.name })),
@@ -179,6 +186,29 @@ export function FormsPage() {
             checked={agree}
             error={!agree ? "저장하려면 동의가 필요합니다." : undefined}
             onChange={(e) => setAgree(e.target.checked)}
+          />
+        </div>
+      </Card>
+
+      {/* 스텝 셀렉터(다섯 단계) */}
+      <Card title="스텝 셀렉터 (StepSelector)">
+        <div className="flex flex-col gap-6">
+          <StepSelector
+            label="당도"
+            required
+            value={sweetness}
+            onChange={setSweetness}
+            minLabel="드라이"
+            maxLabel="스위트"
+          />
+          <StepSelector
+            label="탄닌"
+            required
+            help={<Icons.IconInfoCircle className="h-4 w-4" />}
+            value={tannin}
+            onChange={setTannin}
+            minLabel="매끄러운"
+            maxLabel="떫음"
           />
         </div>
       </Card>
