@@ -21,7 +21,14 @@
 
 ## Select
 
-네이티브 `<select>` 기반. 화살표 아이콘만 커스터마이즈하고 동작은 브라우저 기본을 따른다(키보드·모바일 호환).
+**커스텀 드롭다운**(ARIA select-only combobox). 네이티브 `<select>` 대신 디자인 토큰으로
+트리거·목록을 직접 그려 브라우저 간 외형을 통일한다. 키보드(↑/↓·Home/End·Enter/Space·Esc·
+타이핑 검색), 포커스 복귀, 바깥 클릭 닫기를 직접 처리한다.
+
+- **기본값은 placeholder**: `value=""` 이면 첫 옵션이 자동 선택되지 않고 placeholder 가
+  muted 로 노출된다(네이티브 `<select>` 가 첫 옵션을 보이던 동작과 다름).
+- `onChange` 는 이벤트가 아니라 **선택된 값(string)** 을 바로 넘긴다(RadioGroup 과 동일).
+- `name` 을 주면 네이티브 폼 제출용 hidden input 을 함께 렌더한다.
 
 ```tsx
 import { Select, type SelectOption } from "@company/admin-ui";
@@ -38,19 +45,21 @@ const ROLE_OPTIONS: SelectOption[] = [
   placeholder="권한을 선택하세요"
   options={ROLE_OPTIONS}
   value={role}
-  onChange={(e) => setRole(e.target.value)}
+  onChange={setRole}
 />;
 ```
 
 | prop | 타입 | 설명 |
 | --- | --- | --- |
 | `options` | `SelectOption[]` | `{ label, value, disabled? }` 목록 |
-| `placeholder` | `string` | 미선택 안내(빈 값 `""` 의 disabled 옵션으로 렌더) |
-| `value` / `onChange` | `string` / `(e) => void` | 제어값·변경(네이티브 이벤트) |
+| `placeholder` | `string` | 미선택(`value=""`) 시 노출할 안내 문구(muted) |
+| `value` / `onChange` | `string` / `(value: string) => void` | 제어값·변경(값만 전달) |
+| `name` | `string` | 네이티브 폼 제출용 hidden input 이름(선택) |
 | `label` `hint` `error` `required` `disabled` | — | 공통 규칙 |
-| 그 외 | `SelectHTMLAttributes` | `name`, `aria-*` 등 그대로 전달 |
 
-> 다중 선택(체크 목록)이 필요하면 `Select multiple` 대신 **Checkbox 목록**을 쓴다(관리자 화면 가독성).
+> `onChange` 는 이벤트가 아니라 **선택된 값(string)** 을 바로 넘긴다(Checkbox 와 다름, RadioGroup 과 같음).
+>
+> 다중 선택(체크 목록)이 필요하면 **Checkbox 목록**을 쓴다(관리자 화면 가독성).
 
 ---
 

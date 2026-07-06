@@ -128,7 +128,7 @@ export function FormsPage() {
             placeholder="권한을 선택하세요"
             options={ROLE_OPTIONS}
             value={role}
-            onChange={(e) => setRole(e.target.value)}
+            onChange={setRole}
             hint="선택지에 disabled 항목을 섞을 수 있습니다."
           />
 
