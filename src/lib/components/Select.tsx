@@ -217,7 +217,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
         {label && (
           <label id={labelId} htmlFor={baseId} className="text-sm font-medium text-text">
             {label}
-            {required && <span className="ml-0.5 text-danger">*</span>}
+            {required && <small className="ml-0.5 font-semibold text-primary">(필수)</small>}
           </label>
         )}
         <div ref={rootRef} className="relative">

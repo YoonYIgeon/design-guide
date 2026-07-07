@@ -116,7 +116,7 @@ export function FileUpload({
       {label && (
         <span className="text-sm font-medium text-text">
           {label}
-          {required && <span className="ml-0.5 text-danger">*</span>}
+          {required && <small className="ml-0.5 font-semibold text-primary">(필수)</small>}
         </span>
       )}
 
