@@ -36,6 +36,11 @@ export {
   type AlertTone,
 } from "./components/AlertDialog";
 export { PromptDialog, type PromptDialogProps } from "./components/PromptDialog";
+export {
+  Tooltip,
+  type TooltipProps,
+  type TooltipPlacement,
+} from "./components/Tooltip";
 export { Markdown, type MarkdownProps } from "./components/Markdown";
 export {
   AdminShell,
