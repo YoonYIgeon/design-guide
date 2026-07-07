@@ -1,16 +1,30 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { IconClose } from "../icons";
+import { cn } from "../utils/cn";
 import { Button } from "./Button";
+
+/** 패널 최대 폭. 기본 "md"(기존 동작과 동일). 테이블 등 넓은 내용은 lg~2xl 사용. */
+export type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl";
 
 export interface ModalProps {
   open: boolean;
   title: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
+  /** 패널 최대 폭 (기본 "md"). */
+  size?: ModalSize;
   /** ESC / 오버레이 클릭 / 닫기 버튼으로 닫힘 (기본 true). */
   dismissible?: boolean;
   onClose: () => void;
 }
+
+const sizeClass: Record<ModalSize, string> = {
+  sm: "max-w-sm",
+  md: "max-w-lg", // 기존 기본값(하위 호환)
+  lg: "max-w-2xl",
+  xl: "max-w-4xl",
+  "2xl": "max-w-6xl",
+};
 
 /** 확인·상세용 모달. ESC 닫기, 포커스 이동, 복귀 포커스를 처리합니다. */
 export function Modal({
@@ -18,6 +32,7 @@ export function Modal({
   title,
   children,
   footer,
+  size = "md",
   dismissible = true,
   onClose,
 }: ModalProps) {
@@ -61,7 +76,10 @@ export function Modal({
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="relative z-10 w-full max-w-lg rounded-lg border border-line bg-surface shadow-3 focus-visible:outline-none"
+        className={cn(
+          "relative z-10 w-full rounded-lg border border-line bg-surface shadow-3 focus-visible:outline-none",
+          sizeClass[size],
+        )}
       >
         <header className="flex items-center justify-between border-b border-line px-4 py-3">
           <h2 className="text-sm font-semibold text-text">{title}</h2>
