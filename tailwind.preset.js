@@ -16,24 +16,37 @@
  *
  * @type {import('tailwindcss').Config}
  */
+
+/**
+ * --au-* 색 토큰을 Tailwind opacity 수식어(`bg-success/10`, `ring-primary/40` 등)와
+ * 호환되게 감쌉니다. 토큰 값(hex/rgb)은 그대로 두고 매핑 계층에서만 알파를 적용합니다.
+ * - 수식어 없음(예: `text-primary`) → 원본 var 그대로 반환(기존 동작·직접 참조와 동일).
+ * - 수식어 있음(예: `/10` → opacityValue "0.1") → color-mix 로 10% 틴트.
+ * color-mix 는 런타임 var 값을 쓰므로 라이트/다크 테마 전환에도 자동으로 따라갑니다.
+ */
+const withAlpha = (varName) => ({ opacityValue }) =>
+  opacityValue === undefined
+    ? `var(${varName})`
+    : `color-mix(in srgb, var(${varName}) calc(${opacityValue} * 100%), transparent)`;
+
 export default {
   darkMode: ["class", '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        primary: "var(--au-color-primary)",
-        "primary-hover": "var(--au-color-primary-hover)",
-        danger: "var(--au-color-danger)",
-        "danger-hover": "var(--au-color-danger-hover)",
-        success: "var(--au-color-success)",
-        warning: "var(--au-color-warning)",
-        info: "var(--au-color-info)",
-        bg: "var(--au-color-bg)",
-        surface: "var(--au-color-surface)",
-        "surface-muted": "var(--au-color-surface-muted)",
-        line: "var(--au-color-border)",
-        text: "var(--au-color-text)",
-        "text-muted": "var(--au-color-text-muted)",
+        primary: withAlpha("--au-color-primary"),
+        "primary-hover": withAlpha("--au-color-primary-hover"),
+        danger: withAlpha("--au-color-danger"),
+        "danger-hover": withAlpha("--au-color-danger-hover"),
+        success: withAlpha("--au-color-success"),
+        warning: withAlpha("--au-color-warning"),
+        info: withAlpha("--au-color-info"),
+        bg: withAlpha("--au-color-bg"),
+        surface: withAlpha("--au-color-surface"),
+        "surface-muted": withAlpha("--au-color-surface-muted"),
+        line: withAlpha("--au-color-border"),
+        text: withAlpha("--au-color-text"),
+        "text-muted": withAlpha("--au-color-text-muted"),
       },
       borderRadius: {
         sm: "var(--au-radius-sm)",
