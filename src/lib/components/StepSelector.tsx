@@ -101,13 +101,10 @@ export function StepSelector({
   return (
     <div className="flex flex-col gap-1.5" aria-describedby={describedBy}>
       <div
-        className={cn(
-          "flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5",
-          disabled && "opacity-60",
-        )}
+        className={cn("flex flex-col gap-1.5", disabled && "opacity-60")}
       >
         {(label || help) && (
-          <div className="flex items-center gap-1.5 text-sm font-medium text-text sm:w-28 sm:shrink-0">
+          <div className="flex items-center gap-1.5 text-sm font-medium text-text">
             {label && (
               <span>
                 {label}
@@ -120,7 +117,7 @@ export function StepSelector({
           </div>
         )}
 
-        <div className="flex-1">
+        <div>
           {/* 트랙 + 점 + 큰 노브 */}
           <div
             role="slider"
