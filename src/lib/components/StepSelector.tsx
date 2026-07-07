@@ -1,4 +1,10 @@
-import { useId, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useId,
+  useRef,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
 import { cn } from "../utils/cn";
 
 export interface StepSelectorProps {
@@ -55,6 +61,7 @@ export function StepSelector({
   onChange,
 }: StepSelectorProps) {
   const fieldId = useId();
+  const trackRef = useRef<HTMLDivElement>(null);
   const count = Math.max(1, Math.floor(steps));
   const selectedIndex = value >= 1 && value <= count ? value - 1 : -1;
   const fillPct = selectedIndex >= 0 ? positionOf(selectedIndex, count) : 0;
@@ -96,6 +103,27 @@ export function StepSelector({
     }
   }
 
+  /** 포인터 x 좌표에서 가장 가까운 단계(1..count). */
+  function valueFromClientX(clientX: number): number {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0) return value;
+    const ratio = (clientX - rect.left) / rect.width;
+    return Math.round(ratio * (count - 1)) + 1;
+  }
+
+  function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
+    if (disabled) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.currentTarget.focus();
+    commit(valueFromClientX(e.clientX));
+  }
+
+  function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
+    if (disabled || !e.currentTarget.hasPointerCapture(e.pointerId)) return;
+    commit(valueFromClientX(e.clientX));
+  }
+
   const points = Array.from({ length: count }, (_, i) => i);
 
   return (
@@ -129,9 +157,12 @@ export function StepSelector({
             aria-disabled={disabled || undefined}
             aria-invalid={error ? true : undefined}
             onKeyDown={handleKeyDown}
+            ref={trackRef}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
             className={cn(
               // 양 끝 점(선택 노브 20px)의 절반이 밖으로 나가지 않도록 좌우 여백 확보
-              "relative mx-2.5 h-5",
+              "relative mx-2.5 h-5 touch-none select-none",
               disabled ? "cursor-not-allowed" : "cursor-pointer",
               "rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
             )}
@@ -145,22 +176,17 @@ export function StepSelector({
                 style={{ left: 0, width: `${fillPct}%` }}
               />
             )}
-            {/* 단계 점 */}
+            {/* 단계 점 — 장식 전용. 클릭/드래그 판정은 트랙 포인터 핸들러가 전담 */}
             {points.map((i) => {
               const pct = positionOf(i, count);
               const isSelected = i === selectedIndex;
               const isFilled = selectedIndex >= 0 && i <= selectedIndex;
               return (
-                <button
+                <span
                   key={i}
-                  type="button"
-                  tabIndex={-1}
                   aria-hidden
-                  disabled={disabled}
-                  onClick={() => commit(i + 1)}
                   className={cn(
-                    "absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full transition-[height,width]",
-                    disabled ? "cursor-not-allowed" : "cursor-pointer",
+                    "pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full transition-[height,width]",
                     isSelected
                       ? "h-5 w-5 border-2 border-surface bg-primary shadow-1"
                       : isFilled
