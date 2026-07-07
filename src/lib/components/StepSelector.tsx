@@ -130,7 +130,8 @@ export function StepSelector({
             aria-invalid={error ? true : undefined}
             onKeyDown={handleKeyDown}
             className={cn(
-              "relative h-5",
+              // 양 끝 점(선택 노브 20px)의 절반이 밖으로 나가지 않도록 좌우 여백 확보
+              "relative mx-2.5 h-5",
               disabled ? "cursor-not-allowed" : "cursor-pointer",
               "rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
             )}
@@ -174,7 +175,7 @@ export function StepSelector({
 
           {/* 숫자 라벨 */}
           {showValues && (
-            <div className="relative mt-2 h-4">
+            <div className="relative mx-2.5 mt-2 h-4">
               {points.map((i) => (
                 <span
                   key={i}
