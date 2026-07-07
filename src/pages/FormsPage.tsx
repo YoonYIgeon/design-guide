@@ -9,6 +9,7 @@ import {
   RadioGroup,
   Select,
   StepSelector,
+  Tooltip,
   useToast,
   type FileItem,
   type SelectOption,
@@ -204,7 +205,13 @@ export function FormsPage() {
           <StepSelector
             label="탄닌"
             required
-            help={<Icons.IconInfoCircle className="h-4 w-4" />}
+            help={
+              <Tooltip content="포도 껍질·씨에서 오는 떫은 정도입니다.">
+                <button type="button" aria-label="탄닌 도움말" className="inline-flex">
+                  <Icons.IconInfoCircle className="h-4 w-4" />
+                </button>
+              </Tooltip>
+            }
             value={tannin}
             onChange={setTannin}
             minLabel="매끄러운"

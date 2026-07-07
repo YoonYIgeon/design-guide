@@ -88,6 +88,7 @@ interface AdminShellProps {
 | `AdminShell` | `brand`(node), `logo`, `user`(구조화 객체 \| node), `user.avatar` |
 | `LoginForm` | `brand`(node), `subtitle`(node), `logo` |
 | `PromptDialog` | `title`·`description`·`label`·`hint`·`error`(node) |
+| `Tooltip` | `content`(node), `children`(트리거 노드) |
 
 새 컴포넌트를 추가하거나 기존 컴포넌트를 다듬을 때, "이 자리는 문자열이면
 충분한가, 아니면 노드로 열어야 하는가"를 먼저 판단하세요. 표시용 자리라면
