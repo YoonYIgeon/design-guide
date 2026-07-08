@@ -272,6 +272,7 @@ const attachments = files
 | `label`·`help`·`hint`·`error` | `ReactNode` | 레이블/보조 슬롯/힌트/에러(공통 규칙과 동일). |
 | `min` · `max` | `number` | 표시 전용 가드 — `min` 이하면 삭제 버튼, `max` 이상이면 추가 버튼을 비활성화. |
 | `addLabel` | `ReactNode` | 추가 버튼 라벨(기본 `"추가"`). |
+| `className` | `string` | 행 컨테이너에 얹을 추가 클래스. 기본 세로 스택(`flex flex-col gap-2`)을 `flex-row` 등으로 확장(가로 배치)할 때 사용. `flex-row` 를 주면 기본 `flex-col` 은 자동 제외. |
 | `emptyText` | `ReactNode` | 행이 0개일 때 안내(없으면 빈 상태를 그리지 않음). |
 | `required`·`disabled` | `boolean` | 필수 표시 · 전체 비활성. |
 

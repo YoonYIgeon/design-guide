@@ -38,6 +38,12 @@ export interface AddableInputFormProps<Item = unknown> {
   emptyText?: ReactNode;
   /** 각 행 삭제 버튼의 aria-label(기본 "N번째 항목 삭제"). */
   removeAriaLabel?: (index: number) => string;
+  /**
+   * 행들을 감싸는 컨테이너에 얹을 추가 클래스. 기본은 세로 스택(`flex flex-col gap-2`)이며,
+   * `flex-row` 등을 주어 가로 배치로 확장할 수 있습니다.
+   * (`flex-row` 를 주면 기본 `flex-col` 은 자동으로 제외됩니다.)
+   */
+  className?: string;
 }
 
 /**
@@ -66,6 +72,7 @@ export function AddableInputForm<Item = unknown>({
   max,
   emptyText,
   removeAriaLabel,
+  className,
 }: AddableInputFormProps<Item>) {
   const fieldId = useId();
   const describedBy = error
@@ -97,7 +104,18 @@ export function AddableInputForm<Item = unknown>({
         </div>
       )}
 
-      <div className={cn("flex flex-col gap-2", disabled && "opacity-60")}>
+      <div
+        className={cn(
+          "flex gap-2",
+          // 기본은 세로 스택. className 이 (반응형 아닌) flex-row 로 방향을 바꾸면
+          // 소스 순서상 기본 flex-col 이 이기지 못하므로 flex-col 을 뺀다.
+          /(^|\s)flex-(row|row-reverse)(\s|$)/.test(className ?? "")
+            ? undefined
+            : "flex-col",
+          disabled && "opacity-60",
+          className,
+        )}
+      >
         {items.length === 0 && emptyText ? (
           <p className="rounded-md border border-dashed border-line px-3 py-4 text-center text-sm text-text-muted">
             {emptyText}
