@@ -13,6 +13,10 @@ export { Checkbox, type CheckboxProps } from "./components/Checkbox";
 export { RadioGroup, type RadioGroupProps, type RadioOption } from "./components/Radio";
 export { StepSelector, type StepSelectorProps } from "./components/StepSelector";
 export {
+  AddableInputForm,
+  type AddableInputFormProps,
+} from "./components/AddableInputForm";
+export {
   FileUpload,
   type FileUploadProps,
   type FileItem,

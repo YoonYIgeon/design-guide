@@ -252,9 +252,82 @@ const attachments = files
 
 ---
 
+## AddableInputForm (추가/삭제 가능한 입력 행)
+
+동적으로 **행을 추가·삭제**하는 폼(담당자 목록, 태그, 옵션 등)을 위한 **프레젠테이션 전용
+컨테이너**다. 자신은 상태를 갖지 않고, 렌더할 행 배열(`items`)·각 행의 내용(`children`)·
+추가/삭제 의도(`onAdd`/`onRemove`)만 주고받는다. **폼 상태·검증·필드 배열 로직은 컨테이너의
+몫**이며, [react-hook-form](https://react-hook-form.com) 의 `useForm` + `useFieldArray` 와
+자연스럽게 맞물린다.
+
+### 컴포넌트 API
+
+| prop | 타입 | 설명 |
+| --- | --- | --- |
+| `items` | `readonly Item[]` | 렌더할 행 배열. 이 배열의 길이가 곧 화면의 행 수(예: `useFieldArray` 의 `fields`). |
+| `children` | `(item, index) => ReactNode` | 각 행의 입력 내용을 그리는 렌더 함수. |
+| `onAdd` | `() => void` | 행 추가 의도(실제 추가는 컨테이너: `append(...)`). |
+| `onRemove` | `(index) => void` | 행 삭제 의도(실제 삭제는 컨테이너: `remove(index)`). |
+| `getKey` | `(item, index) => string \| number` | 행의 안정적 key. 재정렬/삭제가 있으면 고유 key(예: field.`id`) 권장. |
+| `label`·`help`·`hint`·`error` | `ReactNode` | 레이블/보조 슬롯/힌트/에러(공통 규칙과 동일). |
+| `min` · `max` | `number` | 표시 전용 가드 — `min` 이하면 삭제 버튼, `max` 이상이면 추가 버튼을 비활성화. |
+| `addLabel` | `ReactNode` | 추가 버튼 라벨(기본 `"추가"`). |
+| `emptyText` | `ReactNode` | 행이 0개일 때 안내(없으면 빈 상태를 그리지 않음). |
+| `required`·`disabled` | `boolean` | 필수 표시 · 전체 비활성. |
+
+> `min`/`max` 는 **버튼 비활성이라는 표시**만 담당한다. "몇 개까지 허용" 같은 도메인 규칙의
+> 최종 판정·검증은 컨테이너(react-hook-form rules 등)에서 한다.
+
+### 컨테이너 연동 (`src/pages/FormsPage.tsx` 발췌)
+
+```tsx
+const { register, control, handleSubmit, formState: { errors } } =
+  useForm<ContactsForm>({ defaultValues: { contacts: [{ name: "", email: "" }] } });
+const { fields, append, remove } = useFieldArray({ control, name: "contacts" });
+
+<AddableInputForm
+  label="담당자"
+  required
+  items={fields}
+  getKey={(field) => field.id}
+  onAdd={() => append({ name: "", email: "" })}
+  onRemove={remove}
+  min={1}
+  max={5}
+  addLabel="담당자 추가"
+>
+  {(_field, index) => (
+    <div className="flex gap-2">
+      <Input
+        placeholder="이름"
+        error={errors.contacts?.[index]?.name?.message}
+        {...register(`contacts.${index}.name`, { required: "이름을 입력하세요." })}
+      />
+      <Input
+        placeholder="name@company.com"
+        error={errors.contacts?.[index]?.email?.message}
+        {...register(`contacts.${index}.email`, {
+          required: "이메일을 입력하세요.",
+          pattern: { value: EMAIL_RE, message: "이메일 형식이 아닙니다." },
+        })}
+      />
+    </div>
+  )}
+</AddableInputForm>
+```
+
+- `items={fields}` + `getKey={(f) => f.id}` 로 react-hook-form 이 관리하는 안정적 key 를 그대로 쓴다.
+- 행 내부의 `Input` 은 `{...register(...)}` 로 이름/ref/변경을 연결하고, 에러는 `errors...message`
+  를 `Input` 의 `error` 슬롯에 넣는다(공통 규칙 재사용).
+- react-hook-form 은 **컨테이너(하네스)의 의존성**이다. 라이브러리(`src/lib`)는 이 훅을 모르며,
+  `AddableInputForm` 은 어떤 폼 라이브러리와도(또는 순수 `useState` 배열과도) 동작한다.
+
+---
+
 ## 리뷰 기준
 
 - [ ] 입력 컴포넌트는 값=props, 변경=callback 만 쓴다(네트워크/검증 로직 없음).
+- [ ] `AddableInputForm` 은 상태를 갖지 않고 `items`/`onAdd`/`onRemove` 로만 동작한다(폼 훅 비의존).
 - [ ] `label`/`aria-describedby`/`aria-invalid` 로 접근성이 연결된다.
 - [ ] 색상만으로 상태를 전달하지 않는다(아이콘/텍스트 병행).
 - [ ] 파일 업로드의 HTTP 는 `src/api` 의 `uploadFile` 로만 수행한다(컴포넌트에서 axios 금지).
