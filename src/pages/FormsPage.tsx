@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import {
+  AddableInputForm,
   Button,
   Card,
   Checkbox,
@@ -41,6 +43,13 @@ const NOTIFY_OPTIONS: RadioOption[] = [
   { label: "받지 않음", value: "none" },
 ];
 
+/** 추가/삭제 가능한 담당자 폼의 값 모양. 폼 상태는 컨테이너(react-hook-form)가 보유. */
+interface ContactsForm {
+  contacts: { name: string; email: string }[];
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function FormsPage() {
   const toast = useToast();
 
@@ -53,6 +62,18 @@ export function FormsPage() {
   // 스텝 셀렉터(다섯 단계) 상태 — 와인 감각 평가 예시.
   const [sweetness, setSweetness] = useState(1);
   const [tannin, setTannin] = useState(4);
+
+  // 추가/삭제 가능한 담당자 폼 — 폼 상태·검증은 컨테이너(react-hook-form)가 보유.
+  // AddableInputForm 은 fields 를 그리고, 추가/삭제 의도만 append/remove 로 넘긴다.
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ContactsForm>({
+    defaultValues: { contacts: [{ name: "", email: "" }] },
+  });
+  const { fields, append, remove } = useFieldArray({ control, name: "contacts" });
 
   // 파일 업로드 상태
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -218,6 +239,58 @@ export function FormsPage() {
             maxLabel="떫음"
           />
         </div>
+      </Card>
+
+      {/* 추가/삭제 가능한 입력 폼 (AddableInputForm + react-hook-form) */}
+      <Card title="추가 가능한 입력 폼 (AddableInputForm)">
+        <form
+          onSubmit={handleSubmit((values) =>
+            toast.success(`담당자 ${values.contacts.length}명 저장 요청(데모)`),
+          )}
+          className="flex flex-col gap-4"
+        >
+          <AddableInputForm
+            label="담당자"
+            required
+            hint="행을 추가/삭제할 수 있습니다. 최소 1개 · 최대 5개."
+            items={fields}
+            getKey={(field) => field.id}
+            onAdd={() => append({ name: "", email: "" })}
+            onRemove={remove}
+            min={1}
+            max={5}
+            addLabel="담당자 추가"
+            removeAriaLabel={(i) => `${i + 1}번째 담당자 삭제`}
+          >
+            {(_field, index) => (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  placeholder="이름"
+                  aria-label={`${index + 1}번째 담당자 이름`}
+                  error={errors.contacts?.[index]?.name?.message}
+                  {...register(`contacts.${index}.name`, {
+                    required: "이름을 입력하세요.",
+                  })}
+                />
+                <Input
+                  placeholder="name@company.com"
+                  aria-label={`${index + 1}번째 담당자 이메일`}
+                  error={errors.contacts?.[index]?.email?.message}
+                  {...register(`contacts.${index}.email`, {
+                    required: "이메일을 입력하세요.",
+                    pattern: { value: EMAIL_RE, message: "이메일 형식이 아닙니다." },
+                  })}
+                />
+              </div>
+            )}
+          </AddableInputForm>
+
+          <div className="flex justify-end">
+            <Button type="submit" variant="primary">
+              담당자 저장
+            </Button>
+          </div>
+        </form>
       </Card>
 
       {/* 파일 업로드 + 결과 미리보기 */}
