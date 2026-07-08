@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import {
   AddableInputForm,
+  AsyncInput,
   Button,
   Card,
   Checkbox,
@@ -50,6 +51,30 @@ interface ContactsForm {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// 이미 사용 중인 아이디(데모용 정적 목록). 실제 소비 시스템은 이 자리를 API 호출로 대체한다.
+const TAKEN_IDS = new Set(["admin", "root", "test", "user"]);
+
+/**
+ * AsyncInput 의 resolve 로 넘길 "아이디 중복 확인" — 컨테이너(하네스)의 책임.
+ * 실제 소비 시스템에서는 여기서 axios/react-query 로 `GET /users/check?id=` 를 호출한다.
+ * 데모에서는 네트워크 없이 지연만 흉내내며 AbortSignal 로 취소에 대응한다(격리망 준수).
+ */
+function checkUserIdAvailable(
+  id: string,
+  signal: AbortSignal,
+): Promise<{ available: boolean }> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => resolve({ available: !TAKEN_IDS.has(id.toLowerCase()) }),
+      600,
+    );
+    signal.addEventListener("abort", () => {
+      clearTimeout(timer);
+      reject(new DOMException("Aborted", "AbortError"));
+    });
+  });
+}
+
 export function FormsPage() {
   const toast = useToast();
 
@@ -74,6 +99,9 @@ export function FormsPage() {
     defaultValues: { contacts: [{ name: "", email: "" }] },
   });
   const { fields, append, remove } = useFieldArray({ control, name: "contacts" });
+
+  // 디바운스 비동기 검사(아이디 중복 확인) 상태 — 값은 컨테이너가 보유.
+  const [userId, setUserId] = useState("");
 
   // 파일 업로드 상태
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -291,6 +319,32 @@ export function FormsPage() {
             </Button>
           </div>
         </form>
+      </Card>
+
+      {/* 디바운스 비동기 검사 입력 (AsyncInput) */}
+      <Card title="비동기 검사 입력 (AsyncInput)">
+        <div className="flex flex-col gap-4">
+          <AsyncInput
+            label="아이디"
+            required
+            placeholder="영문/숫자 4자 이상"
+            hint="입력을 멈추면 중복을 확인합니다(디바운스 500ms)."
+            value={userId}
+            onChange={setUserId}
+            debounceMs={500}
+            minLength={4}
+            resolve={checkUserIdAvailable}
+            // 응답을 받아서 에러 처리(커스텀): 200 이지만 available=false 면 에러로 해석.
+            getError={(res) =>
+              res.available ? null : "이미 사용 중인 아이디입니다."
+            }
+            getSuccess={(res) => (res.available ? "사용 가능한 아이디입니다." : null)}
+            getRequestError={() => "중복 확인에 실패했습니다. 잠시 후 다시 시도하세요."}
+          />
+          <p className="text-xs text-text-muted">
+            이미 사용 중(데모): <code>admin · root · test · user</code>
+          </p>
+        </div>
       </Card>
 
       {/* 파일 업로드 + 결과 미리보기 */}

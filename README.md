@@ -80,7 +80,8 @@ yarn typecheck  # 타입만 검사
 | `AdminShell` | 사이드바 + 상단바 + 콘텐츠 공통 레이아웃 |
 | `DataTable` | 제네릭 목록 테이블 (loading/empty/error 상태) |
 | `Button` | primary/secondary/danger/ghost, loading |
-| `Input` | 레이블·힌트·에러를 A11y 속성과 연결 |
+| `Input` | 레이블·힌트·에러를 A11y 속성과 연결 (leading/trailing 슬롯) |
+| `AsyncInput` | 디바운스 비동기 검사 입력 (조회·에러 해석은 주입 콜백, 로딩/성공/에러 표시) |
 | `Select` / `Checkbox` / `RadioGroup` | 선택형 입력 (레이블·힌트·에러·A11y, indeterminate 지원) |
 | `FileUpload` | 드래그&드롭 파일 업로드 (API 연동 시 업로드 결과 `{ url, name }` 반영) |
 | `AddableInputForm` | 추가/삭제 가능한 입력 행 컨테이너 (render-prop children, `useForm`+`useFieldArray` 연동) |

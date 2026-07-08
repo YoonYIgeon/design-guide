@@ -325,10 +325,68 @@ const { fields, append, remove } = useFieldArray({ control, name: "contacts" });
 
 ---
 
+## AsyncInput (디바운스 비동기 검사 입력)
+
+입력이 멈추면 **디바운스** 후 비동기 검사를 수행하고(아이디 중복 확인, 쿠폰 유효성 등),
+**로딩 스피너·성공/에러**를 표시하는 입력이다. 아이디 중복 확인처럼 "치는 동안 서버에
+물어보는" 패턴에 쓴다.
+
+**프레젠테이션 전용 경계**([08](08-presentational-only.md)): 컴포넌트는 **디바운스와 상태
+표시(순수 UI)만** 담당한다. 실제 HTTP/조회(`resolve`)와 "응답 → 에러/성공" 해석
+(`getError`/`getSuccess`/`getRequestError`)은 **전부 주입된 콜백**이며, 컴포넌트 내부에는
+`fetch`/`axios`·도메인 규칙이 없다.
+
+### 컴포넌트 API
+
+| prop | 타입 | 설명 |
+| --- | --- | --- |
+| `value` · `onChange` | `string` · `(v) => void` | 제어값/변경(즉시). `Input` 과 동일. |
+| `resolve` | `(value, signal) => Promise<Res>` | 디바운스 후 호출되는 **비동기 리졸버**. 실제 HTTP 는 이 콜백 안(컨테이너)에서. `signal` 로 이전 요청 취소. |
+| `getError` | `(res) => ReactNode \| null` | **응답을 에러로 해석**(커스텀). 값 반환 시 에러, `null` 이면 성공. (200 이지만 실패 의미일 때) |
+| `getSuccess` | `(res) => ReactNode \| null` | 성공 시 표시할 메시지(선택). |
+| `getRequestError` | `(error) => ReactNode` | `resolve` 가 throw(네트워크/예외)했을 때 메시지로 변환. |
+| `debounceMs` | `number` | 디바운스 지연(기본 400). |
+| `skipEmpty` · `minLength` | `boolean` · `number` | 빈 값/최소 길이 미만이면 검사 건너뜀(기본 `true` / `0`). |
+| `onResolved` · `onStatusChange` | `(res) => void` · `(status) => void` | 성공 응답/상태 변화 통지(선택). |
+| 그 외 | — | `label`·`hint`·`placeholder`·`required` 등은 `Input` 으로 그대로 전달. |
+
+> 상태 표시는 색만으로 전달하지 않는다 — 오른쪽 끝 **아이콘**(스피너/체크/경고, `Input.trailing`)과
+> **문구**(성공=hint, 에러=error)를 함께 노출한다.
+
+### 컨테이너 연동 (`src/pages/FormsPage.tsx` 발췌)
+
+```tsx
+// 실제 HTTP 는 컨테이너의 몫 — 여기서 axios/react-query 로 GET /users/check?id= 호출.
+function checkUserIdAvailable(id: string, signal: AbortSignal): Promise<{ available: boolean }> {
+  return apiClient.get(`/users/check`, { params: { id }, signal }).then((r) => r.data);
+}
+
+const [userId, setUserId] = useState("");
+
+<AsyncInput
+  label="아이디"
+  value={userId}
+  onChange={setUserId}
+  debounceMs={500}
+  minLength={4}
+  resolve={checkUserIdAvailable}
+  getError={(res) => (res.available ? null : "이미 사용 중인 아이디입니다.")}
+  getSuccess={(res) => (res.available ? "사용 가능한 아이디입니다." : null)}
+  getRequestError={() => "중복 확인에 실패했습니다. 잠시 후 다시 시도하세요."}
+/>
+```
+
+- **디바운스·취소·상태**는 컴포넌트가, **조회·에러 해석**은 콜백(컨테이너)이 담당한다.
+- 값이 바뀌면 이전 요청은 `signal` 로 abort 되고, 늦게 도착한 stale 응답은 무시된다.
+- 정상 200 응답이라도 `getError` 로 "실패 의미"를 에러로 승격할 수 있다(커스텀 에러 처리).
+
+---
+
 ## 리뷰 기준
 
 - [ ] 입력 컴포넌트는 값=props, 변경=callback 만 쓴다(네트워크/검증 로직 없음).
 - [ ] `AddableInputForm` 은 상태를 갖지 않고 `items`/`onAdd`/`onRemove` 로만 동작한다(폼 훅 비의존).
+- [ ] `AsyncInput` 은 내부에서 HTTP 를 하지 않는다 — 조회(`resolve`)·에러 해석(`getError` 등)은 주입 콜백이다.
 - [ ] `label`/`aria-describedby`/`aria-invalid` 로 접근성이 연결된다.
 - [ ] 색상만으로 상태를 전달하지 않는다(아이콘/텍스트 병행).
 - [ ] 파일 업로드의 HTTP 는 `src/api` 의 `uploadFile` 로만 수행한다(컴포넌트에서 axios 금지).
