@@ -7,6 +7,11 @@ export { Badge, type BadgeProps } from "./components/Badge";
 export { Card, type CardProps, type CardHeaderTone } from "./components/Card";
 export { StatCard, type StatCardProps } from "./components/StatCard";
 export { Input, type InputProps } from "./components/Input";
+export {
+  AsyncInput,
+  type AsyncInputProps,
+  type AsyncInputStatus,
+} from "./components/AsyncInput";
 export { Textarea, type TextareaProps } from "./components/Textarea";
 export { Select, type SelectProps, type SelectOption } from "./components/Select";
 export { Checkbox, type CheckboxProps } from "./components/Checkbox";

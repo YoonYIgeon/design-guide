@@ -6,11 +6,13 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   hint?: ReactNode;
   error?: ReactNode;
   leading?: ReactNode;
+  /** 입력 오른쪽 끝 장식(스피너·상태 아이콘 등). */
+  trailing?: ReactNode;
 }
 
 /** 레이블·힌트·에러를 접근성 속성과 함께 연결한 입력 필드. */
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, hint, error, leading, id, className, required, ...rest }, ref) => {
+  ({ label, hint, error, leading, trailing, id, className, required, ...rest }, ref) => {
     const autoId = useId();
     const inputId = id ?? autoId;
     const describedBy = error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined;
@@ -40,11 +42,17 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               "placeholder:text-text-muted focus-visible:outline-none",
               "focus-visible:ring-2 focus-visible:ring-primary/40",
               leading ? "pl-9" : undefined,
+              trailing ? "pr-9" : undefined,
               error ? "border-danger" : "border-line",
               className,
             )}
             {...rest}
           />
+          {trailing && (
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-muted">
+              {trailing}
+            </span>
+          )}
         </div>
         {error ? (
           <p id={`${inputId}-error`} className="text-xs text-danger">
