@@ -171,6 +171,10 @@ export function FormsPage() {
   };
 
   const uploading = files.some((f) => f.status === "uploading");
+  // 업로드 실패가 하나라도 있으면 필드 레벨 에러로 노출(프레젠테이션-전용: 에러 계산은 컨테이너 책임).
+  const uploadError = files.some((f) => f.status === "error")
+    ? "일부 파일 업로드에 실패했습니다. 실패한 항목을 삭제하고 다시 시도하세요."
+    : undefined;
   const allChecked = perms.read && perms.write && perms.delete;
   const someChecked = perms.read || perms.write || perms.delete;
 
@@ -358,6 +362,7 @@ export function FormsPage() {
               accept="image/*,.pdf"
               multiple
               items={files}
+              error={uploadError}
               onSelect={handleSelect}
               onRemove={handleRemove}
             />

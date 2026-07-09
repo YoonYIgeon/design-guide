@@ -52,6 +52,8 @@ export interface FileUploadProps {
   multiple?: boolean;
   disabled?: boolean;
   required?: boolean;
+  /** 읽기 전용: 드롭존/삭제 없이 업로드된 파일 목록만 보여줍니다. */
+  readOnly?: boolean;
   /** 드롭존 안내 문구 커스터마이즈. */
   dropLabel?: ReactNode;
   className?: string;
@@ -84,6 +86,7 @@ export function FileUpload({
   multiple = true,
   disabled = false,
   required,
+  readOnly = false,
   dropLabel = "파일을 끌어다 놓거나 클릭해 선택하세요",
   className,
 }: FileUploadProps) {
@@ -120,7 +123,8 @@ export function FileUpload({
         </span>
       )}
 
-      {/* 드롭존 */}
+      {/* 드롭존 — 읽기 전용에서는 숨기고 파일 목록만 노출 */}
+      {!readOnly && (
       <div
         role="button"
         tabIndex={disabled ? -1 : 0}
@@ -172,6 +176,12 @@ export function FileUpload({
           }}
         />
       </div>
+      )}
+
+      {/* 읽기 전용인데 항목이 없으면 빈 상태 안내 */}
+      {readOnly && items.length === 0 && (
+        <p className="text-sm text-text-muted">첨부된 파일이 없습니다.</p>
+      )}
 
       {/* 선택/업로드된 파일 목록 */}
       {items.length > 0 && (
@@ -245,7 +255,7 @@ export function FileUpload({
                 )}
               </div>
 
-              {onRemove && (
+              {onRemove && !readOnly && (
                 <button
                   type="button"
                   aria-label={`${item.name} ${item.status === "uploading" ? "취소" : "삭제"}`}

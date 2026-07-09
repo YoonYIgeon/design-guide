@@ -1,5 +1,6 @@
 import { useId, type ReactNode } from "react";
 import { cn } from "../utils/cn";
+import { Input } from "./Input";
 
 export interface RadioOption {
   label: ReactNode;
@@ -21,6 +22,8 @@ export interface RadioGroupProps {
   options: RadioOption[];
   required?: boolean;
   disabled?: boolean;
+  /** 읽기 전용: 선택된 옵션 라벨만 밑줄 Input 으로 표시. */
+  readOnly?: boolean;
   /** 배치 방향(기본 세로). */
   orientation?: "vertical" | "horizontal";
   /** 선택 변경. 값 반영은 컨테이너 책임. */
@@ -41,6 +44,7 @@ export function RadioGroup({
   options,
   required,
   disabled,
+  readOnly,
   orientation = "vertical",
   onChange,
 }: RadioGroupProps) {
@@ -50,6 +54,14 @@ export function RadioGroup({
     : hint
       ? `${groupId}-hint`
       : undefined;
+
+  // 읽기 전용: 선택된 옵션 라벨(문자열)만 밑줄 Input 으로 표시.
+  if (readOnly) {
+    const selected = options.find((o) => o.value === value);
+    const display =
+      selected && typeof selected.label === "string" ? selected.label : (selected?.value ?? "");
+    return <Input label={label} hint={hint} error={error} value={display} readOnly />;
+  }
 
   return (
     <fieldset className="flex flex-col gap-1.5" aria-describedby={describedBy}>

@@ -16,6 +16,8 @@ export interface StepSelectorProps {
   error?: ReactNode;
   required?: boolean;
   disabled?: boolean;
+  /** 읽기 전용: 값은 그대로 보이되 클릭/드래그/키보드 조작을 막습니다(비활성 톤 없음). */
+  readOnly?: boolean;
   /** 접근성/폼 연동용 이름. */
   name?: string;
   /** 단계 수(기본 5). 1..steps 사이의 정수를 값으로 사용합니다. */
@@ -52,6 +54,7 @@ export function StepSelector({
   error,
   required,
   disabled,
+  readOnly,
   name,
   steps = 5,
   value,
@@ -63,6 +66,8 @@ export function StepSelector({
   const fieldId = useId();
   const trackRef = useRef<HTMLDivElement>(null);
   const count = Math.max(1, Math.floor(steps));
+  // 조작 잠금(disabled=비활성+흐리게, readOnly=값은 선명하되 조작만 차단).
+  const locked = disabled || readOnly;
   const selectedIndex = value >= 1 && value <= count ? value - 1 : -1;
   const fillPct = selectedIndex >= 0 ? positionOf(selectedIndex, count) : 0;
 
@@ -73,13 +78,13 @@ export function StepSelector({
       : undefined;
 
   function commit(next: number) {
-    if (disabled) return;
+    if (locked) return;
     const clamped = Math.min(count, Math.max(1, next));
     if (clamped !== value) onChange(clamped);
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-    if (disabled) return;
+    if (locked) return;
     const current = selectedIndex >= 0 ? value : 1;
     switch (e.key) {
       case "ArrowRight":
@@ -112,7 +117,7 @@ export function StepSelector({
   }
 
   function handlePointerDown(e: PointerEvent<HTMLDivElement>) {
-    if (disabled) return;
+    if (locked) return;
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     e.currentTarget.focus();
@@ -120,7 +125,7 @@ export function StepSelector({
   }
 
   function handlePointerMove(e: PointerEvent<HTMLDivElement>) {
-    if (disabled || !e.currentTarget.hasPointerCapture(e.pointerId)) return;
+    if (locked || !e.currentTarget.hasPointerCapture(e.pointerId)) return;
     commit(valueFromClientX(e.clientX));
   }
 
@@ -149,12 +154,13 @@ export function StepSelector({
           {/* 트랙 + 점 + 큰 노브 */}
           <div
             role="slider"
-            tabIndex={disabled ? -1 : 0}
+            tabIndex={locked ? -1 : 0}
             aria-label={typeof label === "string" ? label : undefined}
             aria-valuemin={1}
             aria-valuemax={count}
             aria-valuenow={selectedIndex >= 0 ? value : undefined}
             aria-disabled={disabled || undefined}
+            aria-readonly={readOnly || undefined}
             aria-invalid={error ? true : undefined}
             onKeyDown={handleKeyDown}
             ref={trackRef}
@@ -163,7 +169,7 @@ export function StepSelector({
             className={cn(
               // 양 끝 점(선택 노브 20px)의 절반이 밖으로 나가지 않도록 좌우 여백 확보
               "relative mx-2.5 h-5 touch-none select-none",
-              disabled ? "cursor-not-allowed" : "cursor-pointer",
+              disabled ? "cursor-not-allowed" : readOnly ? "cursor-default" : "cursor-pointer",
               "rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
             )}
           >

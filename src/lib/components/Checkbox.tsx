@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "../utils/cn";
+import { Input } from "./Input";
 
 export interface CheckboxProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
@@ -25,7 +26,10 @@ export interface CheckboxProps
  * 프레젠테이션 전용 — 값은 checked, 변경은 onChange 로만 주고받습니다.
  */
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, hint, error, indeterminate = false, id, className, disabled, ...rest }, ref) => {
+  (
+    { label, hint, error, indeterminate = false, id, className, disabled, readOnly, checked, ...rest },
+    ref,
+  ) => {
     const autoId = useId();
     const inputId = id ?? autoId;
     const describedBy = error
@@ -33,6 +37,14 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
       : hint
         ? `${inputId}-hint`
         : undefined;
+
+    // 읽기 전용: 체크 상태를 사람이 읽을 문구로 바꿔 밑줄 Input 으로 표시.
+    if (readOnly) {
+      const display = indeterminate ? "—" : checked ? "예" : "아니오";
+      return (
+        <Input label={label} hint={hint} error={error} id={inputId} value={display} readOnly />
+      );
+    }
 
     const innerRef = useRef<HTMLInputElement | null>(null);
     // indeterminate 는 DOM 프로퍼티라 속성으로 못 주고 ref 로만 설정합니다.
@@ -57,6 +69,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             }}
             id={inputId}
             type="checkbox"
+            checked={checked}
             disabled={disabled}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
