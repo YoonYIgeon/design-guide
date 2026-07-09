@@ -1,4 +1,13 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useRef,
+  useState,
+  type ForwardedRef,
+  type ReactElement,
+  type ReactNode,
+  type Ref,
+} from "react";
 import { Input, type InputProps } from "./Input";
 import { IconAlertCircle, IconCheckCircle } from "../icons";
 
@@ -43,30 +52,25 @@ export interface AsyncInputProps<Res = unknown>
   error?: ReactNode;
 }
 
-/**
- * 디바운스된 비동기 검사 입력. 입력이 멈추면 `resolve` 를 호출하고,
- * 로딩 스피너·성공/에러 표시를 오케스트레이션합니다.
- *
- * 프레젠테이션 전용 경계(docs/08): 컴포넌트는 **디바운스와 상태 표시(순수 UI)만** 담당하고,
- * 실제 HTTP/조회(`resolve`)와 "응답 → 에러/성공" 해석(`getError`/`getSuccess`/`getRequestError`)은
- * **전부 주입된 콜백**입니다. 컴포넌트 내부에는 fetch/axios·도메인 규칙이 없습니다.
- */
-export function AsyncInput<Res = unknown>({
-  value,
-  onChange,
-  resolve,
-  debounceMs = 400,
-  getError,
-  getSuccess,
-  getRequestError = () => "확인 중 오류가 발생했습니다. 잠시 후 다시 시도하세요.",
-  onResolved,
-  onStatusChange,
-  skipEmpty = true,
-  minLength = 0,
-  error: errorProp,
-  hint,
-  ...inputProps
-}: AsyncInputProps<Res>) {
+function AsyncInputInner<Res = unknown>(
+  {
+    value,
+    onChange,
+    resolve,
+    debounceMs = 400,
+    getError,
+    getSuccess,
+    getRequestError = () => "확인 중 오류가 발생했습니다. 잠시 후 다시 시도하세요.",
+    onResolved,
+    onStatusChange,
+    skipEmpty = true,
+    minLength = 0,
+    error: errorProp,
+    hint,
+    ...inputProps
+  }: AsyncInputProps<Res>,
+  ref: ForwardedRef<HTMLInputElement>,
+) {
   const [status, setStatus] = useState<AsyncInputStatus>("idle");
   const [message, setMessage] = useState<ReactNode>(null);
 
@@ -144,6 +148,7 @@ export function AsyncInput<Res = unknown>({
   return (
     <Input
       {...inputProps}
+      ref={ref}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       trailing={trailing}
@@ -153,3 +158,18 @@ export function AsyncInput<Res = unknown>({
     />
   );
 }
+
+/**
+ * 디바운스된 비동기 검사 입력. 입력이 멈추면 `resolve` 를 호출하고,
+ * 로딩 스피너·성공/에러 표시를 오케스트레이션합니다.
+ *
+ * 프레젠테이션 전용 경계(docs/08): 컴포넌트는 **디바운스와 상태 표시(순수 UI)만** 담당하고,
+ * 실제 HTTP/조회(`resolve`)와 "응답 → 에러/성공" 해석(`getError`/`getSuccess`/`getRequestError`)은
+ * **전부 주입된 콜백**입니다. 컴포넌트 내부에는 fetch/axios·도메인 규칙이 없습니다.
+ *
+ * `forwardRef` 로 감싸 내부 `<input>` 요소로 ref 를 전달한다(react-hook-form `Controller` 등
+ * ref 를 주입하는 컨테이너와 호환). 제네릭 `Res` 는 `forwardRef` 로 소실되므로 캐스팅으로 시그니처를 보존한다.
+ */
+export const AsyncInput = forwardRef(AsyncInputInner) as <Res = unknown>(
+  props: AsyncInputProps<Res> & { ref?: Ref<HTMLInputElement> },
+) => ReactElement;
