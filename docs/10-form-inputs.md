@@ -163,8 +163,13 @@ FileUpload items 로 다시 렌더(진행 막대 → 완료 링크)
 | `onRemove` | `(id: string) => void` | 개별 항목 제거/취소 |
 | `accept` | `string` | 허용 형식(예: `"image/*,.pdf"`) |
 | `multiple` | `boolean` | 다중 선택(기본 true) |
+| `readOnly` | `boolean` | 읽기 전용. 드롭존/삭제 없이 업로드된 파일만 보여준다(아래 참고). |
 | `label` `hint` `error` `required` `disabled` | — | 공통 규칙 |
 | `dropLabel` | `ReactNode` | 드롭존 안내 문구 |
+
+> **읽기 전용(`readOnly`)**: 드롭존과 삭제 버튼을 숨기고, 각 파일을 **파일명이 담긴 readOnly
+> input + 우측 링크(`열기`) 버튼** 한 줄로 그린다. `url` 이 있는 항목만 링크 버튼을 노출하며,
+> 항목이 없으면 "첨부된 파일이 없습니다." 안내를 보여준다(조회 화면용).
 
 `FileItem` (컨테이너가 채우는 값):
 

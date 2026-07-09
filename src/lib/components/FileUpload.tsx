@@ -188,8 +188,40 @@ export function FileUpload({
         <p className="text-sm text-text-muted">첨부된 파일이 없습니다.</p>
       )}
 
+      {/* 읽기 전용 목록 — 파일명은 readOnly input, 우측에 링크(열기) 버튼 */}
+      {readOnly && items.length > 0 && (
+        <ul className="flex flex-col gap-2">
+          {items.map((item) => (
+            <li key={item.id} className="flex items-center gap-2">
+              <span className="shrink-0 text-text-muted">
+                <IconFileText width={18} height={18} />
+              </span>
+              <input
+                type="text"
+                value={item.name}
+                readOnly
+                aria-label="파일명"
+                className="h-10 min-w-0 flex-1 cursor-default truncate rounded-md border border-line bg-surface-muted px-3 text-sm text-text focus-visible:outline-none"
+              />
+              {item.url && (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`${item.name} 열기`}
+                  className="inline-flex h-10 shrink-0 items-center gap-1 rounded-md border border-line px-3 text-sm text-primary hover:border-primary/60 hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                >
+                  <IconExternalLink width={16} height={16} />
+                  열기
+                </a>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
       {/* 선택/업로드된 파일 목록 */}
-      {items.length > 0 && (
+      {!readOnly && items.length > 0 && (
         <ul className="flex flex-col gap-1.5">
           {items.map((item) => (
             <li
@@ -260,7 +292,7 @@ export function FileUpload({
                 )}
               </div>
 
-              {onRemove && !readOnly && (
+              {onRemove && (
                 <button
                   type="button"
                   aria-label={`${item.name} ${item.status === "uploading" ? "취소" : "삭제"}`}
