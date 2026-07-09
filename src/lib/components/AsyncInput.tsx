@@ -5,7 +5,7 @@ import { IconAlertCircle, IconCheckCircle } from "../icons";
 export type AsyncInputStatus = "idle" | "loading" | "success" | "error";
 
 export interface AsyncInputProps<Res = unknown>
-  extends Omit<InputProps, "value" | "onChange" | "error" | "trailing"> {
+  extends Omit<InputProps, "value" | "onChange" | "trailing"> {
   /** 제어값. */
   value: string;
   /** 값 변경(즉시 반영). 저장은 컨테이너 책임. */
@@ -36,6 +36,11 @@ export interface AsyncInputProps<Res = unknown>
   skipEmpty?: boolean;
   /** 이 길이 미만이면 검사를 건너뜁니다(기본 0). */
   minLength?: number;
+  /**
+   * 외부(컨테이너) 에러를 직접 지정합니다. 값이 있으면 내부 비동기 상태 에러보다 **우선**해서 표시합니다.
+   * 입력값 자체의 클라이언트 검증(예: zod) 결과를 여기로 넘기면 됩니다.
+   */
+  error?: ReactNode;
 }
 
 /**
@@ -58,6 +63,7 @@ export function AsyncInput<Res = unknown>({
   onStatusChange,
   skipEmpty = true,
   minLength = 0,
+  error: errorProp,
   hint,
   ...inputProps
 }: AsyncInputProps<Res>) {
@@ -120,16 +126,19 @@ export function AsyncInput<Res = unknown>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
+  // 외부 에러(예: zod 검증 결과)가 있으면 내부 비동기 상태 에러보다 우선한다.
+  const effectiveError = errorProp ?? (status === "error" ? message : undefined);
+
   const trailing =
     status === "loading" ? (
       <span
         className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
         aria-hidden
       />
+    ) : effectiveError ? (
+      <IconAlertCircle className="h-4 w-4 text-danger" aria-hidden />
     ) : status === "success" ? (
       <IconCheckCircle className="h-4 w-4 text-success" aria-hidden />
-    ) : status === "error" ? (
-      <IconAlertCircle className="h-4 w-4 text-danger" aria-hidden />
     ) : undefined;
 
   return (
@@ -138,7 +147,7 @@ export function AsyncInput<Res = unknown>({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       trailing={trailing}
-      error={status === "error" ? message : undefined}
+      error={effectiveError}
       hint={status === "success" && message ? message : hint}
       aria-busy={status === "loading" || undefined}
     />
