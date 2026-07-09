@@ -51,6 +51,10 @@ interface ContactsForm {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// 첨부 용량 제한(데모). 이 값을 넘는 파일은 업로드 없이 즉시 실패 항목으로 표시됩니다.
+const MAX_UPLOAD_SIZE = 5 * 1024 * 1024; // 5MB
+const formatMb = (bytes: number) => `${Math.round(bytes / (1024 * 1024))}MB`;
+
 // 이미 사용 중인 아이디(데모용 정적 목록). 실제 소비 시스템은 이 자리를 API 호출로 대체한다.
 const TAKEN_IDS = new Set(["admin", "root", "test", "user"]);
 
@@ -116,6 +120,23 @@ export function FormsPage() {
   function handleSelect(picked: File[]) {
     for (const file of picked) {
       const id = `f${(idRef.current += 1)}`;
+
+      // 0) 클라이언트 검증(컨테이너 책임): 용량 초과는 업로드하지 않고 즉시 실패 항목으로.
+      //    → 항목 에러 + 필드 레벨 error(빨간 테두리/메시지)가 함께 노출됩니다.
+      if (file.size > MAX_UPLOAD_SIZE) {
+        setFiles((prev) => [
+          ...prev,
+          {
+            id,
+            name: file.name,
+            size: file.size,
+            status: "error",
+            error: `${formatMb(MAX_UPLOAD_SIZE)} 이하만 업로드할 수 있습니다.`,
+          },
+        ]);
+        continue;
+      }
+
       const controller = new AbortController();
       controllers.current[id] = controller;
 
@@ -358,7 +379,7 @@ export function FormsPage() {
             <Input label="표시 이름" placeholder="예: 2026년 상반기 보고서" />
             <FileUpload
               label="첨부 파일"
-              hint="드래그&드롭 또는 클릭. 업로드가 끝나면 서버 URL·파일명이 항목에 채워집니다."
+              hint="드래그&드롭 또는 클릭. 5MB 초과 파일을 넣으면 에러 상태를 볼 수 있습니다."
               accept="image/*,.pdf"
               multiple
               items={files}
