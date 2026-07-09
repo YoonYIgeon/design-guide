@@ -145,12 +145,17 @@ export function FileUpload({
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         className={cn(
-          "flex flex-col items-center justify-center gap-2 rounded-md border border-dashed px-4 py-6 text-center",
+          "flex flex-col items-center justify-center gap-2 rounded-md border px-4 py-6 text-center",
           "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
           disabled
             ? "cursor-not-allowed opacity-60"
             : "cursor-pointer hover:border-primary/60 hover:bg-surface-muted",
-          dragging ? "border-primary bg-primary/5" : error ? "border-danger" : "border-line",
+          // 평소엔 점선(placeholder 느낌), 에러일 때만 실선.
+          dragging
+            ? "border-dashed border-primary bg-primary/5"
+            : error
+              ? "border-solid border-danger"
+              : "border-dashed border-line",
         )}
       >
         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-muted text-text-muted">
