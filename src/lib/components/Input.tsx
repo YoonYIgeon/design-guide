@@ -12,7 +12,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 /** 레이블·힌트·에러를 접근성 속성과 함께 연결한 입력 필드. */
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, hint, error, leading, trailing, id, className, required, ...rest }, ref) => {
+  ({ label, hint, error, leading, trailing, id, className, required, readOnly, ...rest }, ref) => {
     const autoId = useId();
     const inputId = id ?? autoId;
     const describedBy = error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined;
@@ -35,12 +35,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             required={required}
+            readOnly={readOnly}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
             className={cn(
-              "h-10 w-full rounded-md border bg-surface px-3 text-sm text-text",
+              "h-10 w-full text-sm text-text",
               "placeholder:text-text-muted focus-visible:outline-none",
-              "focus-visible:ring-2 focus-visible:ring-primary/40",
+              // 읽기 전용: 테두리/배경 없이 밑줄만. 그 외: 카드형 테두리+포커스 링.
+              readOnly
+                ? "cursor-default rounded-none border-0 border-b bg-transparent px-0"
+                : "rounded-md border bg-surface px-3 focus-visible:ring-2 focus-visible:ring-primary/40",
               leading ? "pl-9" : undefined,
               trailing ? "pr-9" : undefined,
               error ? "border-danger" : "border-line",

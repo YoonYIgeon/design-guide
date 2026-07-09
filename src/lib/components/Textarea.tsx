@@ -13,7 +13,7 @@ export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
  * (docs/08-presentational-only.md)
  */
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, hint, error, id, className, required, rows = 4, ...rest }, ref) => {
+  ({ label, hint, error, id, className, required, readOnly, rows = 4, ...rest }, ref) => {
     const autoId = useId();
     const textareaId = id ?? autoId;
     const describedBy = error ? `${textareaId}-error` : hint ? `${textareaId}-hint` : undefined;
@@ -31,12 +31,16 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           id={textareaId}
           rows={rows}
           required={required}
+          readOnly={readOnly}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            "w-full rounded-md border bg-surface px-3 py-2 text-sm text-text",
+            "w-full py-2 text-sm text-text",
             "placeholder:text-text-muted focus-visible:outline-none",
-            "focus-visible:ring-2 focus-visible:ring-primary/40",
+            // 읽기 전용: 테두리/배경 없이 밑줄만. 그 외: 카드형 테두리+포커스 링.
+            readOnly
+              ? "cursor-default rounded-none border-0 border-b bg-transparent px-0"
+              : "rounded-md border bg-surface px-3 focus-visible:ring-2 focus-visible:ring-primary/40",
             error ? "border-danger" : "border-line",
             className,
           )}
