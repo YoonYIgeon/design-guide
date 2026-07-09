@@ -33,6 +33,8 @@ export interface SelectProps {
   id?: string;
   required?: boolean;
   disabled?: boolean;
+  /** 읽기 전용: 값은 보이되 열기/선택은 막고, 테두리 없이 밑줄만 표시. */
+  readOnly?: boolean;
   className?: string;
 }
 
@@ -67,7 +69,7 @@ function lastEnabled(options: SelectOption[]): number {
  */
 export const Select = forwardRef<HTMLButtonElement, SelectProps>(
   (
-    { label, hint, error, options, placeholder, value, onChange, name, id, required, disabled, className },
+    { label, hint, error, options, placeholder, value, onChange, name, id, required, disabled, readOnly, className },
     ref,
   ) => {
     const autoId = useId();
@@ -101,10 +103,10 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     }, []);
 
     const openMenu = useCallback(() => {
-      if (disabled) return;
+      if (disabled || readOnly) return;
       setActiveIndex(selectedIndex >= 0 ? selectedIndex : firstEnabled(options));
       setOpen(true);
-    }, [disabled, options, selectedIndex]);
+    }, [disabled, readOnly, options, selectedIndex]);
 
     const commit = useCallback(
       (index: number) => {
@@ -148,7 +150,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     }, [open, activeIndex]);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-      if (disabled) return;
+      if (disabled || readOnly) return;
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
@@ -238,13 +240,24 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
             aria-required={required || undefined}
+            aria-readonly={readOnly || undefined}
             disabled={disabled}
-            onClick={() => (open ? close() : openMenu())}
+            onClick={() => {
+              if (readOnly) return;
+              open ? close() : openMenu();
+            }}
             onKeyDown={handleKeyDown}
             className={cn(
-              "flex h-10 w-full items-center justify-between rounded-md border bg-surface pl-3 pr-3 text-left text-sm text-text",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-              "disabled:cursor-not-allowed disabled:opacity-60",
+              "flex h-10 w-full items-center justify-between text-left text-sm text-text",
+              "focus-visible:outline-none",
+              // 읽기 전용: 테두리/배경 없이 밑줄만. 그 외: 카드형 테두리+포커스 링.
+              readOnly
+                ? "cursor-default rounded-none border-0 border-b bg-transparent pl-0 pr-0"
+                : cn(
+                    "rounded-md border bg-surface pl-3 pr-3",
+                    "focus-visible:ring-2 focus-visible:ring-primary/40",
+                    "disabled:cursor-not-allowed disabled:opacity-60",
+                  ),
               // 미선택(placeholder) 은 muted 로.
               selectedOption ? undefined : "text-text-muted",
               error ? "border-danger" : "border-line",
@@ -254,14 +267,16 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
             <span className="truncate">
               {selectedOption ? selectedOption.label : placeholder}
             </span>
-            <IconChevronDown
-              width={16}
-              height={16}
-              className={cn(
-                "ml-2 shrink-0 text-text-muted transition-transform",
-                open && "rotate-180",
-              )}
-            />
+            {!readOnly && (
+              <IconChevronDown
+                width={16}
+                height={16}
+                className={cn(
+                  "ml-2 shrink-0 text-text-muted transition-transform",
+                  open && "rotate-180",
+                )}
+              />
+            )}
           </button>
 
           {open && (
