@@ -29,6 +29,8 @@
   muted 로 노출된다(네이티브 `<select>` 가 첫 옵션을 보이던 동작과 다름).
 - `onChange` 는 이벤트가 아니라 **선택된 값(string)** 을 바로 넘긴다(RadioGroup 과 동일).
 - `name` 을 주면 네이티브 폼 제출용 hidden input 을 함께 렌더한다.
+- `multiple` 을 주면 **다중 선택 모드**가 된다 — `value`/`onChange` 계약이 `string[]` 로 바뀌고,
+  옵션을 토글해도 목록이 닫히지 않는다(연속 선택). 미선택은 빈 배열 `[]`.
 
 ```tsx
 import { Select, type SelectOption } from "@company/admin-ui";
@@ -49,17 +51,35 @@ const ROLE_OPTIONS: SelectOption[] = [
 />;
 ```
 
+다중 선택은 `multiple` 을 주고 `value`/`onChange` 를 배열 계약으로 쓴다:
+
+```tsx
+const [scopes, setScopes] = useState<string[]>([]);
+
+<Select
+  multiple
+  label="접근 가능 메뉴"
+  placeholder="메뉴를 선택하세요"
+  options={SCOPE_OPTIONS}
+  value={scopes}       // string[]
+  onChange={setScopes} // (values: string[]) => void
+/>;
+```
+
 | prop | 타입 | 설명 |
 | --- | --- | --- |
 | `options` | `SelectOption[]` | `{ label, value, disabled? }` 목록 |
-| `placeholder` | `string` | 미선택(`value=""`) 시 노출할 안내 문구(muted) |
-| `value` / `onChange` | `string` / `(value: string) => void` | 제어값·변경(값만 전달) |
-| `name` | `string` | 네이티브 폼 제출용 hidden input 이름(선택) |
+| `placeholder` | `string` | 미선택(`value=""` / `[]`) 시 노출할 안내 문구(muted) |
+| `multiple` | `boolean` | 다중 선택 모드(기본 false). 켜면 아래 `value`/`onChange` 가 배열 계약이 된다 |
+| `value` / `onChange` | `string` / `(value: string) => void` | 제어값·변경(값만 전달). `multiple` 이면 `string[]` / `(values: string[]) => void` |
+| `name` | `string` | 네이티브 폼 제출용 hidden input 이름(선택). `multiple` 이면 같은 name 으로 값마다 하나씩 렌더 |
 | `label` `hint` `error` `required` `disabled` | — | 공통 규칙 |
 
 > `onChange` 는 이벤트가 아니라 **선택된 값(string)** 을 바로 넘긴다(Checkbox 와 다름, RadioGroup 과 같음).
 >
-> 다중 선택(체크 목록)이 필요하면 **Checkbox 목록**을 쓴다(관리자 화면 가독성).
+> 다중 선택 UI 는 상황에 맞게 고른다 — 선택지가 적고 항상 펼쳐 보여야 하면 **Checkbox 목록**,
+> 선택지가 많거나 화면을 아끼려면 **`Select multiple`**. 다중 모드의 트리거에는 선택된 라벨이
+> 쉼표로 이어 노출되고, 옵션을 토글해도 목록은 닫히지 않는다(Esc/바깥 클릭으로 닫기).
 
 ---
 

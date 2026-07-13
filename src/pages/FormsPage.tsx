@@ -38,6 +38,14 @@ const ROLE_OPTIONS: SelectOption[] = [
   { label: "정지된 계정", value: "suspended", disabled: true },
 ];
 
+const SCOPE_OPTIONS: SelectOption[] = [
+  { label: "회원", value: "users" },
+  { label: "주문", value: "orders" },
+  { label: "정산", value: "billing" },
+  { label: "공지", value: "notices" },
+  { label: "감사 로그", value: "audit", disabled: true },
+];
+
 const NOTIFY_OPTIONS: RadioOption[] = [
   { label: "모든 알림", value: "all", hint: "로그인·변경·경보를 모두 받습니다." },
   { label: "중요 알림만", value: "important", hint: "보안·장애 관련만 받습니다." },
@@ -84,6 +92,7 @@ export function FormsPage() {
 
   // 순수 UI(폼) 상태 — 컨테이너가 보유. 실제 저장은 소비 시스템 몫.
   const [role, setRole] = useState("");
+  const [scopes, setScopes] = useState<string[]>(["users"]);
   const [notify, setNotify] = useState("important");
   const [perms, setPerms] = useState({ read: true, write: false, delete: false });
   const [agree, setAgree] = useState(false);
@@ -212,6 +221,16 @@ export function FormsPage() {
             value={role}
             onChange={setRole}
             hint="선택지에 disabled 항목을 섞을 수 있습니다."
+          />
+
+          <Select
+            multiple
+            label="접근 가능 메뉴"
+            placeholder="메뉴를 선택하세요"
+            options={SCOPE_OPTIONS}
+            value={scopes}
+            onChange={setScopes}
+            hint="multiple 모드 — 옵션을 토글해도 목록이 닫히지 않습니다."
           />
 
           <RadioGroup
