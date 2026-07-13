@@ -55,6 +55,9 @@ export interface SelectMultipleProps extends SelectBaseProps {
 
 export type SelectProps = SelectSingleProps | SelectMultipleProps;
 
+/** 드롭다운 목록의 최대 높이(px). Tailwind `max-h-60`(15rem) 과 일치시켜 flip 판단에 씁니다. */
+const MENU_MAX_HEIGHT = 240;
+
 /** 활성 인덱스에서 방향(step) 으로 다음 선택 가능한 옵션을 찾습니다. */
 function nextEnabled(options: SelectOption[], from: number, step: 1 | -1): number {
   const len = options.length;
@@ -116,6 +119,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
 
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  // 아래 공간이 부족하면 메뉴를 위로 뒤집어 연다(화면 최하단에서 목록이 잘리는 것을 방지).
+  const [placement, setPlacement] = useState<"bottom" | "top">("bottom");
 
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -138,6 +143,16 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
 
   const openMenu = useCallback(() => {
     if (disabled || readOnly) return;
+    // 트리거 위/아래 여유 공간을 재서 메뉴가 잘리지 않을 쪽으로 연다(아래 우선).
+    // max-h-60(=15rem=240px) 기준으로 아래가 부족하고 위가 더 넓으면 위로 뒤집는다.
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (rect) {
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      setPlacement(spaceBelow < MENU_MAX_HEIGHT && spaceAbove > spaceBelow ? "top" : "bottom");
+    } else {
+      setPlacement("bottom");
+    }
     setActiveIndex(selectedIndex >= 0 ? selectedIndex : firstEnabled(options));
     setOpen(true);
   }, [disabled, readOnly, options, selectedIndex]);
@@ -340,8 +355,10 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
             aria-labelledby={labelId}
             aria-multiselectable={multiple || undefined}
             className={cn(
-              "absolute z-40 mt-1 max-h-60 w-full overflow-auto rounded-md border border-line bg-surface py-1 shadow-2",
+              "absolute z-40 max-h-60 w-full overflow-auto rounded-md border border-line bg-surface py-1 shadow-2",
               "focus-visible:outline-none",
+              // 아래로 열 땐 트리거 밑, 위로 뒤집을 땐 트리거 위에 붙인다.
+              placement === "top" ? "bottom-full mb-1" : "top-full mt-1",
             )}
           >
             {options.map((opt, index) => {
