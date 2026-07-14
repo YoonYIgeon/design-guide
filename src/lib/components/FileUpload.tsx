@@ -56,6 +56,8 @@ export interface FileUploadProps {
   readOnly?: boolean;
   /** 드롭존 안내 문구 커스터마이즈. */
   dropLabel?: ReactNode;
+  /** 업로드 완료된 이미지 항목을 아이콘 대신 썸네일로 보여줄지(기본 false). */
+  preview?: boolean;
   className?: string;
 }
 
@@ -65,6 +67,12 @@ function formatBytes(bytes?: number): string {
   const kb = bytes / 1024;
   if (kb < 1024) return `${kb.toFixed(kb < 10 ? 1 : 0)} KB`;
   return `${(kb / 1024).toFixed(1)} MB`;
+}
+
+const IMAGE_NAME_RE = /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i;
+
+function isImageFile(name: string): boolean {
+  return IMAGE_NAME_RE.test(name);
 }
 
 /**
@@ -88,6 +96,7 @@ export function FileUpload({
   required,
   readOnly = false,
   dropLabel = "파일을 끌어다 놓거나 클릭해 선택하세요",
+  preview = false,
   className,
 }: FileUploadProps) {
   const autoId = useId();
@@ -196,24 +205,32 @@ export function FileUpload({
               key={item.id}
               className="flex items-center gap-3 rounded-md border border-line bg-surface px-3 py-2"
             >
-              <span
-                className={cn(
-                  "shrink-0",
-                  item.status === "done"
-                    ? "text-success"
-                    : item.status === "error"
-                      ? "text-danger"
-                      : "text-text-muted",
-                )}
-              >
-                {item.status === "done" ? (
-                  <IconCheckCircle width={18} height={18} />
-                ) : item.status === "error" ? (
-                  <IconAlertCircle width={18} height={18} />
-                ) : (
-                  <IconFileText width={18} height={18} />
-                )}
-              </span>
+              {preview && item.status === "done" && item.url && isImageFile(item.name) ? (
+                <img
+                  src={item.url}
+                  alt={item.name}
+                  className="h-9 w-9 shrink-0 rounded object-cover"
+                />
+              ) : (
+                <span
+                  className={cn(
+                    "shrink-0",
+                    item.status === "done"
+                      ? "text-success"
+                      : item.status === "error"
+                        ? "text-danger"
+                        : "text-text-muted",
+                  )}
+                >
+                  {item.status === "done" ? (
+                    <IconCheckCircle width={18} height={18} />
+                  ) : item.status === "error" ? (
+                    <IconAlertCircle width={18} height={18} />
+                  ) : (
+                    <IconFileText width={18} height={18} />
+                  )}
+                </span>
+              )}
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
