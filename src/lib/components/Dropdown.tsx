@@ -106,6 +106,8 @@ export function Dropdown(props: DropdownProps) {
   const anchorRef = useRef<HTMLSpanElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // 이번 mousedown 이 패널의 React 하위(중첩 포털 포함)에서 시작됐는지 표시.
+  const insideRef = useRef(false);
 
   const close = useCallback(() => {
     setOpen(false);
@@ -150,6 +152,15 @@ export function Dropdown(props: DropdownProps) {
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (e: MouseEvent) => {
+      // 패널의 React 하위에서 시작한 mousedown 이면 닫지 않는다.
+      // 패널 안에 놓인 Select 의 목록처럼 body 로 포털된 자식은 DOM 상으로는
+      // panelRef 밖(document.body 직속)이지만 React 트리상 패널의 자손이라
+      // onMouseDownCapture 가 먼저 이 플래그를 세워둔다(그래서 아래 contains
+      // 검사만으로는 "바깥"으로 오판해 닫혀버린다). 플래그는 매 mousedown 마다 리셋.
+      if (insideRef.current) {
+        insideRef.current = false;
+        return;
+      }
       const target = e.target as Node;
       if (anchorRef.current?.contains(target)) return;
       if (panelRef.current?.contains(target)) return;
@@ -299,6 +310,12 @@ export function Dropdown(props: DropdownProps) {
             id={panelId}
             role={isMenu ? "menu" : undefined}
             aria-orientation={isMenu ? "vertical" : undefined}
+            // 패널(및 그 React 하위, 포털로 body 에 그려진 Select 목록 포함)에서
+            // 시작한 mousedown 임을 표시해, 위 document 리스너가 "바깥 클릭"으로
+            // 오판해 닫는 것을 막는다.
+            onMouseDownCapture={() => {
+              insideRef.current = true;
+            }}
             style={style ?? { left: -9999, top: -9999 }}
             className={cn(
               "fixed z-[70] overflow-auto rounded-md border border-line bg-surface shadow-2",
