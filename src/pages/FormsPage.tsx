@@ -141,6 +141,7 @@ export function FormsPage() {
 
   // 파일 업로드 상태
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [previewEnabled, setPreviewEnabled] = useState(true);
   const idRef = useRef(0);
   // 업로드 취소용 AbortController 를 항목별로 보관.
   const controllers = useRef<Record<string, AbortController>>({});
@@ -487,6 +488,12 @@ export function FormsPage() {
         <Card title="파일 업로드 (API 동적 연동)">
           <div className="flex flex-col gap-4">
             <Input label="표시 이름" placeholder="예: 2026년 상반기 보고서" />
+            <Checkbox
+              label="이미지 미리보기 켜기"
+              hint="업로드 완료된 이미지 파일을 아이콘 대신 썸네일로 보여줍니다."
+              checked={previewEnabled}
+              onChange={(e) => setPreviewEnabled(e.target.checked)}
+            />
             <FileUpload
               label="첨부 파일"
               hint="드래그&드롭 또는 클릭. 5MB 초과 파일을 넣으면 에러 상태를 볼 수 있습니다."
@@ -496,6 +503,7 @@ export function FormsPage() {
               error={uploadError}
               onSelect={handleSelect}
               onRemove={handleRemove}
+              preview={previewEnabled}
             />
           </div>
         </Card>
