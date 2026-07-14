@@ -12,7 +12,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "../utils/cn";
-import { IconCheck, IconChevronDown } from "../icons";
+import { IconCheck, IconChevronDown, IconClose } from "../icons";
 
 export interface SelectOption {
   label: ReactNode;
@@ -35,6 +35,8 @@ interface SelectBaseProps {
   disabled?: boolean;
   /** 읽기 전용: 값은 보이되 열기/선택은 막고, 테두리 없이 밑줄만 표시. */
   readOnly?: boolean;
+  /** 선택값 지우기(X) 아이콘 노출 여부(기본 true). 선택된 값이 있을 때만 보입니다. */
+  clearable?: boolean;
   className?: string;
 }
 
@@ -95,6 +97,8 @@ function lastEnabled(options: SelectOption[]): number {
  * 위치를 다시 재는 대신 닫습니다(네이티브 select 와 동일).
  * 프레젠테이션 전용 — 값은 value, 선택은 onChange 로만 주고받습니다.
  * `multiple` 이면 value/onChange 가 string[] 계약이 되고, 옵션 토글 시 목록이 닫히지 않습니다.
+ * `clearable`(기본 true) 이면 선택값이 있을 때 X 아이콘으로 지울 수 있습니다
+ * (키보드는 Backspace/Delete).
  * (docs/08-presentational-only.md)
  */
 export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) => {
@@ -109,6 +113,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
     required,
     disabled,
     readOnly,
+    clearable = true,
     className,
     multiple,
     onChange,
@@ -190,6 +195,11 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
     [options, multiple, values, onChange, close],
   );
 
+  const clearValue = useCallback(() => {
+    if (multiple) (onChange as (v: string[]) => void)([]);
+    else (onChange as (v: string) => void)("");
+  }, [multiple, onChange]);
+
   // 바깥 클릭 시 닫기(트리거·목록 모두 바깥일 때만 — 목록은 portal 로 그려져
   // rootRef 밖에 있으므로 listRef 도 함께 확인한다).
   useEffect(() => {
@@ -268,6 +278,14 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
         break;
       case "Tab":
         if (open) close();
+        break;
+      case "Backspace":
+      case "Delete":
+        // 목록을 열지 않고도 지울 수 있게(마우스 X 아이콘과 동일한 키보드 대안).
+        if (clearable && selectedOptions.length > 0) {
+          e.preventDefault();
+          clearValue();
+        }
         break;
       default: {
         // 타이핑 검색(첫 글자로 옵션 이동). 문자열 라벨만 대상으로 합니다.
@@ -359,14 +377,28 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
               : placeholder}
           </span>
           {!readOnly && (
-            <IconChevronDown
-              width={16}
-              height={16}
-              className={cn(
-                "ml-2 shrink-0 text-text-muted transition-transform",
-                open && "rotate-180",
+            <span className="ml-2 flex shrink-0 items-center gap-1">
+              {clearable && !disabled && selectedOptions.length > 0 && (
+                // 버튼 안에 <button> 을 중첩할 수 없어 마우스 전용 아이콘으로 두고,
+                // 키보드 대안은 Backspace/Delete(handleKeyDown)로 제공합니다.
+                <span
+                  aria-hidden="true"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearValue();
+                  }}
+                  className="rounded p-0.5 text-text-muted hover:bg-surface-muted hover:text-danger"
+                >
+                  <IconClose width={14} height={14} />
+                </span>
               )}
-            />
+              <IconChevronDown
+                width={16}
+                height={16}
+                className={cn("text-text-muted transition-transform", open && "rotate-180")}
+              />
+            </span>
           )}
         </button>
 
