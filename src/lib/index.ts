@@ -61,6 +61,11 @@ export {
   type TooltipProps,
   type TooltipPlacement,
 } from "./components/Tooltip";
+export {
+  Dropdown,
+  type DropdownProps,
+  type DropdownItem,
+} from "./components/Dropdown";
 export { Markdown, type MarkdownProps } from "./components/Markdown";
 export {
   AdminShell,

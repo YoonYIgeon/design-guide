@@ -148,6 +148,14 @@ export const IconUpload = (p: IconProps) => (
   </svg>
 );
 
+export const IconMoreVertical = (p: IconProps) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="5" r="1" />
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="12" cy="19" r="1" />
+  </svg>
+);
+
 export const IconExternalLink = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />

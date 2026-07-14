@@ -4,6 +4,12 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/) 를, 버전은 [SemVer](https://semver.org/lang/ko/) 를 따릅니다.
 
 ## [Unreleased]
+### Added
+- `Dropdown` 추가 — 트리거 클릭 시 카드형 액션 메뉴가 뜨는 프레젠테이션 전용 컴포넌트.
+  `Select`와 같은 flip 로직(아래 공간이 부족하면 위로 뒤집기)을 쓰고, `Tooltip`처럼
+  portal(`document.body`) + fixed 좌표로 그려 조상 `overflow`에 잘리지 않음.
+  트리거는 `children`(단일 요소)으로 자유롭게 구성하고, 항목은 `items`/`onSelect`로만 오간다.
+  `Icons.IconMoreVertical` 아이콘 추가.
 
 ## [0.2.0] - 2026-07-02
 ### Added
