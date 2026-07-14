@@ -12,6 +12,8 @@ export interface AddableInputFormProps<Item = unknown> {
   error?: ReactNode;
   required?: boolean;
   disabled?: boolean;
+  /** 읽기 전용(값 표시만). `disabled` 와 마찬가지로 추가/삭제 버튼을 숨깁니다. */
+  readOnly?: boolean;
   /**
    * 렌더할 행 배열. 이 컴포넌트는 상태를 갖지 않으며, 이 배열이 곧 화면의 행 수입니다.
    * (예: react-hook-form `useFieldArray` 의 `fields`)
@@ -62,6 +64,7 @@ export function AddableInputForm<Item = unknown>({
   error,
   required,
   disabled,
+  readOnly,
   items,
   getKey,
   children,
@@ -81,6 +84,7 @@ export function AddableInputForm<Item = unknown>({
       ? `${fieldId}-hint`
       : undefined;
 
+  const hideActions = disabled || readOnly;
   const canRemove = (index: number) =>
     !disabled && (min === undefined || items.length > min) && index >= 0;
   const canAdd =
@@ -112,7 +116,7 @@ export function AddableInputForm<Item = unknown>({
           /(^|\s)flex-(row|row-reverse)(\s|$)/.test(className ?? "")
             ? undefined
             : "flex-col",
-          disabled && "opacity-60",
+          (disabled || readOnly) && "opacity-60",
           className,
         )}
       >
@@ -127,35 +131,39 @@ export function AddableInputForm<Item = unknown>({
               className="flex items-start gap-2"
             >
               <div className="min-w-0 flex-1">{children(item, index)}</div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="md"
-                className="shrink-0 px-2 text-text-muted hover:text-danger"
-                disabled={!canRemove(index)}
-                aria-label={
-                  removeAriaLabel ? removeAriaLabel(index) : `${index + 1}번째 항목 삭제`
-                }
-                onClick={() => onRemove(index)}
-              >
-                <IconTrash className="h-4 w-4" aria-hidden />
-              </Button>
+              {!hideActions && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="md"
+                  className="shrink-0 px-2 text-text-muted hover:text-danger"
+                  disabled={!canRemove(index)}
+                  aria-label={
+                    removeAriaLabel ? removeAriaLabel(index) : `${index + 1}번째 항목 삭제`
+                  }
+                  onClick={() => onRemove(index)}
+                >
+                  <IconTrash className="h-4 w-4" aria-hidden />
+                </Button>
+              )}
             </div>
           ))
         )}
 
-        <div>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            disabled={!canAdd}
-            onClick={onAdd}
-          >
-            <IconPlus className="h-4 w-4" aria-hidden />
-            {addLabel}
-          </Button>
-        </div>
+        {!hideActions && (
+          <div>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={!canAdd}
+              onClick={onAdd}
+            >
+              <IconPlus className="h-4 w-4" aria-hidden />
+              {addLabel}
+            </Button>
+          </div>
+        )}
       </div>
 
       {error ? (
