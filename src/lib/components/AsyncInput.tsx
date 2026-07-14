@@ -65,6 +65,8 @@ export function AsyncInput<Res = unknown>({
   minLength = 0,
   error: errorProp,
   hint,
+  disabled,
+  readOnly,
   ...inputProps
 }: AsyncInputProps<Res>) {
   const [status, setStatus] = useState<AsyncInputStatus>("idle");
@@ -78,7 +80,17 @@ export function AsyncInput<Res = unknown>({
   const statusRef = useRef(status);
   statusRef.current = status;
 
+  // 사용자가 값을 실제로 바꾸기 전(초기 마운트 값 그대로)에는 검사를 시작하지 않는다 —
+  // prefill 된 값에 대해 아직 손대지 않았는데 에러가 뜨는 것을 막는다.
+  const isDirtyRef = useRef(false);
+
   useEffect(() => {
+    if (disabled || readOnly || !isDirtyRef.current) {
+      setStatus("idle");
+      setMessage(null);
+      return;
+    }
+
     const shouldSkip =
       (skipEmpty && value.trim() === "") || value.length < minLength;
     if (shouldSkip) {
@@ -118,7 +130,7 @@ export function AsyncInput<Res = unknown>({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [value, debounceMs, skipEmpty, minLength]);
+  }, [value, debounceMs, skipEmpty, minLength, disabled, readOnly]);
 
   useEffect(() => {
     onStatusChange?.(status);
@@ -144,8 +156,13 @@ export function AsyncInput<Res = unknown>({
   return (
     <Input
       {...inputProps}
+      disabled={disabled}
+      readOnly={readOnly}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => {
+        isDirtyRef.current = true;
+        onChange(e.target.value);
+      }}
       trailing={trailing}
       error={effectiveError}
       hint={status === "success" && message ? message : hint}

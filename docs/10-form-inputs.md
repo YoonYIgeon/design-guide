@@ -295,6 +295,7 @@ const attachments = files
 | `className` | `string` | 행 컨테이너에 얹을 추가 클래스. 기본 세로 스택(`flex flex-col gap-2`)을 `flex-row` 등으로 확장(가로 배치)할 때 사용. `flex-row` 를 주면 기본 `flex-col` 은 자동 제외. |
 | `emptyText` | `ReactNode` | 행이 0개일 때 안내(없으면 빈 상태를 그리지 않음). |
 | `required`·`disabled` | `boolean` | 필수 표시 · 전체 비활성. |
+| `readOnly` | `boolean` | 읽기 전용(값 표시만). `disabled` 와 마찬가지로 추가/삭제 버튼을 **숨긴다**(비활성이 아니라 렌더 자체를 하지 않음). |
 
 > `min`/`max` 는 **버튼 비활성이라는 표시**만 담당한다. "몇 개까지 허용" 같은 도메인 규칙의
 > 최종 판정·검증은 컨테이너(react-hook-form rules 등)에서 한다.
@@ -399,6 +400,8 @@ const [userId, setUserId] = useState("");
 - **디바운스·취소·상태**는 컴포넌트가, **조회·에러 해석**은 콜백(컨테이너)이 담당한다.
 - 값이 바뀌면 이전 요청은 `signal` 로 abort 되고, 늦게 도착한 stale 응답은 무시된다.
 - 정상 200 응답이라도 `getError` 로 "실패 의미"를 에러로 승격할 수 있다(커스텀 에러 처리).
+- `disabled`/`readOnly` 인 동안이나, 사용자가 아직 값을 바꾸지 않은 동안(dirty 되기 전 — 예: prefill 된
+  값을 그대로 마운트한 직후)에는 비동기 검사를 시작하지 않는다. 손대기 전 값에 대해 에러가 뜨는 것을 막는다.
 
 ---
 
