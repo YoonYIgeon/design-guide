@@ -5,11 +5,13 @@
 
 ## [Unreleased]
 ### Added
-- `Dropdown` 추가 — 트리거 클릭 시 카드형 액션 메뉴가 뜨는 프레젠테이션 전용 컴포넌트.
-  `Select`와 같은 flip 로직(아래 공간이 부족하면 위로 뒤집기)을 쓰고, `Tooltip`처럼
-  portal(`document.body`) + fixed 좌표로 그려 조상 `overflow`에 잘리지 않음.
-  트리거는 `children`(단일 요소)으로 자유롭게 구성하고, 항목은 `items`/`onSelect`로만 오간다.
-  `Icons.IconMoreVertical` 아이콘 추가.
+- `Dropdown` 추가 — 트리거 클릭 시 카드형 패널이 뜨는 프레젠테이션 전용 컴포넌트.
+  `Select`와 같은 flip 로직(패널 실측 높이 기준으로 아래 공간이 부족하면 위로 뒤집기)을 쓰고,
+  `Tooltip`처럼 portal(`document.body`) + fixed 좌표로 그려 조상 `overflow`에 잘리지 않음.
+  트리거는 `children`(단일 요소)으로 자유롭게 구성하며, 두 모드를 지원:
+  단순 액션 목록은 `items`/`onSelect`(role="menu"), 필터 폼처럼 임의 구성이 필요하면
+  `content`(함수로 주면 `{ close }` 를 받아 "적용" 버튼 등에서 직접 닫을 수 있음) —
+  이 경우 패널 내부 클릭으로는 자동으로 닫히지 않는다. `Icons.IconMoreVertical` 아이콘 추가.
 
 ## [0.2.0] - 2026-07-02
 ### Added

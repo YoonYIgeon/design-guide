@@ -59,6 +59,12 @@ const ROW_ACTIONS: DropdownItem[] = [
   },
 ];
 
+const STATUS_FILTER_OPTIONS = [
+  { label: "활성", value: "active" },
+  { label: "정지", value: "suspended" },
+  { label: "대기", value: "pending" },
+];
+
 const NOTIFY_OPTIONS: RadioOption[] = [
   { label: "모든 알림", value: "all", hint: "로그인·변경·경보를 모두 받습니다." },
   { label: "중요 알림만", value: "important", hint: "보안·장애 관련만 받습니다." },
@@ -109,6 +115,10 @@ export function FormsPage() {
   const [notify, setNotify] = useState("important");
   const [perms, setPerms] = useState({ read: true, write: false, delete: false });
   const [agree, setAgree] = useState(false);
+
+  // 필터 드롭다운(커스텀 콘텐츠) 상태 — 체크박스 클릭은 패널을 닫지 않고,
+  // "적용" 버튼을 눌러야 Dropdown 이 넘겨주는 close() 로 닫힙니다.
+  const [statusFilter, setStatusFilter] = useState<string[]>(["active"]);
 
   // 스텝 셀렉터(다섯 단계) 상태 — 와인 감각 평가 예시.
   const [sweetness, setSweetness] = useState(1);
@@ -320,6 +330,45 @@ export function FormsPage() {
           >
             <Button variant="secondary" size="sm">
               작업
+              <Icons.IconChevronDown width={16} height={16} />
+            </Button>
+          </Dropdown>
+
+          {/* 커스텀 콘텐츠 모드 — 필터 폼처럼 임의 구성을 얹고, "적용" 클릭 시에만 닫힙니다. */}
+          <Dropdown
+            align="start"
+            content={({ close }) => (
+              <div className="flex w-52 flex-col gap-3">
+                <p className="text-sm font-medium text-text">상태 필터</p>
+                <div className="flex flex-col gap-2">
+                  {STATUS_FILTER_OPTIONS.map((opt) => (
+                    <Checkbox
+                      key={opt.value}
+                      label={opt.label}
+                      checked={statusFilter.includes(opt.value)}
+                      onChange={(e) =>
+                        setStatusFilter((prev) =>
+                          e.target.checked
+                            ? [...prev, opt.value]
+                            : prev.filter((v) => v !== opt.value),
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-end gap-2 border-t border-line pt-3">
+                  <Button variant="ghost" size="sm" onClick={() => setStatusFilter([])}>
+                    초기화
+                  </Button>
+                  <Button variant="primary" size="sm" onClick={close}>
+                    적용
+                  </Button>
+                </div>
+              </div>
+            )}
+          >
+            <Button variant="secondary" size="sm">
+              상태 필터{statusFilter.length > 0 && ` (${statusFilter.length})`}
               <Icons.IconChevronDown width={16} height={16} />
             </Button>
           </Dropdown>
