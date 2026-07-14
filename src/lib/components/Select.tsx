@@ -104,8 +104,10 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
     multiple,
     onChange,
   } = props;
-  // 단일/다중을 내부에서는 값 배열 하나로 통일해 다룹니다(단일 미선택 "" 은 빈 배열).
-  const values = multiple ? props.value : props.value ? [props.value] : [];
+  // 단일/다중을 내부에서는 값 배열 하나로 통일해 다룹니다.
+  // 단일 값 ""은 options 에 value=="" 인 항목이 있으면 그 항목을 선택된 것으로 보고,
+  // 없으면(일반적인 미선택 상태) selectedOptions 가 비어 placeholder 가 노출됩니다.
+  const values = multiple ? props.value : [props.value];
 
   const autoId = useId();
   const baseId = id ?? autoId;
