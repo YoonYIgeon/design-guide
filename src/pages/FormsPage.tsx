@@ -6,6 +6,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Dropdown,
   FileUpload,
   Icons,
   Input,
@@ -14,6 +15,7 @@ import {
   StepSelector,
   Tooltip,
   useToast,
+  type DropdownItem,
   type FileItem,
   type SelectOption,
   type RadioOption,
@@ -44,6 +46,17 @@ const SCOPE_OPTIONS: SelectOption[] = [
   { label: "정산", value: "billing" },
   { label: "공지", value: "notices" },
   { label: "감사 로그", value: "audit", disabled: true },
+];
+
+const ROW_ACTIONS: DropdownItem[] = [
+  { label: "수정", value: "edit", icon: <Icons.IconFileText width={16} height={16} /> },
+  { label: "내보내기", value: "export", icon: <Icons.IconExternalLink width={16} height={16} /> },
+  {
+    label: "삭제",
+    value: "delete",
+    icon: <Icons.IconTrash width={16} height={16} />,
+    danger: true,
+  },
 ];
 
 const NOTIFY_OPTIONS: RadioOption[] = [
@@ -281,6 +294,35 @@ export function FormsPage() {
             error={!agree ? "저장하려면 동의가 필요합니다." : undefined}
             onChange={(e) => setAgree(e.target.checked)}
           />
+        </div>
+      </Card>
+
+      {/* 액션 드롭다운 — 트리거 클릭 시 위/아래로 자동 뒤집히는 카드형 메뉴 */}
+      <Card title="액션 메뉴 (Dropdown)">
+        <div className="flex items-center gap-3">
+          <Dropdown
+            items={ROW_ACTIONS}
+            onSelect={(value) => toast.success(`선택됨: ${value}`)}
+          >
+            <button
+              type="button"
+              aria-label="더보기"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <Icons.IconMoreVertical width={16} height={16} />
+            </button>
+          </Dropdown>
+
+          <Dropdown
+            align="start"
+            items={ROW_ACTIONS}
+            onSelect={(value) => toast.success(`선택됨: ${value}`)}
+          >
+            <Button variant="secondary" size="sm">
+              작업
+              <Icons.IconChevronDown width={16} height={16} />
+            </Button>
+          </Dropdown>
         </div>
       </Card>
 
