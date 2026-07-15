@@ -39,7 +39,7 @@ function LoginScreen({
   loading,
   error,
 }: {
-  onLogin: (payload: { id: string; password: string; remember: boolean }) => void;
+  onLogin: (payload: { id: string; password: string }) => void;
   loading?: boolean;
   error?: string;
 }) {
@@ -156,11 +156,12 @@ export default function App() {
     setDark((prev) => !prev);
   }
 
-  async function handleLogin(payload: { id: string; password: string; remember: boolean }) {
+  async function handleLogin(payload: { id: string; password: string }) {
     // 로그인 API 호출·토큰 저장은 AuthProvider(→ src/api/auth.*)가 담당합니다.
     // 여기서는 성공 시 라우팅/토스트, 실패 시 토스트만 처리합니다(에러 메시지는 loginError 로 폼에 표시).
+    // 자동 로그인 제거로 항상 세션 쿠키(remember=false)로 저장합니다.
     try {
-      await login({ id: payload.id, password: payload.password }, payload.remember);
+      await login({ id: payload.id, password: payload.password }, false);
       navigate("/", { replace: true });
       toast.success("로그인되었습니다.");
     } catch {
