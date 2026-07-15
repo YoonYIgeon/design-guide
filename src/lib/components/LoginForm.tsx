@@ -15,16 +15,12 @@ export interface LoginFormProps {
   loading?: boolean;
   /** 표시할 에러 메시지. 값 판단은 소비 시스템이 함. */
   error?: ReactNode;
-  /** 자동 로그인 체크박스 노출 여부(기본 true). */
-  showRemember?: boolean;
-  /** 자동 로그인 체크박스의 초기값(기본 true). */
-  defaultRemember?: boolean;
   /**
    * 제출 이벤트. 실제 인증(HTTP 호출·쿠키 저장 등)은 소비 시스템이 담당합니다.
-   * 이 컴포넌트는 입력을 그리고 값(자동 로그인 여부 포함)을 넘겨줄 뿐입니다.
+   * 이 컴포넌트는 입력을 그리고 값을 넘겨줄 뿐입니다.
    * (docs/08-presentational-only.md)
    */
-  onSubmit: (credentials: { id: string; password: string; remember: boolean }) => void;
+  onSubmit: (credentials: { id: string; password: string }) => void;
   footer?: ReactNode;
   className?: string;
 }
@@ -40,19 +36,16 @@ export function LoginForm({
   logo,
   loading = false,
   error,
-  showRemember = true,
-  defaultRemember = true,
   onSubmit,
   footer,
   className,
 }: LoginFormProps) {
   const [id, setId] = useState("");
   const [pw, setPw] = useState("");
-  const [remember, setRemember] = useState(defaultRemember);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    onSubmit({ id: id.trim(), password: pw, remember });
+    onSubmit({ id: id.trim(), password: pw });
   }
 
   return (
@@ -89,18 +82,6 @@ export function LoginForm({
           onChange={(e) => setPw(e.target.value)}
           required
         />
-
-        {showRemember && (
-          <label className="flex select-none items-center gap-2 text-sm text-text">
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={(e) => setRemember(e.target.checked)}
-              className="h-4 w-4 rounded border-line text-primary accent-primary focus-visible:outline-none"
-            />
-            자동 로그인
-          </label>
-        )}
 
         {error && (
           <div
