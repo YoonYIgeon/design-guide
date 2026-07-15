@@ -60,7 +60,16 @@ export function RadioGroup({
     const selected = options.find((o) => o.value === value);
     const display =
       selected && typeof selected.label === "string" ? selected.label : (selected?.value ?? "");
-    return <Input label={label} hint={hint} error={error} value={display} readOnly />;
+    return (
+      <Input
+        label={label}
+        hint={hint}
+        error={error}
+        value={display}
+        required={required}
+        readOnly
+      />
+    );
   }
 
   return (
@@ -73,8 +82,11 @@ export function RadioGroup({
       )}
       <div
         className={cn(
-          "flex gap-2",
-          orientation === "horizontal" ? "flex-row flex-wrap gap-x-5" : "flex-col",
+          // 다른 입력 컨트롤(h-10)과 높이를 맞추기 위해 최소 높이를 확보하고 세로 가운데 정렬.
+          "flex min-h-[2.5rem] gap-2",
+          orientation === "horizontal"
+            ? "flex-row flex-wrap items-center gap-x-5"
+            : "flex-col justify-center",
         )}
       >
         {options.map((opt) => {

@@ -4,6 +4,10 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/) 를, 버전은 [SemVer](https://semver.org/lang/ko/) 를 따릅니다.
 
 ## [Unreleased]
+### Fixed
+- `RadioGroup` 이 `readOnly` 일 때 `(필수)` 표시가 사라지던 문제 수정 — 읽기 전용 표시에도 `required` 를 전달해 항상 노출.
+- `RadioGroup` 옵션 영역의 높이가 다른 입력(`h-10`)보다 낮던 문제 수정 — 최소 높이(`2.5rem`) 확보 후 세로 가운데 정렬로 맞춤.
+
 ### Added
 - `AdminShell` 에 `sidebarFooter` prop 추가 — 사이드바 하단 표기(버전·환경 등)를 상위(하네스)에서 넘길 수 있게 함.
   `ReactNode` 를 받아 문자열도 그대로 동작하며, 생략 시 기존 기본 표기를 쓰고 `null` 을 주면 영역을 숨긴다.
