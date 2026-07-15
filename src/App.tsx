@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Navigate,
   Outlet,
@@ -21,6 +21,9 @@ import { createAppRoutes, toNavItems, toTitleMap } from "./routes";
  *   AdminShell 은 activeKey/onNavigate props 로 라우터와 연결됩니다.
  *   (docs/08-presentational-only.md)
  */
+
+// 테마(다크/라이트) 선택을 저장하는 localStorage 키
+const THEME_STORAGE_KEY = "au-theme";
 
 // 표시용 정적 예시 데이터 (프리뷰 전용)
 const EXAMPLE_USERS: UserRow[] = [
@@ -110,7 +113,23 @@ export default function App() {
   const { authed, login, logout, loggingIn, loginError } = useAuth();
   const toast = useToast();
   const { confirm } = useAlert();
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(() => {
+    try {
+      return localStorage.getItem(THEME_STORAGE_KEY) === "dark";
+    } catch {
+      return false;
+    }
+  });
+
+  // dark 상태를 문서 속성과 localStorage 에 동기화합니다.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, dark ? "dark" : "light");
+    } catch {
+      // localStorage 사용 불가(프라이빗 모드 등) 시 무시합니다.
+    }
+  }, [dark]);
 
   const [users, setUsers] = useState<UserRow[]>(EXAMPLE_USERS);
   const [query, setQuery] = useState("");
@@ -134,9 +153,7 @@ export default function App() {
   );
 
   function toggleTheme() {
-    const next = !dark;
-    setDark(next);
-    document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
+    setDark((prev) => !prev);
   }
 
   async function handleLogin(payload: { id: string; password: string; remember: boolean }) {
