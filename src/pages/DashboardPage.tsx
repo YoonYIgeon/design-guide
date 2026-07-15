@@ -8,6 +8,7 @@ import {
   Modal,
   StatCard,
   type Column,
+  type DataTablePagination,
 } from "../lib";
 import { IconPlus, IconSearch, IconTrash, IconUsers } from "../lib/icons";
 
@@ -29,7 +30,7 @@ export interface DashboardStats {
 }
 
 export interface DashboardPageProps {
-  /** 그릴 사용자 목록(이미 검색/정렬이 끝난 상태로 전달받음). */
+  /** 그릴 사용자 목록(이미 검색/정렬/페이징이 끝난 "현재 페이지" 행만 전달받음). */
   users: UserRow[];
   stats: DashboardStats;
   loading?: boolean;
@@ -40,6 +41,8 @@ export interface DashboardPageProps {
   /** 사용자 추가/삭제 의도 전달만. 실제 반영은 컨테이너가 처리. */
   onCreateUser: (payload: { name: string; email: string }) => void;
   onDeleteUser: (id: number) => void;
+  /** 페이지네이션(controlled). 페이지·페이지 크기 상태는 컨테이너가 보유합니다. */
+  pagination?: DataTablePagination;
 }
 
 /**
@@ -58,6 +61,7 @@ export function DashboardPage({
   onQueryChange,
   onCreateUser,
   onDeleteUser,
+  pagination,
 }: DashboardPageProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "" });
@@ -156,6 +160,7 @@ export function DashboardPage({
             loading={loading}
             error={error}
             emptyText={query ? "검색 결과가 없습니다." : "등록된 사용자가 없습니다."}
+            pagination={pagination}
           />
         </div>
       </Card>

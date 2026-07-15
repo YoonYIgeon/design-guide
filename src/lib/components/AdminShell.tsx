@@ -46,6 +46,12 @@ export interface AdminShellProps {
    */
   user?: AdminShellUser | ReactNode;
   actions?: ReactNode;
+  /**
+   * 사이드바 하단 영역(버전·환경 표기 등). 문자열 또는 임의의 노드.
+   * 값·버전 문자열은 하네스(소비 시스템)의 책임이므로 여기서 props 로 받습니다.
+   * 생략하면 기본 표기를 그대로 쓰고, `null` 을 주면 영역 자체를 숨깁니다.
+   */
+  sidebarFooter?: ReactNode;
   children: ReactNode;
 }
 
@@ -238,6 +244,7 @@ export function AdminShell({
   title,
   user,
   actions,
+  sidebarFooter = "격리망 전용 · v0.1.0",
   children,
 }: AdminShellProps) {
   return (
@@ -256,9 +263,11 @@ export function AdminShell({
           onNavigate={onNavigate}
           defaultOpenKeys={defaultOpenKeys}
         />
-        <div className="border-t border-line p-3 text-xs text-text-muted">
-          격리망 전용 · v0.1.0
-        </div>
+        {sidebarFooter != null && (
+          <div className="border-t border-line p-3 text-xs text-text-muted">
+            {sidebarFooter}
+          </div>
+        )}
       </aside>
 
       {/* 본문 영역 */}

@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 ### Added
+- `AdminShell` 에 `sidebarFooter` prop 추가 — 사이드바 하단 표기(버전·환경 등)를 상위(하네스)에서 넘길 수 있게 함.
+  `ReactNode` 를 받아 문자열도 그대로 동작하며, 생략 시 기존 기본 표기를 쓰고 `null` 을 주면 영역을 숨긴다.
+  하네스(`src/App.tsx`)가 `"격리망 전용 · v0.1.0"` 을 직접 넘기도록 연결.
+- 데모 하네스에서 `DataTable` 페이지네이션을 실제로 연결 — 페이지 크기 선택(20/50/100)을
+  `pageSizeOptions`/`onPageSizeChange` 로 노출. 페이지·페이지 크기 상태와 행 슬라이싱은 컨테이너가 소유.
 - `Dropdown` 추가 — 트리거 클릭 시 카드형 패널이 뜨는 프레젠테이션 전용 컴포넌트.
   `Select`와 같은 flip 로직(패널 실측 높이 기준으로 아래 공간이 부족하면 위로 뒤집기)을 쓰고,
   `Tooltip`처럼 portal(`document.body`) + fixed 좌표로 그려 조상 `overflow`에 잘리지 않음.
