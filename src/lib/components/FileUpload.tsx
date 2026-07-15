@@ -209,7 +209,7 @@ export function FileUpload({
                 <img
                   src={item.url}
                   alt={item.name}
-                  className="h-9 w-9 shrink-0 rounded object-cover"
+                  className="h-auto w-9 shrink-0 rounded"
                 />
               ) : (
                 <span
