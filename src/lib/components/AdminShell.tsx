@@ -1,6 +1,6 @@
 import { isValidElement, useEffect, useState, type ReactNode } from "react";
 import { cn } from "../utils/cn";
-import { IconBell, IconChevronDown, IconShield } from "../icons";
+import { IconChevronDown, IconShield } from "../icons";
 
 export interface NavItem {
   key: string;
@@ -268,12 +268,6 @@ export function AdminShell({
           <h1 className="truncate text-base font-semibold">{title}</h1>
           <div className="flex items-center gap-3">
             {actions}
-            <button
-              className="rounded-md p-2 text-text-muted hover:bg-surface-muted hover:text-text"
-              aria-label="알림"
-            >
-              <IconBell width={18} height={18} />
-            </button>
             {user != null &&
               (isUserDescriptor(user) ? <UserBadge {...user} /> : user)}
           </div>
