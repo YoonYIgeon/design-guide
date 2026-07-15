@@ -44,7 +44,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               // 읽기 전용: 테두리/배경 없이 밑줄만. 그 외: 카드형 테두리+포커스 링.
               readOnly
                 ? "cursor-default rounded-none border-0 border-b bg-transparent px-0"
-                : "rounded-md border bg-surface px-3 focus-visible:ring-2 focus-visible:ring-primary/40",
+                : "rounded-md border bg-surface px-3 focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:bg-surface-muted",
               leading ? "pl-9" : undefined,
               trailing ? "pr-9" : undefined,
               error ? "border-danger" : "border-line",

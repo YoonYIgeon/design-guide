@@ -358,7 +358,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
               : cn(
                   "rounded-md border bg-surface pl-3 pr-3",
                   "focus-visible:ring-2 focus-visible:ring-primary/40",
-                  "disabled:cursor-not-allowed disabled:opacity-60",
+                  "disabled:cursor-not-allowed disabled:bg-surface-muted disabled:opacity-60",
                 ),
             // 미선택(placeholder) 은 muted 로.
             selectedOptions.length > 0 ? undefined : "text-text-muted",
