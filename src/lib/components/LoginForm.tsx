@@ -58,9 +58,11 @@ export function LoginForm({
   return (
     <div className={cn("w-full max-w-sm", className)}>
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
-        <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
-          {logo ?? <IconShield width={26} height={26} />}
-        </span>
+        {logo ?? (
+          <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg bg-primary/10 text-primary">
+            <IconShield width={26} height={26} />
+          </span>
+        )}
         <h1 className="text-lg font-semibold text-text">{brand}</h1>
         <p className="text-sm text-text-muted">{subtitle}</p>
       </div>
