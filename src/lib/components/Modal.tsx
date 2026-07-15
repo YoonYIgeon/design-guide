@@ -81,17 +81,17 @@ export function Modal({
           sizeClass[size],
         )}
       >
-        <header className="flex items-center justify-between border-b border-line px-4 py-3">
-          <h2 className="text-sm font-semibold text-text">{title}</h2>
+        <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+          <h2 className="text-base font-semibold text-text">{title}</h2>
           {dismissible && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
               aria-label="닫기"
-              className="h-8 w-8 p-0"
+              className="-my-1 -mr-1 h-9 w-9 shrink-0 p-0 text-text-muted hover:text-text"
             >
-              <IconClose width={18} height={18} />
+              <IconClose width={20} height={20} />
             </Button>
           )}
         </header>

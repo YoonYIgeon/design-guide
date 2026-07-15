@@ -68,15 +68,16 @@ export function AlertDialog({
   return (
     <Modal
       open={open}
+      size="sm"
       title={
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-2.5">
           <span
             className={cn(
-              "flex h-7 w-7 items-center justify-center rounded-full",
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
               toneClass[tone],
             )}
           >
-            <Icon width={16} height={16} />
+            <Icon width={18} height={18} />
           </span>
           {title}
         </span>
@@ -100,7 +101,7 @@ export function AlertDialog({
         </>
       }
     >
-      <p className="text-sm text-text-muted">{children}</p>
+      <p className="text-sm leading-relaxed text-text-muted">{children}</p>
     </Modal>
   );
 }
