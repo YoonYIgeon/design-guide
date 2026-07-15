@@ -143,6 +143,81 @@ yarn add axios @tanstack/react-query react-router-dom
 }
 ```
 
+### 다크/라이트 전환 + 저장 (사용처 구현)
+
+라이브러리는 **프레젠테이션 전용**이라 다크 토큰(`[data-theme="dark"]`)과 토글용
+`Button` 만 제공합니다. **테마 상태·localStorage 저장·`data-theme` 적용은 소비 앱
+(복사해 소유하는 하네스)의 책임**입니다. 아래 패턴을 앱 루트에 두세요.
+
+```tsx
+import { useEffect, useState } from "react";
+import { AdminShell, Button } from "@company/admin-ui";
+
+const THEME_KEY = "au-theme"; // FOUC 스크립트와 동일 키
+
+function useTheme() {
+  const [dark, setDark] = useState(() => {
+    try {
+      return localStorage.getItem(THEME_KEY) === "dark";
+    } catch {
+      return false; // 스토리지 차단 환경(아래 주의 참고)
+    }
+  });
+
+  // dark 상태를 <html data-theme> 와 localStorage 에 동기화
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    try {
+      localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
+    } catch {
+      // 저장 불가 시 세션 내 전환은 되지만 새로고침하면 초기화됩니다.
+    }
+  }, [dark]);
+
+  return { dark, toggle: () => setDark((v) => !v) };
+}
+
+// AdminShell 의 actions 슬롯에 토글 버튼을 배치
+function Shell() {
+  const { dark, toggle } = useTheme();
+  return (
+    <AdminShell
+      title="사용자 관리"
+      actions={
+        <Button variant="secondary" size="sm" onClick={toggle}>
+          {dark ? "라이트" : "다크"}
+        </Button>
+      }
+    >
+      {/* … */}
+    </AdminShell>
+  );
+}
+```
+
+**새로고침 깜빡임(FOUC) 방지** — React 마운트 전 첫 페인트에서 이미 저장된 테마를
+적용하려면, 소비 앱의 `index.html` `<head>` 에 블로킹 인라인 스크립트를 넣으세요.
+(위 `useEffect` 는 마운트 후에야 실행되므로, 이게 없으면 새로고침마다 라이트로 잠깐
+그려진 뒤 다크로 바뀝니다.)
+
+```html
+<!-- 키("au-theme")는 위 THEME_KEY 와 반드시 일치 -->
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem("au-theme");
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    } catch (e) {}
+  })();
+</script>
+```
+
+> **주의 — 저장이 안 되는 것처럼 보일 때:** 앱을 `allow-same-origin` 이 없는
+> `sandbox` iframe(일부 미리보기·문서 임베드) 안에서 렌더링하면 `localStorage` 접근이
+> 막혀 **토글은 되지만 새로고침 시 라이트로 초기화**됩니다(코드 문제가 아님). 이때는
+> 임베드하는 **호스트 측에서 iframe 에 `allow-same-origin` 을 허용**해야 합니다.
+> 일반 브라우저 탭에서는 그대로 저장·복원됩니다.
+
 ## 업그레이드 체크리스트
 
 1. [릴리스 노트/CHANGELOG](06-versioning-release.md) 확인 (특히 파괴적 변경).
