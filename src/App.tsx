@@ -25,6 +25,9 @@ import { createAppRoutes, toNavItems, toTitleMap } from "./routes";
 // 테마(다크/라이트) 선택을 저장하는 localStorage 키
 const THEME_STORAGE_KEY = "au-theme";
 
+// DataTable 페이지 크기 선택지 (하네스가 소유)
+const PAGE_SIZE_OPTIONS = [20, 50, 100];
+
 // 표시용 정적 예시 데이터 (프리뷰 전용)
 const EXAMPLE_USERS: UserRow[] = [
   { id: 1, name: "김하늘", email: "haneul.kim@corp.local", role: "관리자", status: "활성", lastLogin: "2026-06-30 14:22" },
@@ -91,6 +94,7 @@ function ProtectedLayout({
       onNavigate={(key) => navigate(key)}
       title={titles[location.pathname] ?? ""}
       user={{ name: "관리자", role: "시스템 관리자" }}
+      sidebarFooter="격리망 전용 · v0.1.0"
       actions={
         <>
           <Button variant="secondary" size="sm" onClick={onToggleTheme}>
@@ -133,6 +137,8 @@ export default function App() {
 
   const [users, setUsers] = useState<UserRow[]>(EXAMPLE_USERS);
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -141,6 +147,19 @@ export default function App() {
       (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
     );
   }, [users, query]);
+
+  // 검색어가 바뀌면 항상 첫 페이지부터 다시 봅니다.
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
+
+  // 목록 수·페이지 크기 변화로 현재 페이지가 범위를 벗어나면 마지막 페이지로 보정.
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const pagedUsers = useMemo(
+    () => filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filtered, currentPage, pageSize],
+  );
 
   const stats = useMemo(
     () => ({
@@ -182,10 +201,21 @@ export default function App() {
 
   const dashboard = (
     <DashboardPage
-      users={filtered}
+      users={pagedUsers}
       stats={stats}
       query={query}
       onQueryChange={setQuery}
+      pagination={{
+        page: currentPage,
+        pageSize,
+        total: filtered.length,
+        onPageChange: setPage,
+        pageSizeOptions: PAGE_SIZE_OPTIONS,
+        onPageSizeChange: (size) => {
+          setPageSize(size);
+          setPage(1);
+        },
+      }}
       onCreateUser={(payload) => {
         setUsers((prev) => [
           {
