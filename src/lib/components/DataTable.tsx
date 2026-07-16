@@ -42,6 +42,14 @@ export interface DataTableProps<T> {
   error?: string | null;
   emptyText?: string;
   onRowClick?: (row: T) => void;
+  /**
+   * 행별 추가 className(선택). 행 상태에 따라 스타일을 덧입히는 이스케이프 해치입니다.
+   * 예: 선택된 행 배경 강조 — `rowClassName={(u) => u.id === selectedId ? "bg-primary/5" : undefined}`.
+   *
+   * 기본 클래스(테두리·hover 등) 뒤에 이어 붙으므로 색·배경을 덮어쓸 수 있습니다.
+   * 토큰 기반 유틸(`bg-primary/5` 등)만 사용하고 색을 하드코딩하지 마세요.
+   */
+  rowClassName?: (row: T) => string | false | null | undefined;
   /** 페이지네이션(controlled). 주면 테이블 하단에 페이지 컨트롤을 렌더합니다. */
   pagination?: DataTablePagination;
   /**
@@ -136,6 +144,7 @@ export function DataTable<T>({
   error = null,
   emptyText = "표시할 데이터가 없습니다.",
   onRowClick,
+  rowClassName,
   pagination,
   fillHeight = false,
 }: DataTableProps<T>) {
@@ -194,6 +203,7 @@ export function DataTable<T>({
                   className={cn(
                     "border-b border-line last:border-0",
                     onRowClick && "cursor-pointer hover:bg-surface-muted",
+                    rowClassName?.(row),
                   )}
                 >
                   {columns.map((col) => (
