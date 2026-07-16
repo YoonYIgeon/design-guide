@@ -44,6 +44,14 @@ export interface DataTableProps<T> {
   onRowClick?: (row: T) => void;
   /** 페이지네이션(controlled). 주면 테이블 하단에 페이지 컨트롤을 렌더합니다. */
   pagination?: DataTablePagination;
+  /**
+   * 상위 컨테이너의 높이를 꽉 채우고, 헤더·푸터(페이지네이션)를 고정한 채
+   * 본문(tbody)만 세로 스크롤합니다. 기본 false(내용 높이만큼만 차지).
+   *
+   * true 로 쓰려면 부모가 높이를 제한해야 합니다(예: 부모에 `h-full`/고정 높이,
+   * 또는 flex 컨테이너의 자식이라 높이가 정해지는 경우).
+   */
+  fillHeight?: boolean;
 }
 
 const alignClass = {
@@ -129,10 +137,21 @@ export function DataTable<T>({
   emptyText = "표시할 데이터가 없습니다.",
   onRowClick,
   pagination,
+  fillHeight = false,
 }: DataTableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-lg border border-line bg-surface">
-      <div className="overflow-x-auto">
+    <div
+      className={cn(
+        "overflow-hidden rounded-lg border border-line bg-surface",
+        fillHeight && "flex h-full flex-col",
+      )}
+    >
+      <div
+        className={cn(
+          "overflow-x-auto",
+          fillHeight && "flex min-h-0 flex-1 flex-col overflow-y-auto",
+        )}
+      >
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-line bg-surface-muted">
@@ -143,6 +162,10 @@ export function DataTable<T>({
                   className={cn(
                     "whitespace-nowrap px-4 py-2.5 font-medium text-text-muted",
                     alignClass[col.align ?? "left"],
+                    // border-collapse 에서는 sticky 헤더의 아래 테두리가 스크롤 시
+                    // 사라지므로 inset box-shadow 로 구분선을 보강한다.
+                    fillHeight &&
+                      "sticky top-0 z-10 bg-surface-muted shadow-[inset_0_-1px_0_var(--au-color-border)]",
                   )}
                 >
                   {col.header}
@@ -190,17 +213,24 @@ export function DataTable<T>({
               ))}
           </tbody>
         </table>
+
+        {!loading && error && (
+          <div
+            className={cn(
+              "px-4 py-10 text-center text-sm text-danger",
+              fillHeight && "flex flex-1 items-center justify-center",
+            )}
+          >
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && rows.length === 0 && (
+          <div className={cn(fillHeight && "flex flex-1 items-center justify-center")}>
+            <EmptyState title={emptyText} />
+          </div>
+        )}
       </div>
-
-      {!loading && error && (
-        <div className="px-4 py-10 text-center text-sm text-danger">
-          {error}
-        </div>
-      )}
-
-      {!loading && !error && rows.length === 0 && (
-        <EmptyState title={emptyText} />
-      )}
 
       {pagination && <PaginationBar {...pagination} />}
     </div>
