@@ -121,9 +121,9 @@ export function DashboardPage({
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+    <div className="mx-auto flex h-full min-h-0 max-w-6xl flex-col gap-6">
       {/* 요약 지표 */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid shrink-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="전체 사용자" value={stats.total} icon={<IconUsers />} />
         <StatCard label="활성 사용자" value={stats.active} />
         <StatCard label="정지 사용자" value={stats.suspended} />
@@ -150,9 +150,10 @@ export function DashboardPage({
             </Button>
           </div>
         }
-        bodyClassName="p-0"
+        bodyClassName="flex min-h-0 flex-1 flex-col p-0"
+        className="flex min-h-0 flex-1 flex-col"
       >
-        <div className="p-4">
+        <div className="flex min-h-0 flex-1 flex-col p-4">
           <DataTable
             columns={columns}
             rows={users}
@@ -161,6 +162,7 @@ export function DashboardPage({
             error={error}
             emptyText={query ? "검색 결과가 없습니다." : "등록된 사용자가 없습니다."}
             pagination={pagination}
+            fillHeight
           />
         </div>
       </Card>
