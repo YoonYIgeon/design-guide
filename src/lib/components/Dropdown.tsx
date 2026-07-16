@@ -30,6 +30,12 @@ interface DropdownBaseProps {
   /** 트리거 기준 패널의 가로 정렬(기본 end = 트리거 오른쪽 끝에 맞춤). */
   align?: "start" | "end";
   disabled?: boolean;
+  /**
+   * 패널이 열리거나 닫힐 때 호출됩니다(열림=true, 닫힘=false). 열림 상태는
+   * 컴포넌트가 내부에서 관리하며(비제어), 이 콜백은 상태 변화만 알려줍니다.
+   * 실제 부수효과(추적, 포커스 이동 등)는 컨테이너 책임입니다.
+   */
+  onOpenChange?: (open: boolean) => void;
   className?: string;
 }
 
@@ -95,7 +101,7 @@ function lastEnabled(items: DropdownItem[]): number {
  * (docs/08-presentational-only.md, docs/11-flexible-composition.md)
  */
 export function Dropdown(props: DropdownProps) {
-  const { children, align = "end", disabled, className } = props;
+  const { children, align = "end", disabled, onOpenChange, className } = props;
   const isMenu = "items" in props && props.items != null;
 
   const panelId = useId();
@@ -119,6 +125,19 @@ export function Dropdown(props: DropdownProps) {
     setActiveIndex(-1);
     setOpen(true);
   }, [disabled]);
+
+  // 열림 상태가 실제로 바뀔 때만 컨테이너에 알립니다. 최초 마운트(초기 false)에는
+  // 발화하지 않도록 이전 값을 기억해 비교합니다. setState 업데이터 안에서 콜백을
+  // 부르면 StrictMode 에서 이중 발화하므로 effect 로 분리합니다.
+  const onOpenChangeRef = useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
+  const prevOpenRef = useRef(open);
+  useEffect(() => {
+    if (prevOpenRef.current !== open) {
+      prevOpenRef.current = open;
+      onOpenChangeRef.current?.(open);
+    }
+  }, [open]);
 
   // 패널을 실제로 그린 뒤 크기를 측정해 위치를 정합니다(위/아래 뒤집기 포함).
   // 열려 있는 동안은 스크롤/리사이즈에 따라 갱신합니다.
