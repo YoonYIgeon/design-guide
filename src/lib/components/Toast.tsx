@@ -76,7 +76,7 @@ export function Toast({
           size="sm"
           onClick={onDismiss}
           aria-label="닫기"
-          className="-mr-1 -mt-1 h-7 w-7 shrink-0 p-0"
+          className="-mr-1 -mt-1 h-7 w-7 shrink-0 !p-0"
         >
           <IconClose width={16} height={16} />
         </Button>

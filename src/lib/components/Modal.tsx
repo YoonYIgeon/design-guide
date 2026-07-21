@@ -89,7 +89,7 @@ export function Modal({
               size="sm"
               onClick={onClose}
               aria-label="닫기"
-              className="-my-1 -mr-1 h-9 w-9 shrink-0 p-0 text-text-muted hover:text-text"
+              className="-my-1 -mr-1 h-9 w-9 shrink-0 !p-0 text-text-muted hover:text-text"
             >
               <IconClose width={20} height={20} />
             </Button>
