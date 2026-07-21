@@ -3,6 +3,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import {
   AddableInputForm,
   AsyncInput,
+  type AsyncInputStatus,
   Button,
   Card,
   Checkbox,
@@ -141,6 +142,9 @@ export function FormsPage() {
 
   // 디바운스 비동기 검사(아이디 중복 확인) 상태 — 값은 컨테이너가 보유.
   const [userId, setUserId] = useState("");
+  // AsyncInput 의 검사 상태를 컨테이너가 추적한다(onStatusChange). 제출 게이팅에 사용 —
+  // 백엔드 검사(resolve)가 success 일 때만 제출을 허용한다(프레젠테이션 전용: 막는 건 컨테이너 몫).
+  const [userIdStatus, setUserIdStatus] = useState<AsyncInputStatus>("idle");
 
   // 파일 업로드 상태
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -479,10 +483,29 @@ export function FormsPage() {
             }
             getSuccess={(res) => (res.available ? "사용 가능한 아이디입니다." : null)}
             getRequestError={() => "중복 확인에 실패했습니다. 잠시 후 다시 시도하세요."}
+            // 검사 상태를 컨테이너로 끌어올려 제출 게이팅에 쓴다.
+            onStatusChange={setUserIdStatus}
           />
           <p className="text-xs text-text-muted">
             이미 사용 중(데모): <code>admin · root · test · user</code>
           </p>
+          <div className="flex items-center justify-end gap-3">
+            {userIdStatus !== "success" && (
+              <span className="text-xs text-text-muted">
+                {userIdStatus === "loading"
+                  ? "중복 확인 중…"
+                  : "사용 가능한 아이디를 입력하면 가입할 수 있습니다."}
+              </span>
+            )}
+            <Button
+              variant="primary"
+              // 백엔드 검사가 success 일 때만 제출 허용 — 검사 미통과/진행 중이면 막는다.
+              disabled={userIdStatus !== "success"}
+              onClick={() => toast.success("가입 요청을 보냈습니다(데모).")}
+            >
+              가입
+            </Button>
+          </div>
         </div>
       </Card>
 

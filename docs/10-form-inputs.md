@@ -405,6 +405,16 @@ const [userId, setUserId] = useState("");
   값을 그대로 마운트한 직후)에는 비동기 검사를 시작하지 않는다. 손대기 전 값에 대해 에러가 뜨는 것을 막는다.
 - **로컬 검증이 성공했을 때만 API 를 호출한다** — `error`(zod 등 클라이언트 검증 결과)가 있으면 `resolve` 를
   건너뛴다. 형식이 틀린 값(예: 이메일 형식 오류)으로 불필요한 네트워크 요청이 나가지 않게 한다.
+- **제출 차단은 컨테이너 몫이다** — `AsyncInput` 은 프레젠테이션 전용이라 스스로 폼 제출을 막지 않는다.
+  백엔드 검사(`resolve`)가 통과했을 때만 제출을 허용하려면, `onStatusChange` 로 상태를 끌어올려
+  `status === "success"` 일 때만 제출 버튼을 활성화한다(아래 발췌).
+
+```tsx
+const [status, setStatus] = useState<AsyncInputStatus>("idle");
+
+<AsyncInput /* … */ onStatusChange={setStatus} />
+<Button disabled={status !== "success"} onClick={submit}>가입</Button>
+```
 
 ---
 
