@@ -39,6 +39,7 @@ export interface AsyncInputProps<Res = unknown>
   /**
    * 외부(컨테이너) 에러를 직접 지정합니다. 값이 있으면 내부 비동기 상태 에러보다 **우선**해서 표시합니다.
    * 입력값 자체의 클라이언트 검증(예: zod) 결과를 여기로 넘기면 됩니다.
+   * 이 값이 있으면(로컬 검증 실패) `resolve`(API 호출)를 건너뜁니다 — 로컬 검증이 성공했을 때만 네트워크 검사가 돕니다.
    */
   error?: ReactNode;
 }
@@ -84,6 +85,11 @@ export function AsyncInput<Res = unknown>({
   // prefill 된 값에 대해 아직 손대지 않았는데 에러가 뜨는 것을 막는다.
   const isDirtyRef = useRef(false);
 
+  // 로컬(클라이언트) 검증 실패 여부. `error` prop 은 입력값 자체의 클라이언트 검증
+  // (예: zod) 결과를 받는 자리이므로, 값이 있으면 로컬 검증이 실패한 것으로 본다.
+  // ReactNode 를 그대로 deps 에 두면 매 렌더 새 엘리먼트로 재실행될 수 있어 boolean 으로 고정한다.
+  const hasLocalError = errorProp != null && errorProp !== false;
+
   useEffect(() => {
     if (disabled || readOnly || !isDirtyRef.current) {
       setStatus("idle");
@@ -91,8 +97,12 @@ export function AsyncInput<Res = unknown>({
       return;
     }
 
+    // 로컬 검증이 실패한 상태면 API(resolve)를 호출하지 않는다 —
+    // 로컬 검증이 성공(에러 없음)했을 때만 네트워크 검사를 시작한다.
     const shouldSkip =
-      (skipEmpty && value.trim() === "") || value.length < minLength;
+      hasLocalError ||
+      (skipEmpty && value.trim() === "") ||
+      value.length < minLength;
     if (shouldSkip) {
       setStatus("idle");
       setMessage(null);
@@ -130,7 +140,7 @@ export function AsyncInput<Res = unknown>({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [value, debounceMs, skipEmpty, minLength, disabled, readOnly]);
+  }, [value, debounceMs, skipEmpty, minLength, disabled, readOnly, hasLocalError]);
 
   useEffect(() => {
     onStatusChange?.(status);
