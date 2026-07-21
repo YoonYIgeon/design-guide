@@ -71,15 +71,21 @@ export function Toast({
         </p>
       </div>
       {dismissible && onDismiss && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onDismiss}
-          aria-label="닫기"
-          className="-mr-1 -mt-1 h-7 w-7 shrink-0 p-0"
-        >
-          <IconClose width={16} height={16} />
-        </Button>
+        // 닫기 버튼은 sm 사이즈(h-8=32px) 때문에 본문 한 줄(20px)보다 커서,
+        // 그대로 flex 행에 두면 items-start 정렬상 남는 높이가 아래로 쏠려
+        // 카드 상하 여백이 어긋납니다. 첫 줄 높이(h-5)로 고정한 트랙에 담아
+        // 세로 중앙 정렬로 넘치게 두면 행 높이를 키우지 않아 상하 여백이 맞습니다.
+        <span className="-mr-1 flex h-5 shrink-0 items-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onDismiss}
+            aria-label="닫기"
+            className="h-8 w-8 p-0"
+          >
+            <IconClose width={16} height={16} />
+          </Button>
+        </span>
       )}
     </div>
   );
