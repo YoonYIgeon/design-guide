@@ -36,6 +36,13 @@ interface DropdownBaseProps {
    * 실제 부수효과(추적, 포커스 이동 등)는 컨테이너 책임입니다.
    */
   onOpenChange?: (open: boolean) => void;
+  /**
+   * 바깥(패널·트리거 밖) 클릭 시 패널을 닫을지 여부. 기본 true.
+   * false 면 backdrop 클릭은 물론 트리거 재클릭으로도 닫히지 않고, Esc,
+   * 그리고 커스텀 모드의 `close()` 호출로만 닫힙니다(실수로 닫히면
+   * 곤란한 필터/폼 패널 등에 사용).
+   */
+  closeOnOutsideClick?: boolean;
   className?: string;
 }
 
@@ -101,7 +108,14 @@ function lastEnabled(items: DropdownItem[]): number {
  * (docs/08-presentational-only.md, docs/11-flexible-composition.md)
  */
 export function Dropdown(props: DropdownProps) {
-  const { children, align = "end", disabled, onOpenChange, className } = props;
+  const {
+    children,
+    align = "end",
+    disabled,
+    onOpenChange,
+    closeOnOutsideClick = true,
+    className,
+  } = props;
   const isMenu = "items" in props && props.items != null;
 
   const panelId = useId();
@@ -169,7 +183,7 @@ export function Dropdown(props: DropdownProps) {
   // 바깥 클릭 시 닫기(트리거·패널 모두 바깥일 때만).
   // 커스텀 콘텐츠는 패널 내부 클릭으로 닫히지 않도록 여기서만 처리합니다.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !closeOnOutsideClick) return;
     const onPointerDown = (e: MouseEvent) => {
       // 패널의 React 하위에서 시작한 mousedown 이면 닫지 않는다.
       // 패널 안에 놓인 Select 의 목록처럼 body 로 포털된 자식은 DOM 상으로는
@@ -187,7 +201,7 @@ export function Dropdown(props: DropdownProps) {
     };
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [open, close]);
+  }, [open, close, closeOnOutsideClick]);
 
   // 활성 항목을 패널 스크롤 안으로 이동(메뉴 모드).
   useEffect(() => {
@@ -277,7 +291,13 @@ export function Dropdown(props: DropdownProps) {
       onClick: (e: React.MouseEvent) => {
         el.props.onClick?.(e);
         if (disabled) return;
-        open ? close() : openPanel();
+        // closeOnOutsideClick=false 면 backdrop 뿐 아니라 트리거 재클릭으로도
+        // 닫히지 않게 한다(닫힘은 Esc·close() 로만). 이미 열려 있으면 무시.
+        if (open) {
+          if (closeOnOutsideClick) close();
+          return;
+        }
+        openPanel();
       },
     });
   }
