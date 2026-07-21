@@ -357,8 +357,8 @@ export function FormsPage() {
           </Dropdown>
 
           {/* 커스텀 콘텐츠 모드 — 필터 폼처럼 임의 구성을 얹고, "적용" 클릭 시에만 닫힙니다.
-              closeOnOutsideClick={false} 로 바깥(backdrop) 클릭에도 닫히지 않게 해
-              실수로 필터가 사라지지 않도록 합니다(Esc·적용 버튼으로만 닫힘). */}
+              closeOnOutsideClick={false} 로 바깥(backdrop) 클릭·트리거 재클릭에도
+              닫히지 않게 해 실수로 필터가 사라지지 않도록 합니다(Esc·적용 버튼으로만 닫힘). */}
           <Dropdown
             align="start"
             closeOnOutsideClick={false}

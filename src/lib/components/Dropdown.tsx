@@ -38,9 +38,9 @@ interface DropdownBaseProps {
   onOpenChange?: (open: boolean) => void;
   /**
    * 바깥(패널·트리거 밖) 클릭 시 패널을 닫을지 여부. 기본 true.
-   * false 면 backdrop 클릭으로는 닫히지 않고, Esc·트리거 재클릭, 그리고
-   * 커스텀 모드의 `close()` 호출로만 닫힙니다(실수로 닫히면 곤란한
-   * 필터/폼 패널 등에 사용).
+   * false 면 backdrop 클릭은 물론 트리거 재클릭으로도 닫히지 않고, Esc,
+   * 그리고 커스텀 모드의 `close()` 호출로만 닫힙니다(실수로 닫히면
+   * 곤란한 필터/폼 패널 등에 사용).
    */
   closeOnOutsideClick?: boolean;
   className?: string;
@@ -291,7 +291,13 @@ export function Dropdown(props: DropdownProps) {
       onClick: (e: React.MouseEvent) => {
         el.props.onClick?.(e);
         if (disabled) return;
-        open ? close() : openPanel();
+        // closeOnOutsideClick=false 면 backdrop 뿐 아니라 트리거 재클릭으로도
+        // 닫히지 않게 한다(닫힘은 Esc·close() 로만). 이미 열려 있으면 무시.
+        if (open) {
+          if (closeOnOutsideClick) close();
+          return;
+        }
+        openPanel();
       },
     });
   }
