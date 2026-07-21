@@ -368,6 +368,7 @@ const { fields, append, remove } = useFieldArray({ control, name: "contacts" });
 | `getRequestError` | `(error) => ReactNode` | `resolve` 가 throw(네트워크/예외)했을 때 메시지로 변환. |
 | `debounceMs` | `number` | 디바운스 지연(기본 400). |
 | `skipEmpty` · `minLength` | `boolean` · `number` | 빈 값/최소 길이 미만이면 검사 건너뜀(기본 `true` / `0`). |
+| `error` | `ReactNode` | 컨테이너의 **로컬(클라이언트) 검증**(예: zod) 결과. 값이 있으면 내부 비동기 에러보다 우선 표시하며, **`resolve`(API 호출)를 건너뛴다** — 로컬 검증이 성공했을 때만 네트워크 검사가 돈다. |
 | `onResolved` · `onStatusChange` | `(res) => void` · `(status) => void` | 성공 응답/상태 변화 통지(선택). |
 | 그 외 | — | `label`·`hint`·`placeholder`·`required` 등은 `Input` 으로 그대로 전달. |
 
@@ -402,6 +403,8 @@ const [userId, setUserId] = useState("");
 - 정상 200 응답이라도 `getError` 로 "실패 의미"를 에러로 승격할 수 있다(커스텀 에러 처리).
 - `disabled`/`readOnly` 인 동안이나, 사용자가 아직 값을 바꾸지 않은 동안(dirty 되기 전 — 예: prefill 된
   값을 그대로 마운트한 직후)에는 비동기 검사를 시작하지 않는다. 손대기 전 값에 대해 에러가 뜨는 것을 막는다.
+- **로컬 검증이 성공했을 때만 API 를 호출한다** — `error`(zod 등 클라이언트 검증 결과)가 있으면 `resolve` 를
+  건너뛴다. 형식이 틀린 값(예: 이메일 형식 오류)으로 불필요한 네트워크 요청이 나가지 않게 한다.
 
 ---
 
