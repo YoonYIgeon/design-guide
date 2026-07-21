@@ -75,13 +75,14 @@ export function Toast({
         // 그대로 flex 행에 두면 items-start 정렬상 남는 높이가 아래로 쏠려
         // 카드 상하 여백이 어긋납니다. 첫 줄 높이(h-5)로 고정한 트랙에 담아
         // 세로 중앙 정렬로 넘치게 두면 행 높이를 키우지 않아 상하 여백이 맞습니다.
+        // (!p-0: size="sm" 의 px-3 가로 패딩을 눌러 아이콘이 찌그러지지 않게 함)
         <span className="-mr-1 flex h-5 shrink-0 items-center">
           <Button
             variant="ghost"
             size="sm"
             onClick={onDismiss}
             aria-label="닫기"
-            className="h-8 w-8 p-0"
+            className="h-8 w-8 !p-0"
           >
             <IconClose width={16} height={16} />
           </Button>
