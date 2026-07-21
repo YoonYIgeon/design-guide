@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import {
   AddableInputForm,
   AsyncInput,
@@ -77,6 +77,10 @@ interface ContactsForm {
   contacts: { name: string; email: string }[];
 }
 
+interface SignupForm {
+  userId: string;
+}
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // 첨부 용량 제한(데모). 이 값을 넘는 파일은 업로드 없이 즉시 실패 항목으로 표시됩니다.
@@ -140,11 +144,21 @@ export function FormsPage() {
   });
   const { fields, append, remove } = useFieldArray({ control, name: "contacts" });
 
-  // 디바운스 비동기 검사(아이디 중복 확인) 상태 — 값은 컨테이너가 보유.
-  const [userId, setUserId] = useState("");
-  // AsyncInput 의 검사 상태를 컨테이너가 추적한다(onStatusChange). 제출 게이팅에 사용 —
-  // 백엔드 검사(resolve)가 success 일 때만 제출을 허용한다(프레젠테이션 전용: 막는 건 컨테이너 몫).
-  const [userIdStatus, setUserIdStatus] = useState<AsyncInputStatus>("idle");
+  // 아이디 가입 폼 — AsyncInput 을 react-hook-form 검증에 통합한다.
+  // 값/로컬 검증은 RHF 가 보유하고, 백엔드 검사(비동기)는 AsyncInput 이 수행한 뒤 상태만 끌어올린다.
+  const {
+    control: signupControl,
+    handleSubmit: handleSignupSubmit,
+    trigger: triggerSignup,
+    formState: { errors: signupErrors, isValid: signupValid },
+  } = useForm<SignupForm>({
+    defaultValues: { userId: "" },
+    mode: "onChange",
+  });
+
+  // AsyncInput 의 최신 검사 상태. RHF 의 validate 룰이 이 값을 읽어 제출을 게이팅한다
+  // (백엔드 검사가 success 일 때만 폼이 valid). ref 라 렌더를 유발하지 않는다.
+  const userIdStatusRef = useRef<AsyncInputStatus>("idle");
 
   // 파일 업로드 상태
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -464,49 +478,77 @@ export function FormsPage() {
         </form>
       </Card>
 
-      {/* 디바운스 비동기 검사 입력 (AsyncInput) */}
+      {/* 디바운스 비동기 검사 입력 (AsyncInput) + react-hook-form 통합 */}
       <Card title="비동기 검사 입력 (AsyncInput)">
-        <div className="flex flex-col gap-4">
-          <AsyncInput
-            label="아이디"
-            required
-            placeholder="영문/숫자 4자 이상"
-            hint="입력을 멈추면 중복을 확인합니다(디바운스 500ms)."
-            value={userId}
-            onChange={setUserId}
-            debounceMs={500}
-            minLength={4}
-            resolve={checkUserIdAvailable}
-            // 응답을 받아서 에러 처리(커스텀): 200 이지만 available=false 면 에러로 해석.
-            getError={(res) =>
-              res.available ? null : "이미 사용 중인 아이디입니다."
-            }
-            getSuccess={(res) => (res.available ? "사용 가능한 아이디입니다." : null)}
-            getRequestError={() => "중복 확인에 실패했습니다. 잠시 후 다시 시도하세요."}
-            // 검사 상태를 컨테이너로 끌어올려 제출 게이팅에 쓴다.
-            onStatusChange={setUserIdStatus}
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={handleSignupSubmit(() =>
+            toast.success("가입 요청을 보냈습니다(데모)."),
+          )}
+        >
+          {/*
+            AsyncInput 을 RHF 에 통합하는 두 갈래:
+            - 로컬 검증(required/minLength)은 Controller rules → error 로 표시(= resolve 게이팅).
+            - 백엔드 검사 성공 여부는 validate 룰이 userIdStatusRef 를 읽어 제출을 막는다.
+              (async 게이트 에러는 error 로 되먹이지 않는다 — 되먹이면 resolve 가 영영 안 돎)
+          */}
+          <Controller
+            name="userId"
+            control={signupControl}
+            rules={{
+              required: "아이디를 입력하세요.",
+              minLength: { value: 4, message: "4자 이상 입력하세요." },
+              // 백엔드 검사(resolve)가 success 여야 통과 — 값 자체는 여기서 안 본다.
+              validate: () =>
+                userIdStatusRef.current === "success" ||
+                "아이디 중복 확인이 필요합니다.",
+            }}
+            render={({ field }) => (
+              <AsyncInput
+                label="아이디"
+                required
+                placeholder="영문/숫자 4자 이상"
+                hint="입력을 멈추면 중복을 확인합니다(디바운스 500ms)."
+                value={field.value}
+                onChange={field.onChange}
+                debounceMs={500}
+                minLength={4}
+                resolve={checkUserIdAvailable}
+                // 로컬 검증(required/minLength) 에러만 전달 → 이 값이 있으면 resolve 를 건너뛴다.
+                // async 게이트(validate) 에러는 제외해 교착을 막는다.
+                error={
+                  signupErrors.userId && signupErrors.userId.type !== "validate"
+                    ? signupErrors.userId.message
+                    : undefined
+                }
+                // 응답을 받아서 에러 처리(커스텀): 200 이지만 available=false 면 에러로 해석.
+                getError={(res) =>
+                  res.available ? null : "이미 사용 중인 아이디입니다."
+                }
+                getSuccess={(res) => (res.available ? "사용 가능한 아이디입니다." : null)}
+                getRequestError={() => "중복 확인에 실패했습니다. 잠시 후 다시 시도하세요."}
+                // 검사 상태를 ref 로 끌어올리고, RHF 를 재검증해 validate 룰이 다시 돌게 한다.
+                onStatusChange={(status) => {
+                  userIdStatusRef.current = status;
+                  void triggerSignup("userId");
+                }}
+              />
+            )}
           />
           <p className="text-xs text-text-muted">
             이미 사용 중(데모): <code>admin · root · test · user</code>
           </p>
-          <div className="flex items-center justify-end gap-3">
-            {userIdStatus !== "success" && (
-              <span className="text-xs text-text-muted">
-                {userIdStatus === "loading"
-                  ? "중복 확인 중…"
-                  : "사용 가능한 아이디를 입력하면 가입할 수 있습니다."}
-              </span>
-            )}
+          <div className="flex justify-end">
             <Button
+              type="submit"
               variant="primary"
-              // 백엔드 검사가 success 일 때만 제출 허용 — 검사 미통과/진행 중이면 막는다.
-              disabled={userIdStatus !== "success"}
-              onClick={() => toast.success("가입 요청을 보냈습니다(데모).")}
+              // 폼이 valid(로컬 검증 통과 + 백엔드 검사 success)일 때만 제출.
+              disabled={!signupValid}
             >
               가입
             </Button>
           </div>
-        </div>
+        </form>
       </Card>
 
       {/* 파일 업로드 + 결과 미리보기 */}

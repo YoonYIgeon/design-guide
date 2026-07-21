@@ -416,6 +416,48 @@ const [status, setStatus] = useState<AsyncInputStatus>("idle");
 <Button disabled={status !== "success"} onClick={submit}>가입</Button>
 ```
 
+### react-hook-form 통합
+
+RHF 로 폼을 관리한다면 `useState` 게이팅 대신 검증 파이프라인에 통합해 `handleSubmit`/`isValid`
+가 백엔드 검사 결과까지 반영하게 한다. **두 갈래로 나누는 게 핵심**이다:
+
+- **로컬 검증**(required/minLength/format)은 `Controller` 의 `rules` → `error` prop 으로 표시.
+  `error` 가 있으면 `resolve` 가 건너뛰어지므로(위 항목) 로컬 룰 통과 후에만 네트워크 검사가 돈다.
+- **백엔드 검사 성공 여부**는 `validate` 룰이 `onStatusChange` 로 끌어올린 상태(ref)를 읽어 판정한다.
+  이 async 게이트 에러는 **`error` prop 으로 되먹이지 않는다** — 되먹이면 `resolve` 가 영영 안 돌아
+  교착된다. 그래서 `error` 에는 `type !== "validate"` 인 로컬 에러만 넘긴다.
+
+```tsx
+const statusRef = useRef<AsyncInputStatus>("idle");
+const { control, handleSubmit, trigger, formState: { errors, isValid } } =
+  useForm<{ userId: string }>({ defaultValues: { userId: "" }, mode: "onChange" });
+
+<form onSubmit={handleSubmit(submit)}>
+  <Controller
+    name="userId"
+    control={control}
+    rules={{
+      required: "아이디를 입력하세요.",
+      minLength: { value: 4, message: "4자 이상" },
+      validate: () => statusRef.current === "success" || "중복 확인이 필요합니다.",
+    }}
+    render={({ field }) => (
+      <AsyncInput
+        value={field.value}
+        onChange={field.onChange}
+        resolve={checkUserIdAvailable}
+        // 로컬 에러만 전달(= resolve 게이팅). async 게이트(validate)는 제외해 교착 방지.
+        error={errors.userId && errors.userId.type !== "validate" ? errors.userId.message : undefined}
+        // 상태를 ref 로 올리고 RHF 를 재검증 → validate 룰이 다시 돈다.
+        onStatusChange={(s) => { statusRef.current = s; void trigger("userId"); }}
+        /* getError·getSuccess·getRequestError … */
+      />
+    )}
+  />
+  <Button type="submit" disabled={!isValid}>가입</Button>
+</form>
+```
+
 ---
 
 ## 리뷰 기준
