@@ -405,6 +405,58 @@ const [userId, setUserId] = useState("");
   값을 그대로 마운트한 직후)에는 비동기 검사를 시작하지 않는다. 손대기 전 값에 대해 에러가 뜨는 것을 막는다.
 - **로컬 검증이 성공했을 때만 API 를 호출한다** — `error`(zod 등 클라이언트 검증 결과)가 있으면 `resolve` 를
   건너뛴다. 형식이 틀린 값(예: 이메일 형식 오류)으로 불필요한 네트워크 요청이 나가지 않게 한다.
+- **제출 차단은 컨테이너 몫이다** — `AsyncInput` 은 프레젠테이션 전용이라 스스로 폼 제출을 막지 않는다.
+  백엔드 검사(`resolve`)가 통과했을 때만 제출을 허용하려면, `onStatusChange` 로 상태를 끌어올려
+  `status === "success"` 일 때만 제출 버튼을 활성화한다(아래 발췌).
+
+```tsx
+const [status, setStatus] = useState<AsyncInputStatus>("idle");
+
+<AsyncInput /* … */ onStatusChange={setStatus} />
+<Button disabled={status !== "success"} onClick={submit}>가입</Button>
+```
+
+### react-hook-form 통합
+
+RHF 로 폼을 관리한다면 `useState` 게이팅 대신 검증 파이프라인에 통합해 `handleSubmit`/`isValid`
+가 백엔드 검사 결과까지 반영하게 한다. **두 갈래로 나누는 게 핵심**이다:
+
+- **로컬 검증**(required/minLength/format)은 `Controller` 의 `rules` → `error` prop 으로 표시.
+  `error` 가 있으면 `resolve` 가 건너뛰어지므로(위 항목) 로컬 룰 통과 후에만 네트워크 검사가 돈다.
+- **백엔드 검사 성공 여부**는 `validate` 룰이 `onStatusChange` 로 끌어올린 상태(ref)를 읽어 판정한다.
+  이 async 게이트 에러는 **`error` prop 으로 되먹이지 않는다** — 되먹이면 `resolve` 가 영영 안 돌아
+  교착된다. 그래서 `error` 에는 `type !== "validate"` 인 로컬 에러만 넘긴다.
+
+```tsx
+const statusRef = useRef<AsyncInputStatus>("idle");
+const { control, handleSubmit, trigger, formState: { errors, isValid } } =
+  useForm<{ userId: string }>({ defaultValues: { userId: "" }, mode: "onChange" });
+
+<form onSubmit={handleSubmit(submit)}>
+  <Controller
+    name="userId"
+    control={control}
+    rules={{
+      required: "아이디를 입력하세요.",
+      minLength: { value: 4, message: "4자 이상" },
+      validate: () => statusRef.current === "success" || "중복 확인이 필요합니다.",
+    }}
+    render={({ field }) => (
+      <AsyncInput
+        value={field.value}
+        onChange={field.onChange}
+        resolve={checkUserIdAvailable}
+        // 로컬 에러만 전달(= resolve 게이팅). async 게이트(validate)는 제외해 교착 방지.
+        error={errors.userId && errors.userId.type !== "validate" ? errors.userId.message : undefined}
+        // 상태를 ref 로 올리고 RHF 를 재검증 → validate 룰이 다시 돈다.
+        onStatusChange={(s) => { statusRef.current = s; void trigger("userId"); }}
+        /* getError·getSuccess·getRequestError … */
+      />
+    )}
+  />
+  <Button type="submit" disabled={!isValid}>가입</Button>
+</form>
+```
 
 ---
 
