@@ -133,6 +133,9 @@ export function FormsPage() {
     formState: { errors },
   } = useForm<ContactsForm>({
     defaultValues: { contacts: [{ name: "", email: "" }] },
+    // 기본값(onSubmit)이면 첫 제출 전까지 로컬 검증이 돌지 않는다 —
+    // 입력하는 동안에도 검증이 돌도록 onChange 로 둔다(제출 전에 error 가 갱신됨).
+    mode: "onChange",
   });
   const { fields, append, remove } = useFieldArray({ control, name: "contacts" });
 
