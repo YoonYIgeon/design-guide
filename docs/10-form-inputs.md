@@ -16,6 +16,35 @@
 - `error` 가 있으면 `hint` 대신 에러 문구를 빨간색으로 노출한다(둘 다 있으면 error 우선).
 - `required` 는 레이블에 `*` 를 붙인다.
 - 색상만으로 상태를 전달하지 않는다(아이콘/텍스트 병행 — WCAG AA).
+- **제어값은 nullable 을 허용한다** — API 응답의 `string | null` 같은 값을 컨테이너에서
+  `?? ""` 변환 없이 그대로 `value` 로 넘겨도 된다. 컴포넌트가 "미입력/미선택"으로 정규화한다.
+
+## nullable 값 다루기
+
+DB/API 스키마에는 nullable 필드(`nickname: string | null` 등)가 흔하다. 이런 값을 폼에
+그대로 물리면 예전에는 타입 에러가 났고, `null` 이 DOM 까지 흘러가면 React 의
+controlled/uncontrolled 경고가 났다. 지금은 **모든 입력 컴포넌트가 `null`/`undefined` 를
+받아 스스로 정규화**하므로 컨테이너에서 별도 변환이 필요 없다.
+
+| 컴포넌트 | `value`(제어값) 타입 | `null`/`undefined` 해석 |
+| --- | --- | --- |
+| `Input` · `Textarea` | `string \| number \| … \| null` | `null` → 빈 문자열 `""`. `undefined` 는 **비제어 유지**(RHF `register`/`defaultValue` 사용처) |
+| `AsyncInput` | `string \| null \| undefined` | 빈 문자열(미입력) — 검사도 건너뜀(`skipEmpty`) |
+| `Select`(단일) | `string \| null \| undefined` | 미선택(placeholder 노출) |
+| `Select multiple` | `string[] \| null \| undefined` | 빈 배열(미선택) |
+| `RadioGroup` | `string \| null \| undefined` | 미선택 |
+| `StepSelector` | `number \| null \| undefined` | 선택 없음(범위 밖 `0` 과 동일) |
+| `Checkbox` | `checked?: boolean \| null` | `null` → 해제(false). `undefined` 는 비제어 유지 |
+
+```tsx
+// user.nickname: string | null — 변환 없이 그대로 넘긴다.
+<Input label="닉네임" value={user.nickname} onChange={(e) => setNickname(e.target.value)} />
+<Select label="부서" options={DEPT_OPTIONS} value={user.deptId} onChange={setDeptId} />
+```
+
+> **`onChange` 는 여전히 `null` 을 돌려주지 않는다** — 비움/해제는 `""`·`[]`·`false` 로
+> 나온다. "빈 문자열을 `null` 로 저장" 같은 도메인 규칙은 저장 시점에 컨테이너가 변환한다
+> (예: `nickname: form.nickname || null`).
 
 ---
 
@@ -71,7 +100,7 @@ const [scopes, setScopes] = useState<string[]>([]);
 | `options` | `SelectOption[]` | `{ label, value, disabled? }` 목록 |
 | `placeholder` | `string` | 미선택(`value=""` / `[]`) 시 노출할 안내 문구(muted) |
 | `multiple` | `boolean` | 다중 선택 모드(기본 false). 켜면 아래 `value`/`onChange` 가 배열 계약이 된다 |
-| `value` / `onChange` | `string` / `(value: string) => void` | 제어값·변경(값만 전달). `multiple` 이면 `string[]` / `(values: string[]) => void` |
+| `value` / `onChange` | `string \| null \| undefined` / `(value: string) => void` | 제어값·변경(값만 전달). `multiple` 이면 `string[] \| null \| undefined` / `(values: string[]) => void`. nullable 은 미선택으로 정규화 |
 | `name` | `string` | 네이티브 폼 제출용 hidden input 이름(선택). `multiple` 이면 같은 name 으로 값마다 하나씩 렌더 |
 | `label` `hint` `error` `required` `disabled` | — | 공통 규칙 |
 
@@ -109,7 +138,7 @@ import { Checkbox } from "@company/admin-ui";
 | prop | 타입 | 설명 |
 | --- | --- | --- |
 | `label` | `ReactNode` | 체크박스 오른쪽 라벨(클릭 영역 포함) |
-| `checked` / `onChange` | `boolean` / `(e) => void` | 제어값·변경 |
+| `checked` / `onChange` | `boolean \| null` / `(e) => void` | 제어값·변경. `null` 은 해제(false)로 정규화 |
 | `indeterminate` | `boolean` | 부분 선택 표시(DOM 프로퍼티라 내부에서 ref 로 설정) |
 | `label` `hint` `error` `disabled` | — | 공통 규칙 |
 | 그 외 | `InputHTMLAttributes` | `name`, `value` 등 그대로 전달 |
@@ -146,7 +175,7 @@ const NOTIFY_OPTIONS: RadioOption[] = [
 | --- | --- | --- |
 | `name` | `string` | 같은 그룹 식별(단일 선택 보장 — 필수) |
 | `options` | `RadioOption[]` | `{ label, value, hint?, disabled? }` 목록 |
-| `value` / `onChange` | `string` / `(value: string) => void` | 제어값·변경(값만 전달) |
+| `value` / `onChange` | `string \| null \| undefined` / `(value: string) => void` | 제어값·변경(값만 전달). nullable 은 미선택으로 정규화 |
 | `orientation` | `"vertical" \| "horizontal"` | 배치 방향(기본 세로) |
 | `label` `hint` `error` `required` `disabled` | — | 공통 규칙(그룹 전체) |
 
@@ -361,7 +390,7 @@ const { fields, append, remove } = useFieldArray({ control, name: "contacts" });
 
 | prop | 타입 | 설명 |
 | --- | --- | --- |
-| `value` · `onChange` | `string` · `(v) => void` | 제어값/변경(즉시). `Input` 과 동일. |
+| `value` · `onChange` | `string \| null \| undefined` · `(v) => void` | 제어값/변경(즉시). nullable 은 빈 문자열로 정규화. |
 | `resolve` | `(value, signal) => Promise<Res>` | 디바운스 후 호출되는 **비동기 리졸버**. 실제 HTTP 는 이 콜백 안(컨테이너)에서. `signal` 로 이전 요청 취소. |
 | `getError` | `(res) => ReactNode \| null` | **응답을 에러로 해석**(커스텀). 값 반환 시 에러, `null` 이면 성공. (200 이지만 실패 의미일 때) |
 | `getSuccess` | `(res) => ReactNode \| null` | 성공 시 표시할 메시지(선택). |

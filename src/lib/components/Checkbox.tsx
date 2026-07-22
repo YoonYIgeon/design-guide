@@ -11,13 +11,18 @@ import { cn } from "../utils/cn";
 import { Input } from "./Input";
 
 export interface CheckboxProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "checked"> {
   /** 체크박스 오른쪽에 붙는 라벨. */
   label?: ReactNode;
   hint?: ReactNode;
   error?: ReactNode;
   /** 부분 선택 상태(예: 전체 선택 헤더). checked 와 별개로 시각 표시만 담당. */
   indeterminate?: boolean;
+  /**
+   * 제어값. API 응답처럼 nullable 인 값도 그대로 받아 `null` 은 해제(false)로
+   * 정규화합니다(`undefined` 는 비제어 유지 — register/defaultChecked 사용처).
+   */
+  checked?: boolean | null;
 }
 
 /**
@@ -69,7 +74,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             }}
             id={inputId}
             type="checkbox"
-            checked={checked}
+            checked={checked === null ? false : checked}
             disabled={disabled}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}

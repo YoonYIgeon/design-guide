@@ -6,8 +6,8 @@ export type AsyncInputStatus = "idle" | "loading" | "success" | "error";
 
 export interface AsyncInputProps<Res = unknown>
   extends Omit<InputProps, "value" | "onChange" | "trailing"> {
-  /** 제어값. */
-  value: string;
+  /** 제어값. nullable 값(`null`/`undefined`)은 빈 문자열("")로 정규화합니다. */
+  value: string | null | undefined;
   /** 값 변경(즉시 반영). 저장은 컨테이너 책임. */
   onChange: (value: string) => void;
   /**
@@ -70,6 +70,8 @@ export function AsyncInput<Res = unknown>({
   readOnly,
   ...inputProps
 }: AsyncInputProps<Res>) {
+  // nullable(API 응답의 null/undefined)은 빈 문자열(미입력)로 정규화해 내부에서 일관되게 다룬다.
+  const val = value ?? "";
   const [status, setStatus] = useState<AsyncInputStatus>("idle");
   const [message, setMessage] = useState<ReactNode>(null);
 
@@ -101,8 +103,8 @@ export function AsyncInput<Res = unknown>({
     // 로컬 검증이 성공(에러 없음)했을 때만 네트워크 검사를 시작한다.
     const shouldSkip =
       hasLocalError ||
-      (skipEmpty && value.trim() === "") ||
-      value.length < minLength;
+      (skipEmpty && val.trim() === "") ||
+      val.length < minLength;
     if (shouldSkip) {
       setStatus("idle");
       setMessage(null);
@@ -116,7 +118,7 @@ export function AsyncInput<Res = unknown>({
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
-        const res = await cbs.current.resolve(value, controller.signal);
+        const res = await cbs.current.resolve(val, controller.signal);
         if (controller.signal.aborted) return;
         const err = cbs.current.getError?.(res);
         if (err != null && err !== false) {
@@ -140,7 +142,7 @@ export function AsyncInput<Res = unknown>({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [value, debounceMs, skipEmpty, minLength, disabled, readOnly, hasLocalError]);
+  }, [val, debounceMs, skipEmpty, minLength, disabled, readOnly, hasLocalError]);
 
   useEffect(() => {
     onStatusChange?.(status);
@@ -168,7 +170,7 @@ export function AsyncInput<Res = unknown>({
       {...inputProps}
       disabled={disabled}
       readOnly={readOnly}
-      value={value}
+      value={val}
       onChange={(e) => {
         isDirtyRef.current = true;
         onChange(e.target.value);

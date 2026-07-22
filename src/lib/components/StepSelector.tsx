@@ -24,8 +24,9 @@ export interface StepSelectorProps {
   steps?: number;
   /**
    * 선택된 단계(1..steps). 제어값이며 범위를 벗어나면(예: 0) 선택 없음으로 봅니다.
+   * nullable 값(`null`/`undefined`)도 선택 없음으로 봅니다.
    */
-  value: number;
+  value: number | null | undefined;
   /** 각 단계 아래 숫자를 표시할지(기본 true). */
   showValues?: boolean;
   /** 트랙 왼쪽 끝 캡션(예: "드라이"). */
@@ -68,7 +69,9 @@ export function StepSelector({
   const count = Math.max(1, Math.floor(steps));
   // 조작 잠금(disabled=비활성+흐리게, readOnly=값은 선명하되 조작만 차단).
   const locked = disabled || readOnly;
-  const selectedIndex = value >= 1 && value <= count ? value - 1 : -1;
+  // nullable(null/undefined)은 범위 밖(0)과 동일한 "선택 없음"으로 정규화.
+  const val = value ?? 0;
+  const selectedIndex = val >= 1 && val <= count ? val - 1 : -1;
   const fillPct = selectedIndex >= 0 ? positionOf(selectedIndex, count) : 0;
 
   const describedBy = error
@@ -80,17 +83,17 @@ export function StepSelector({
   function commit(next: number) {
     if (locked) return;
     const clamped = Math.min(count, Math.max(1, next));
-    if (clamped !== value) onChange(clamped);
+    if (clamped !== val) onChange(clamped);
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (locked) return;
-    const current = selectedIndex >= 0 ? value : 1;
+    const current = selectedIndex >= 0 ? val : 1;
     switch (e.key) {
       case "ArrowRight":
       case "ArrowUp":
         e.preventDefault();
-        commit(selectedIndex >= 0 ? value + 1 : 1);
+        commit(selectedIndex >= 0 ? val + 1 : 1);
         break;
       case "ArrowLeft":
       case "ArrowDown":
@@ -111,7 +114,7 @@ export function StepSelector({
   /** 포인터 x 좌표에서 가장 가까운 단계(1..count). */
   function valueFromClientX(clientX: number): number {
     const rect = trackRef.current?.getBoundingClientRect();
-    if (!rect || rect.width === 0) return value;
+    if (!rect || rect.width === 0) return val;
     const ratio = (clientX - rect.left) / rect.width;
     return Math.round(ratio * (count - 1)) + 1;
   }
@@ -158,7 +161,7 @@ export function StepSelector({
             aria-label={typeof label === "string" ? label : undefined}
             aria-valuemin={1}
             aria-valuemax={count}
-            aria-valuenow={selectedIndex >= 0 ? value : undefined}
+            aria-valuenow={selectedIndex >= 0 ? val : undefined}
             aria-disabled={disabled || undefined}
             aria-readonly={readOnly || undefined}
             aria-invalid={error ? true : undefined}
@@ -233,7 +236,7 @@ export function StepSelector({
             <input
               type="hidden"
               name={name}
-              value={selectedIndex >= 0 ? value : ""}
+              value={selectedIndex >= 0 ? val : ""}
             />
           )}
         </div>

@@ -17,8 +17,8 @@ export interface RadioGroupProps {
   error?: ReactNode;
   /** 같은 그룹으로 묶는 name(라디오는 name 이 같아야 단일 선택됩니다). */
   name: string;
-  /** 선택된 값(제어값). */
-  value: string;
+  /** 선택된 값(제어값). 미선택은 빈 문자열 `""` — nullable 값(`null`/`undefined`)도 미선택으로 봅니다. */
+  value: string | null | undefined;
   options: RadioOption[];
   required?: boolean;
   disabled?: boolean;
@@ -103,7 +103,7 @@ export function RadioGroup({
                 type="radio"
                 name={name}
                 value={opt.value}
-                checked={value === opt.value}
+                checked={(value ?? "") === opt.value}
                 disabled={optDisabled}
                 required={required}
                 aria-invalid={error ? true : undefined}

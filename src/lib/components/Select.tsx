@@ -43,8 +43,8 @@ interface SelectBaseProps {
 export interface SelectSingleProps extends SelectBaseProps {
   /** 다중 선택 여부(기본 false = 단일 선택). */
   multiple?: false;
-  /** 선택된 값(제어값). 미선택은 빈 문자열 `""`. */
-  value: string;
+  /** 선택된 값(제어값). 미선택은 빈 문자열 `""` — nullable 값(`null`/`undefined`)도 미선택으로 봅니다. */
+  value: string | null | undefined;
   /** 선택 변경. 값(string)만 넘깁니다(RadioGroup 과 동일 계약). 값 반영은 컨테이너 책임. */
   onChange: (value: string) => void;
 }
@@ -52,8 +52,8 @@ export interface SelectSingleProps extends SelectBaseProps {
 export interface SelectMultipleProps extends SelectBaseProps {
   /** 다중 선택 모드. 옵션을 토글해도 목록이 닫히지 않습니다. */
   multiple: true;
-  /** 선택된 값 배열(제어값). 미선택은 빈 배열 `[]`. */
-  value: string[];
+  /** 선택된 값 배열(제어값). 미선택은 빈 배열 `[]` — nullable 값(`null`/`undefined`)도 미선택으로 봅니다. */
+  value: string[] | null | undefined;
   /** 선택 변경. 토글이 반영된 값 배열(string[])을 넘깁니다. 값 반영은 컨테이너 책임. */
   onChange: (values: string[]) => void;
 }
@@ -118,8 +118,9 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
     multiple,
     onChange,
   } = props;
-  // 단일/다중을 내부에서는 값 배열 하나로 통일해 다룹니다(단일 미선택 "" 은 빈 배열).
-  const values = multiple ? props.value : props.value ? [props.value] : [];
+  // 단일/다중을 내부에서는 값 배열 하나로 통일해 다룹니다.
+  // nullable(API 응답의 null/undefined)·단일 미선택 "" 은 모두 빈 배열(미선택)로 정규화.
+  const values = multiple ? (props.value ?? []) : props.value ? [props.value] : [];
 
   const autoId = useId();
   const baseId = id ?? autoId;

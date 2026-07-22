@@ -1,18 +1,24 @@
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from "react";
 import { cn } from "../utils/cn";
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "value"> {
   label?: ReactNode;
   hint?: ReactNode;
   error?: ReactNode;
   leading?: ReactNode;
   /** 입력 오른쪽 끝 장식(스피너·상태 아이콘 등). */
   trailing?: ReactNode;
+  /**
+   * 제어값. API 응답처럼 nullable 인 값도 그대로 받아 `null` 은 빈 문자열("")로
+   * 정규화합니다(`undefined` 는 비제어 입력 유지 — register/defaultValue 사용처).
+   */
+  value?: InputHTMLAttributes<HTMLInputElement>["value"] | null;
 }
 
 /** 레이블·힌트·에러를 접근성 속성과 함께 연결한 입력 필드. */
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, hint, error, leading, trailing, id, className, required, readOnly, ...rest }, ref) => {
+  ({ label, hint, error, leading, trailing, id, className, required, readOnly, value, ...rest }, ref) => {
     const autoId = useId();
     const inputId = id ?? autoId;
     const describedBy = error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined;
@@ -36,6 +42,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             required={required}
             readOnly={readOnly}
+            value={value === null ? "" : value}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
             className={cn(
