@@ -45,6 +45,16 @@ interface DropdownBaseProps {
    * 스크림 없이 포인터만 차단합니다.
    */
   closeOnOutsideClick?: boolean;
+  /**
+   * 바깥 클릭·Esc 로 "닫힘(dismiss)"될 때 호출됩니다 — 즉 "취소" 버튼을 누른 것과
+   * 동일하게 처리하고 싶을 때 씁니다(예: 미적용 값 되돌리기). 커스텀 모드에서
+   * content 가 받는 `close()`(=적용/확정)와 구분됩니다: `close()` 는 onCancel 을
+   * 호출하지 않습니다. 항목 선택(onSelect) 이나 트리거 재클릭 닫기에도 발화하지
+   * 않습니다. 호출 후 패널은 닫힙니다.
+   * (closeOnOutsideClick=false 면 바깥 클릭은 backdrop 에 막히므로 이때 onCancel 은
+   * Esc 로만 발화합니다.)
+   */
+  onCancel?: () => void;
   className?: string;
 }
 
@@ -116,6 +126,7 @@ export function Dropdown(props: DropdownProps) {
     disabled,
     onOpenChange,
     closeOnOutsideClick = true,
+    onCancel,
     className,
   } = props;
   const isMenu = "items" in props && props.items != null;
@@ -135,6 +146,17 @@ export function Dropdown(props: DropdownProps) {
     setOpen(false);
     setActiveIndex(-1);
   }, []);
+
+  // onCancel 은 렌더마다 바뀔 수 있으므로 ref 로 최신값을 참조해 dismiss/effect 의
+  // 의존성을 흔들지 않는다(onOpenChange 와 같은 패턴).
+  const onCancelRef = useRef(onCancel);
+  onCancelRef.current = onCancel;
+  // 바깥 클릭·Esc 로 닫는 경로. "취소" 로 간주해 onCancel 을 먼저 부르고 닫는다.
+  // 항목 선택·트리거 재클릭·content 의 close() 는 이 경로를 타지 않는다.
+  const dismiss = useCallback(() => {
+    onCancelRef.current?.();
+    close();
+  }, [close]);
 
   const openPanel = useCallback(() => {
     if (disabled) return;
@@ -199,11 +221,11 @@ export function Dropdown(props: DropdownProps) {
       const target = e.target as Node;
       if (anchorRef.current?.contains(target)) return;
       if (panelRef.current?.contains(target)) return;
-      close();
+      dismiss();
     };
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [open, close, closeOnOutsideClick]);
+  }, [open, dismiss, closeOnOutsideClick]);
 
   // 활성 항목을 패널 스크롤 안으로 이동(메뉴 모드).
   useEffect(() => {
@@ -229,7 +251,7 @@ export function Dropdown(props: DropdownProps) {
     if (disabled) return;
     if (e.key === "Escape" && open) {
       e.preventDefault();
-      close();
+      dismiss();
       return;
     }
     // 커스텀 콘텐츠(필터 폼 등)는 내부 입력 요소가 방향키/Tab/Enter 를 직접 써야
@@ -266,7 +288,8 @@ export function Dropdown(props: DropdownProps) {
         }
         break;
       case "Tab":
-        if (open) close();
+        // 선택 없이 포커스를 떠나므로 취소로 간주(Esc·바깥 클릭과 동일).
+        if (open) dismiss();
         break;
       default:
         break;
