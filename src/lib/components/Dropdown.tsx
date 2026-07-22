@@ -38,9 +38,11 @@ interface DropdownBaseProps {
   onOpenChange?: (open: boolean) => void;
   /**
    * 바깥(패널·트리거 밖) 클릭 시 패널을 닫을지 여부. 기본 true.
-   * false 면 backdrop 클릭은 물론 트리거 재클릭으로도 닫히지 않고, Esc,
-   * 그리고 커스텀 모드의 `close()` 호출로만 닫힙니다(실수로 닫히면
-   * 곤란한 필터/폼 패널 등에 사용).
+   * false 면 패널 뒤에 투명 backdrop 을 깔아 바깥 클릭·트리거 재클릭은 물론
+   * 내비 링크 이동 등 페이지 상호작용까지 막고(모달처럼 페이지를 잠금),
+   * 닫힘은 Esc 와 커스텀 모드의 `close()` 호출로만 가능합니다(실수로 닫히거나
+   * 페이지를 벗어나면 곤란한 필터/폼 패널 등에 사용). backdrop 은 시각적
+   * 스크림 없이 포인터만 차단합니다.
    */
   closeOnOutsideClick?: boolean;
   className?: string;
@@ -347,31 +349,48 @@ export function Dropdown(props: DropdownProps) {
       {trigger}
       {open &&
         createPortal(
-          <div
-            ref={panelRef}
-            id={panelId}
-            role={isMenu ? "menu" : undefined}
-            aria-orientation={isMenu ? "vertical" : undefined}
-            // 패널(및 그 React 하위, 포털로 body 에 그려진 Select 목록 포함)에서
-            // 시작한 mousedown 임을 표시해, 위 document 리스너가 "바깥 클릭"으로
-            // 오판해 닫는 것을 막는다.
-            onMouseDownCapture={() => {
-              insideRef.current = true;
-            }}
-            // 패널은 portal(document.body) 로 그려지지만 React 이벤트는 트리
-            // 기준으로 버블링돼 트리거의 조상까지 올라간다. 패널 내부 클릭이
-            // 클릭 가능한 조상(행/카드 등)으로 새지 않도록 여기서 막는다.
-            onClick={(e) => e.stopPropagation()}
-            style={style ?? { left: -9999, top: -9999 }}
-            className={cn(
-              "fixed z-popover overflow-auto rounded-md border border-line bg-surface shadow-2",
-              "focus-visible:outline-none",
-              isMenu ? "min-w-40 max-h-60 py-1" : "max-h-[70vh] min-w-48 p-3",
-              className,
+          <>
+            {!closeOnOutsideClick && (
+              // closeOnOutsideClick=false 면 패널 뒤에 투명 backdrop 을 깔아
+              // 바깥 클릭은 물론 내비 링크 이동 등 페이지 상호작용까지 막는다
+              // (닫힘은 Esc·close() 로만). 라우팅을 아는 게 아니라, 클릭이
+              // 아래 요소에 닿지 못하게 포인터를 삼킬 뿐이라 프레젠테이션
+              // 원칙을 지킨다. 시각적 스크림 없이 투명하게 둔다. mousedown 기본
+              // 동작을 막아 포커스가 패널/트리거에서 빠지지 않게 해(→ Esc 유지),
+              // 패널은 이보다 뒤(DOM)에 그려 같은 z-popover 에서도 위에 쌓인다.
+              <div
+                aria-hidden
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
+                className="fixed inset-0 z-popover"
+              />
             )}
-          >
-            {panelBody}
-          </div>,
+            <div
+              ref={panelRef}
+              id={panelId}
+              role={isMenu ? "menu" : undefined}
+              aria-orientation={isMenu ? "vertical" : undefined}
+              // 패널(및 그 React 하위, 포털로 body 에 그려진 Select 목록 포함)에서
+              // 시작한 mousedown 임을 표시해, 위 document 리스너가 "바깥 클릭"으로
+              // 오판해 닫는 것을 막는다.
+              onMouseDownCapture={() => {
+                insideRef.current = true;
+              }}
+              // 패널은 portal(document.body) 로 그려지지만 React 이벤트는 트리
+              // 기준으로 버블링돼 트리거의 조상까지 올라간다. 패널 내부 클릭이
+              // 클릭 가능한 조상(행/카드 등)으로 새지 않도록 여기서 막는다.
+              onClick={(e) => e.stopPropagation()}
+              style={style ?? { left: -9999, top: -9999 }}
+              className={cn(
+                "fixed z-popover overflow-auto rounded-md border border-line bg-surface shadow-2",
+                "focus-visible:outline-none",
+                isMenu ? "min-w-40 max-h-60 py-1" : "max-h-[70vh] min-w-48 p-3",
+                className,
+              )}
+            >
+              {panelBody}
+            </div>
+          </>,
           document.body,
         )}
     </span>
