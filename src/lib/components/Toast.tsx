@@ -124,7 +124,7 @@ export function ToastViewport({
   return (
     <div
       className={cn(
-        "pointer-events-none fixed z-[60] flex w-full max-w-sm flex-col gap-2 p-4",
+        "pointer-events-none fixed z-toast flex w-full max-w-sm flex-col gap-2 p-4",
         positionClass[position],
         className,
       )}

@@ -22,7 +22,7 @@
 | 간격 | `--au-space-1..8` (4px 스케일) | 마진/패딩은 스케일 값만 사용 |
 | 반경 | `--au-radius-sm/md/lg` | |
 | 그림자 | `--au-shadow-1/2/3` | 과도한 그림자 지양 |
-| z-index | `--au-z-dropdown/modal/toast` | 레이어 충돌 방지 |
+| z-index | `--au-z-modal/toast/popover/alert` | 레이어 충돌 방지. 겹침 순서: modal < toast < popover < alert |
 
 - **네이밍**: `--au-<범주>-<의미>` (예: `--au-color-danger`). 색상 raw 값(`--au-blue-500`)은 내부 팔레트로만.
 - **다크모드/테마**: 토큰을 `:root`와 `[data-theme="dark"]`에서 재정의.

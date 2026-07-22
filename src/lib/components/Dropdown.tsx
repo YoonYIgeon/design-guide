@@ -289,6 +289,9 @@ export function Dropdown(props: DropdownProps) {
       "aria-expanded": open,
       "aria-controls": open ? panelId : undefined,
       onClick: (e: React.MouseEvent) => {
+        // 클릭 가능한 조상(행/카드 등) 안에 놓였을 때 트리거 클릭이 조상의
+        // onClick 으로 번지지 않게 한다(행 선택/네비게이션 오작동 방지).
+        e.stopPropagation();
         el.props.onClick?.(e);
         if (disabled) return;
         // closeOnOutsideClick=false 면 backdrop 뿐 아니라 트리거 재클릭으로도
@@ -355,9 +358,13 @@ export function Dropdown(props: DropdownProps) {
             onMouseDownCapture={() => {
               insideRef.current = true;
             }}
+            // 패널은 portal(document.body) 로 그려지지만 React 이벤트는 트리
+            // 기준으로 버블링돼 트리거의 조상까지 올라간다. 패널 내부 클릭이
+            // 클릭 가능한 조상(행/카드 등)으로 새지 않도록 여기서 막는다.
+            onClick={(e) => e.stopPropagation()}
             style={style ?? { left: -9999, top: -9999 }}
             className={cn(
-              "fixed z-[70] overflow-auto rounded-md border border-line bg-surface shadow-2",
+              "fixed z-popover overflow-auto rounded-md border border-line bg-surface shadow-2",
               "focus-visible:outline-none",
               isMenu ? "min-w-40 max-h-60 py-1" : "max-h-[70vh] min-w-48 p-3",
               className,

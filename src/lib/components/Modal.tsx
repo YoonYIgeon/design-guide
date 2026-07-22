@@ -6,6 +6,13 @@ import { Button } from "./Button";
 /** 패널 최대 폭. 기본 "md"(기존 동작과 동일). 테이블 등 넓은 내용은 lg~2xl 사용. */
 export type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl";
 
+/**
+ * 겹침 레이어. 기본 "modal" 은 팝오버(드롭다운·셀렉트) 아래에 놓여, 모달 안에서
+ * 연 셀렉트가 모달 위로 뜨도록 합니다. "alert" 는 팝오버 위로 올라오는
+ * 인터럽트 레이어로, AlertDialog/PromptDialog 가 사용합니다(tokens.css --au-z-*).
+ */
+export type ModalLayer = "modal" | "alert";
+
 export interface ModalProps {
   open: boolean;
   title: ReactNode;
@@ -15,6 +22,8 @@ export interface ModalProps {
   size?: ModalSize;
   /** ESC / 오버레이 클릭 / 닫기 버튼으로 닫힘 (기본 true). */
   dismissible?: boolean;
+  /** 겹침 레이어 (기본 "modal"). AlertDialog/PromptDialog 는 "alert" 로 팝오버 위에 뜹니다. */
+  layer?: ModalLayer;
   onClose: () => void;
 }
 
@@ -34,6 +43,7 @@ export function Modal({
   footer,
   size = "md",
   dismissible = true,
+  layer = "modal",
   onClose,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -64,7 +74,10 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className={cn(
+        "fixed inset-0 flex items-center justify-center p-4",
+        layer === "alert" ? "z-alert" : "z-modal",
+      )}
       role="dialog"
       aria-modal="true"
     >

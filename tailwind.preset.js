@@ -62,6 +62,14 @@ export default {
       fontFamily: {
         sans: "var(--au-font-sans)",
       },
+      // z-index 레이어(겹침 순서의 단일 원천). 값의 원천은 tokens.css 의 --au-z-*.
+      // 컴포넌트는 z-modal / z-toast / z-popover / z-alert 유틸리티만 사용합니다.
+      zIndex: {
+        modal: "var(--au-z-modal)",
+        toast: "var(--au-z-toast)",
+        popover: "var(--au-z-popover)",
+        alert: "var(--au-z-alert)",
+      },
     },
   },
 };

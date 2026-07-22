@@ -412,7 +412,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
               aria-multiselectable={multiple || undefined}
               style={style ?? { left: -9999, top: -9999 }}
               className={cn(
-                "fixed z-[70] max-h-60 overflow-auto rounded-md border border-line bg-surface py-1 shadow-2",
+                "fixed z-popover max-h-60 overflow-auto rounded-md border border-line bg-surface py-1 shadow-2",
                 "focus-visible:outline-none",
               )}
             >
