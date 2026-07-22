@@ -121,9 +121,12 @@ export function FormsPage() {
   const [perms, setPerms] = useState({ read: true, write: false, delete: false });
   const [agree, setAgree] = useState(false);
 
-  // 필터 드롭다운(커스텀 콘텐츠) 상태 — 체크박스 클릭은 패널을 닫지 않고,
-  // "적용" 버튼을 눌러야 Dropdown 이 넘겨주는 close() 로 닫힙니다.
+  // 필터 드롭다운(커스텀 콘텐츠) 상태 — "적용"으로 확정한 값(statusFilter)과
+  // 패널에서 편집 중인 임시값(statusDraft)을 분리합니다. 체크박스는 draft 만 바꾸고,
+  // "적용"(close)에서 draft 를 확정, "취소"(바깥 클릭/Esc → onCancel)에서 draft 를
+  // 마지막 적용값으로 되돌립니다.
   const [statusFilter, setStatusFilter] = useState<string[]>(["active"]);
+  const [statusDraft, setStatusDraft] = useState<string[]>(statusFilter);
 
   // 스텝 셀렉터(다섯 단계) 상태 — 와인 감각 평가 예시.
   const [sweetness, setSweetness] = useState(1);
@@ -358,10 +361,15 @@ export function FormsPage() {
 
           {/* 커스텀 콘텐츠 모드 — 필터 폼처럼 임의 구성을 얹고, "적용" 클릭 시에만 닫힙니다.
               closeOnOutsideClick={false} 로 바깥(backdrop) 클릭·트리거 재클릭에도
-              닫히지 않게 해 실수로 필터가 사라지지 않도록 합니다(Esc·적용 버튼으로만 닫힘). */}
+              닫히지 않게 해 실수로 필터가 사라지지 않도록 합니다(Esc·적용 버튼으로만 닫힘).
+              onCancel 로 "취소"를 취소 버튼과 동일하게 처리 — 편집 중이던 draft 를
+              마지막 적용값으로 되돌립니다(적용=close 는 되돌리지 않음). 여기선 바깥
+              클릭이 backdrop 에 막히므로 취소는 Esc 로 발화합니다(closeOnOutsideClick
+              기본값이면 바깥 클릭도 취소가 됩니다). */}
           <Dropdown
             align="start"
             closeOnOutsideClick={false}
+            onCancel={() => setStatusDraft(statusFilter)}
             content={({ close }) => (
               <div className="flex w-52 flex-col gap-3">
                 <p className="text-sm font-medium text-text">상태 필터</p>
@@ -370,9 +378,9 @@ export function FormsPage() {
                     <Checkbox
                       key={opt.value}
                       label={opt.label}
-                      checked={statusFilter.includes(opt.value)}
+                      checked={statusDraft.includes(opt.value)}
                       onChange={(e) =>
-                        setStatusFilter((prev) =>
+                        setStatusDraft((prev) =>
                           e.target.checked
                             ? [...prev, opt.value]
                             : prev.filter((v) => v !== opt.value),
@@ -382,10 +390,17 @@ export function FormsPage() {
                   ))}
                 </div>
                 <div className="flex justify-end gap-2 border-t border-line pt-3">
-                  <Button variant="ghost" size="sm" onClick={() => setStatusFilter([])}>
+                  <Button variant="ghost" size="sm" onClick={() => setStatusDraft([])}>
                     초기화
                   </Button>
-                  <Button variant="primary" size="sm" onClick={close}>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      setStatusFilter(statusDraft);
+                      close();
+                    }}
+                  >
                     적용
                   </Button>
                 </div>
