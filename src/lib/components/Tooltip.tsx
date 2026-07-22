@@ -157,7 +157,7 @@ export function Tooltip({
           role="tooltip"
           style={bubbleStyle}
           className={cn(
-            "pointer-events-none fixed z-[70] w-max max-w-60 rounded px-2 py-1 text-xs shadow-2 transition-opacity",
+            "pointer-events-none fixed z-popover w-max max-w-60 rounded px-2 py-1 text-xs shadow-2 transition-opacity",
             "bg-text text-surface",
             visible && pos ? "opacity-100" : "invisible opacity-0",
             className,

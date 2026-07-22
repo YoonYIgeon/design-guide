@@ -364,7 +364,7 @@ export function Dropdown(props: DropdownProps) {
             onClick={(e) => e.stopPropagation()}
             style={style ?? { left: -9999, top: -9999 }}
             className={cn(
-              "fixed z-[70] overflow-auto rounded-md border border-line bg-surface shadow-2",
+              "fixed z-popover overflow-auto rounded-md border border-line bg-surface shadow-2",
               "focus-visible:outline-none",
               isMenu ? "min-w-40 max-h-60 py-1" : "max-h-[70vh] min-w-48 p-3",
               className,

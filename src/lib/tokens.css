@@ -35,6 +35,21 @@
   --au-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕",
     sans-serif;
+
+  /*
+   * z-index 레이어 (겹침 순서의 단일 원천).
+   * 값이 아니라 "순서"가 계약입니다 — 아래에서 위로 쌓입니다.
+   *   modal(기본 다이얼로그) < toast < popover < alert
+   * - popover(드롭다운·셀렉트·툴팁)를 modal 위에 둬, 모달 안에서 연 셀렉트가
+   *   모달에 가리지 않도록 합니다.
+   * - alert(확인/입력 인터럽트 다이얼로그)는 popover 위에 둬, 열려 있는 드롭다운
+   *   위로 확실히 올라오게 합니다.
+   * 테마와 무관한 구조값이라 다크 테마에서 재정의하지 않습니다.
+   */
+  --au-z-modal: 1000;
+  --au-z-toast: 1100;
+  --au-z-popover: 1200;
+  --au-z-alert: 1300;
 }
 
 /* 다크 테마 */

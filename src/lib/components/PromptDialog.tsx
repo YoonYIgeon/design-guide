@@ -86,6 +86,7 @@ export function PromptDialog({
     <Modal
       open={open}
       title={title}
+      layer="alert"
       dismissible={!loading}
       onClose={onCancel}
       footer={
