@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import { cn } from "../utils/cn";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
@@ -54,21 +54,32 @@ export interface DataTableProps<T> {
   emptyText?: string;
   onRowClick?: (row: T) => void;
   /**
-   * 체크박스 열을 맨 왼쪽에 추가합니다. 기본 false.
+   * 선택 열을 맨 왼쪽에 추가합니다. 기본 false.
    * 선택 상태는 컨트롤드입니다 — `value` 로 내려주고 `onChange` 로 올려받습니다(프레젠테이션 전용).
+   * 컨트롤 모양은 `selectionMode` 로 정합니다(다중=체크박스, 단일=라디오).
    */
   checkable?: boolean;
+  /**
+   * 선택 방식. 기본 `"multiple"`.
+   * - `"multiple"`: 체크박스. 전체 선택 헤더(부분 선택 시 indeterminate)를 함께 렌더.
+   * - `"single"`: 라디오. 한 번에 한 행만 선택되고 전체 선택 헤더는 없습니다.
+   *   `value` 에는 0~1개의 id 만 담기며, 새 행을 고르면 이전 선택은 자동으로 대체됩니다.
+   */
+  selectionMode?: "single" | "multiple";
   /**
    * 선택된 행의 uniqueId 목록(controlled). `rowKey(row)` 값과 매칭됩니다.
    * `checkable` 일 때만 의미가 있습니다. 페이지네이션이 있어도 이 배열은 전체 선택을 담고,
    * 현재 페이지에 없는 선택은 그대로 보존됩니다.
+   * `selectionMode="single"` 이면 최대 1개만 담습니다.
    */
   value?: Array<string | number>;
   /**
    * 선택 변경 콜백.
    * - `selectedIds`: 변경이 반영된 "다음 선택 전체"(그대로 `value` 에 넣으면 됩니다).
+   *   단일 모드에서는 항상 길이 0~1.
    * - `changed`: 이번 동작에서 토글된 행들. 각 항목이 `{ id(uniqueId), row, checked }`.
-   *   행 클릭이면 1건, 전체 선택/해제면 상태가 실제로 바뀐 행들만 여러 건 들어옵니다.
+   *   다중: 행 클릭이면 1건, 전체 선택/해제면 상태가 실제로 바뀐 행들만 여러 건.
+   *   단일: 방금 고른 행 1건(`checked: true`). 이전 선택 해제는 `selectedIds` 로만 반영됩니다.
    *
    * 참고: `row` 원본 데이터는 "현재 페이지에 보이는(=토글 가능한)" 행에 대해서만 제공됩니다.
    * 다른 페이지의 선택은 id 로만 `selectedIds` 에 유지됩니다.
@@ -78,8 +89,8 @@ export interface DataTableProps<T> {
     changed: DataTableSelectionChange<T>[],
   ) => void;
   /**
-   * 행별 선택 가능 여부(선택). false 를 반환하면 해당 행 체크박스를 비활성화하고
-   * 전체 선택 대상에서도 제외합니다. 예: 자기 자신 계정은 선택 못 하게.
+   * 행별 선택 가능 여부(선택). false 를 반환하면 해당 행의 선택 컨트롤(체크박스/라디오)을
+   * 비활성화하고 전체 선택 대상에서도 제외합니다. 예: 자기 자신 계정은 선택 못 하게.
    */
   isRowSelectable?: (row: T) => boolean;
   /**
@@ -188,20 +199,25 @@ export function DataTable<T>({
   pagination,
   fillHeight = false,
   checkable = false,
+  selectionMode = "multiple",
   value,
   onChange,
   isRowSelectable,
 }: DataTableProps<T>) {
+  // 같은 페이지에 여러 테이블이 있어도 라디오 그룹이 섞이지 않도록 고유 name 을 만듭니다.
+  const radioName = useId();
+  const single = selectionMode === "single";
   const selectedSet = new Set(value ?? []);
   // 전체 선택 계산은 "현재 페이지의 선택 가능한 행"만 대상으로 합니다.
   const selectableRows = rows.filter((row) => isRowSelectable?.(row) ?? true);
+  // 전체 선택 헤더는 다중 모드에서만 씁니다.
   const allSelected =
     selectableRows.length > 0 &&
     selectableRows.every((row) => selectedSet.has(rowKey(row)));
   const someSelected = selectableRows.some((row) => selectedSet.has(rowKey(row)));
   const indeterminate = someSelected && !allSelected;
 
-  /** changed 목록을 현재 value 에 반영한 "다음 선택 전체"를 계산해 콜백으로 냅니다. */
+  /** changed 목록을 현재 value 에 반영한 "다음 선택 전체"를 계산해 콜백으로 냅니다(다중). */
   function emitChange(changed: DataTableSelectionChange<T>[]) {
     if (!onChange || changed.length === 0) return;
     // Set 삽입 순서 = 기존 value 순서 + 새로 추가된 순서(안정적).
@@ -225,6 +241,13 @@ export function DataTable<T>({
       .filter((row) => selectedSet.has(rowKey(row)) !== target)
       .map((row) => ({ id: rowKey(row), row, checked: target }));
     emitChange(changed);
+  }
+
+  /** 단일 선택: 고른 행으로 전체를 대체합니다(이전 선택은 selectedIds 로만 해제). */
+  function selectSingle(row: T) {
+    const id = rowKey(row);
+    if (selectedSet.has(id)) return; // 이미 선택된 라디오 재클릭은 무시(표준 동작).
+    onChange?.([id], [{ id, row, checked: true }]);
   }
 
   return (
@@ -252,13 +275,16 @@ export function DataTable<T>({
                       "sticky top-0 z-10 bg-surface-muted shadow-[inset_0_-1px_0_var(--au-color-border)]",
                   )}
                 >
-                  <Checkbox
-                    aria-label="전체 선택"
-                    checked={allSelected}
-                    indeterminate={indeterminate}
-                    disabled={selectableRows.length === 0}
-                    onChange={toggleAll}
-                  />
+                  {/* 전체 선택은 다중 모드에서만. 단일 모드는 헤더 자리만 비웁니다. */}
+                  {!single && (
+                    <Checkbox
+                      aria-label="전체 선택"
+                      checked={allSelected}
+                      indeterminate={indeterminate}
+                      disabled={selectableRows.length === 0}
+                      onChange={toggleAll}
+                    />
+                  )}
                 </th>
               )}
               {columns.map((col) => (
@@ -311,15 +337,33 @@ export function DataTable<T>({
                   {checkable && (
                     <td
                       className="px-4 py-3 text-center align-middle"
-                      // 체크박스 클릭이 행 클릭(onRowClick)까지 번지지 않게 막습니다.
+                      // 선택 컨트롤 클릭이 행 클릭(onRowClick)까지 번지지 않게 막습니다.
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Checkbox
-                        aria-label="행 선택"
-                        checked={selectedSet.has(rowKey(row))}
-                        disabled={!(isRowSelectable?.(row) ?? true)}
-                        onChange={() => toggleRow(row)}
-                      />
+                      {single ? (
+                        <input
+                          type="radio"
+                          name={radioName}
+                          aria-label="행 선택"
+                          checked={selectedSet.has(rowKey(row))}
+                          disabled={!(isRowSelectable?.(row) ?? true)}
+                          onChange={() => selectSingle(row)}
+                          className={cn(
+                            "h-4 w-4 shrink-0 border-line accent-primary",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                            (isRowSelectable?.(row) ?? true)
+                              ? "cursor-pointer"
+                              : "cursor-not-allowed opacity-60",
+                          )}
+                        />
+                      ) : (
+                        <Checkbox
+                          aria-label="행 선택"
+                          checked={selectedSet.has(rowKey(row))}
+                          disabled={!(isRowSelectable?.(row) ?? true)}
+                          onChange={() => toggleRow(row)}
+                        />
+                      )}
                     </td>
                   )}
                   {columns.map((col) => (
