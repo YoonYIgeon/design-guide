@@ -1,10 +1,12 @@
 import { forwardRef, useId, type TextareaHTMLAttributes, type ReactNode } from "react";
 import { cn } from "../utils/cn";
 
-export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "value"> {
   label?: ReactNode;
   hint?: ReactNode;
   error?: ReactNode;
+  /** 제어값. API/DB 에서 온 `null` 도 그대로 받아 빈 문자열로 표시합니다. */
+  value?: TextareaHTMLAttributes<HTMLTextAreaElement>["value"] | null;
 }
 
 /**
@@ -13,7 +15,7 @@ export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
  * (docs/08-presentational-only.md)
  */
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ label, hint, error, id, className, required, readOnly, rows = 4, ...rest }, ref) => {
+  ({ label, hint, error, id, className, required, readOnly, rows = 4, value, ...rest }, ref) => {
     const autoId = useId();
     const textareaId = id ?? autoId;
     const describedBy = error ? `${textareaId}-error` : hint ? `${textareaId}-hint` : undefined;
@@ -32,6 +34,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           rows={rows}
           required={required}
           readOnly={readOnly}
+          value={value === null ? "" : value}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
