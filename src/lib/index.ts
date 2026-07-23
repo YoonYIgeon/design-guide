@@ -88,6 +88,7 @@ export {
   type AlertApi,
   type AlertOptions,
   type ConfirmOptions,
+  type PromptOptions,
 } from "./providers/AlertProvider";
 
 export { cn } from "./utils/cn";

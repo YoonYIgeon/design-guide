@@ -116,7 +116,7 @@ export default function App() {
   // 인증 상태·토큰 저장/복원·로그인 API 호출은 AuthProvider(하네스)가 담당합니다.
   const { authed, login, logout, loggingIn, loginError } = useAuth();
   const toast = useToast();
-  const { confirm } = useAlert();
+  const { confirm, prompt } = useAlert();
   const [dark, setDark] = useState(() => {
     try {
       return localStorage.getItem(THEME_STORAGE_KEY) === "dark";
@@ -229,6 +229,18 @@ export default function App() {
           ...prev,
         ]);
         toast.success("사용자를 추가했습니다.");
+      }}
+      onRenameUser={async (id) => {
+        const target = users.find((u) => u.id === id);
+        const next = await prompt("새 이름을 입력하세요.", target?.name ?? "", {
+          title: "이름 변경",
+          label: "이름",
+          required: true,
+        });
+        const name = next?.trim();
+        if (!name || name === target?.name) return;
+        setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, name } : u)));
+        toast.success("이름을 변경했습니다.");
       }}
       onDeleteUser={async (id) => {
         const target = users.find((u) => u.id === id);

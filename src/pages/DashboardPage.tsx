@@ -10,7 +10,7 @@ import {
   type Column,
   type DataTablePagination,
 } from "../lib";
-import { IconPlus, IconSearch, IconTrash, IconUsers } from "../lib/icons";
+import { IconPencil, IconPlus, IconSearch, IconTrash, IconUsers } from "../lib/icons";
 
 /** 데모 표시용 행 모양. 실제 데이터 형태는 소비 시스템이 정합니다. */
 export interface UserRow {
@@ -41,6 +41,8 @@ export interface DashboardPageProps {
   /** 사용자 추가/삭제 의도 전달만. 실제 반영은 컨테이너가 처리. */
   onCreateUser: (payload: { name: string; email: string }) => void;
   onDeleteUser: (id: number) => void;
+  /** 사용자 이름 변경 의도 전달만. 값 입력·반영은 컨테이너가 처리. */
+  onRenameUser: (id: number) => void;
   /** 페이지네이션(controlled). 페이지·페이지 크기 상태는 컨테이너가 보유합니다. */
   pagination?: DataTablePagination;
 }
@@ -61,6 +63,7 @@ export function DashboardPage({
   onQueryChange,
   onCreateUser,
   onDeleteUser,
+  onRenameUser,
   pagination,
 }: DashboardPageProps) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -97,15 +100,26 @@ export function DashboardPage({
       header: "",
       align: "right",
       render: (u) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-label={`${u.name} 삭제`}
-          onClick={() => onDeleteUser(u.id)}
-          className="h-8 w-8 p-0 text-text-muted hover:text-danger"
-        >
-          <IconTrash width={16} height={16} />
-        </Button>
+        <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={`${u.name} 이름 변경`}
+            onClick={() => onRenameUser(u.id)}
+            className="h-8 w-8 p-0 text-text-muted hover:text-text"
+          >
+            <IconPencil width={16} height={16} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={`${u.name} 삭제`}
+            onClick={() => onDeleteUser(u.id)}
+            className="h-8 w-8 p-0 text-text-muted hover:text-danger"
+          >
+            <IconTrash width={16} height={16} />
+          </Button>
+        </div>
       ),
     },
   ];

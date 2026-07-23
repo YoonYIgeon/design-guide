@@ -102,9 +102,12 @@ import { ToastProvider, AlertProvider, useToast, useAlert } from "@company/admin
 
 // 어디서든 호출
 const toast = useToast();
-const { confirm } = useAlert();
+const { confirm, prompt } = useAlert();
 toast.success("저장되었습니다.");
 if (await confirm("정말 삭제할까요?")) { /* … */ }
+
+const name = await prompt("새 이름을 입력하세요.", "기존 이름", { required: true });
+if (name != null) { /* 확인: 입력값, 취소: null */ }
 ```
 
 > 실제 export 목록은 `docs/04-ui-guidelines.md`와 소스의 `src/lib/index.ts`를 기준으로 합니다.
