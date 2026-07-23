@@ -50,11 +50,15 @@ interface DropdownBaseProps {
    * 동일하게 처리하고 싶을 때 씁니다(예: 미적용 값 되돌리기). 커스텀 모드에서
    * content 가 받는 `close()`(=적용/확정)와 구분됩니다: `close()` 는 onCancel 을
    * 호출하지 않습니다. 항목 선택(onSelect) 이나 트리거 재클릭 닫기에도 발화하지
-   * 않습니다. 호출 후 패널은 닫힙니다.
+   * 않습니다.
+   *
+   * 반환값으로 닫기를 막을 수 있습니다: `false` 를 반환하면 닫기를 취소하고 패널을
+   * 유지합니다(예: "저장 안 된 변경이 있는데 닫을까요?" 확인이 필요할 때). 그 외
+   * (반환 없음/`true`)에는 닫습니다.
    * (closeOnOutsideClick=false 면 바깥 클릭은 backdrop 에 막히므로 이때 onCancel 은
    * Esc 로만 발화합니다.)
    */
-  onCancel?: () => void;
+  onCancel?: () => boolean | void;
   className?: string;
 }
 
@@ -153,8 +157,9 @@ export function Dropdown(props: DropdownProps) {
   onCancelRef.current = onCancel;
   // 바깥 클릭·Esc 로 닫는 경로. "취소" 로 간주해 onCancel 을 먼저 부르고 닫는다.
   // 항목 선택·트리거 재클릭·content 의 close() 는 이 경로를 타지 않는다.
+  // onCancel 이 false 를 반환하면 닫기를 취소하고 패널을 유지한다.
   const dismiss = useCallback(() => {
-    onCancelRef.current?.();
+    if (onCancelRef.current?.() === false) return;
     close();
   }, [close]);
 
