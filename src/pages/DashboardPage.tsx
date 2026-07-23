@@ -68,6 +68,8 @@ export function DashboardPage({
 }: DashboardPageProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "" });
+  // 선택 상태는 하네스(이 페이지)가 보유합니다. DataTable 은 value 로 받아 그리고 onChange 로만 냅니다.
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   const columns: Column<UserRow>[] = [
     {
@@ -168,6 +170,14 @@ export function DashboardPage({
         className="flex min-h-0 flex-1 flex-col"
       >
         <div className="flex min-h-0 flex-1 flex-col p-4">
+          {selectedIds.length > 0 && (
+            <div className="mb-3 flex shrink-0 items-center justify-between rounded-md border border-line bg-surface-muted px-4 py-2 text-sm">
+              <span className="text-text">{selectedIds.length}명 선택됨</span>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedIds([])}>
+                선택 해제
+              </Button>
+            </div>
+          )}
           <DataTable
             columns={columns}
             rows={users}
@@ -177,6 +187,9 @@ export function DashboardPage({
             emptyText={query ? "검색 결과가 없습니다." : "등록된 사용자가 없습니다."}
             pagination={pagination}
             fillHeight
+            checkable
+            value={selectedIds}
+            onChange={(ids) => setSelectedIds(ids as number[])}
           />
         </div>
       </Card>

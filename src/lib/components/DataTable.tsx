@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "../utils/cn";
 import { Button } from "./Button";
+import { Checkbox } from "./Checkbox";
 import { EmptyState } from "./EmptyState";
 
 export interface Column<T> {
@@ -34,6 +35,16 @@ export interface DataTablePagination {
   onPageSizeChange?: (pageSize: number) => void;
 }
 
+/** onChange 로 올려주는 "이번에 토글된" 행 1건. id 는 rowKey 값, row 는 원본 데이터. */
+export interface DataTableSelectionChange<T> {
+  /** rowKey(row) 로 계산된 uniqueId. */
+  id: string | number;
+  /** 토글된 행의 원본 데이터(현재 페이지의 행). */
+  row: T;
+  /** 토글 후 상태. true=선택됨, false=해제됨. */
+  checked: boolean;
+}
+
 export interface DataTableProps<T> {
   columns: Column<T>[];
   rows: T[];
@@ -42,6 +53,35 @@ export interface DataTableProps<T> {
   error?: string | null;
   emptyText?: string;
   onRowClick?: (row: T) => void;
+  /**
+   * 체크박스 열을 맨 왼쪽에 추가합니다. 기본 false.
+   * 선택 상태는 컨트롤드입니다 — `value` 로 내려주고 `onChange` 로 올려받습니다(프레젠테이션 전용).
+   */
+  checkable?: boolean;
+  /**
+   * 선택된 행의 uniqueId 목록(controlled). `rowKey(row)` 값과 매칭됩니다.
+   * `checkable` 일 때만 의미가 있습니다. 페이지네이션이 있어도 이 배열은 전체 선택을 담고,
+   * 현재 페이지에 없는 선택은 그대로 보존됩니다.
+   */
+  value?: Array<string | number>;
+  /**
+   * 선택 변경 콜백.
+   * - `selectedIds`: 변경이 반영된 "다음 선택 전체"(그대로 `value` 에 넣으면 됩니다).
+   * - `changed`: 이번 동작에서 토글된 행들. 각 항목이 `{ id(uniqueId), row, checked }`.
+   *   행 클릭이면 1건, 전체 선택/해제면 상태가 실제로 바뀐 행들만 여러 건 들어옵니다.
+   *
+   * 참고: `row` 원본 데이터는 "현재 페이지에 보이는(=토글 가능한)" 행에 대해서만 제공됩니다.
+   * 다른 페이지의 선택은 id 로만 `selectedIds` 에 유지됩니다.
+   */
+  onChange?: (
+    selectedIds: Array<string | number>,
+    changed: DataTableSelectionChange<T>[],
+  ) => void;
+  /**
+   * 행별 선택 가능 여부(선택). false 를 반환하면 해당 행 체크박스를 비활성화하고
+   * 전체 선택 대상에서도 제외합니다. 예: 자기 자신 계정은 선택 못 하게.
+   */
+  isRowSelectable?: (row: T) => boolean;
   /**
    * 행별 추가 className(선택). 행 상태에 따라 스타일을 덧입히는 이스케이프 해치입니다.
    * 예: 선택된 행 배경 강조 — `rowClassName={(u) => u.id === selectedId ? "bg-primary/5" : undefined}`.
@@ -147,7 +187,46 @@ export function DataTable<T>({
   rowClassName,
   pagination,
   fillHeight = false,
+  checkable = false,
+  value,
+  onChange,
+  isRowSelectable,
 }: DataTableProps<T>) {
+  const selectedSet = new Set(value ?? []);
+  // 전체 선택 계산은 "현재 페이지의 선택 가능한 행"만 대상으로 합니다.
+  const selectableRows = rows.filter((row) => isRowSelectable?.(row) ?? true);
+  const allSelected =
+    selectableRows.length > 0 &&
+    selectableRows.every((row) => selectedSet.has(rowKey(row)));
+  const someSelected = selectableRows.some((row) => selectedSet.has(rowKey(row)));
+  const indeterminate = someSelected && !allSelected;
+
+  /** changed 목록을 현재 value 에 반영한 "다음 선택 전체"를 계산해 콜백으로 냅니다. */
+  function emitChange(changed: DataTableSelectionChange<T>[]) {
+    if (!onChange || changed.length === 0) return;
+    // Set 삽입 순서 = 기존 value 순서 + 새로 추가된 순서(안정적).
+    const next = new Set(value ?? []);
+    for (const c of changed) {
+      if (c.checked) next.add(c.id);
+      else next.delete(c.id);
+    }
+    onChange(Array.from(next), changed);
+  }
+
+  function toggleRow(row: T) {
+    const id = rowKey(row);
+    emitChange([{ id, row, checked: !selectedSet.has(id) }]);
+  }
+
+  function toggleAll() {
+    const target = !allSelected;
+    // 상태가 실제로 바뀌는 행만 changed 에 담습니다.
+    const changed = selectableRows
+      .filter((row) => selectedSet.has(rowKey(row)) !== target)
+      .map((row) => ({ id: rowKey(row), row, checked: target }));
+    emitChange(changed);
+  }
+
   return (
     <div
       className={cn(
@@ -164,6 +243,24 @@ export function DataTable<T>({
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-line bg-surface-muted">
+              {checkable && (
+                <th
+                  style={{ width: "1%" }}
+                  className={cn(
+                    "w-px whitespace-nowrap px-4 py-2.5 text-center align-middle",
+                    fillHeight &&
+                      "sticky top-0 z-10 bg-surface-muted shadow-[inset_0_-1px_0_var(--au-color-border)]",
+                  )}
+                >
+                  <Checkbox
+                    aria-label="전체 선택"
+                    checked={allSelected}
+                    indeterminate={indeterminate}
+                    disabled={selectableRows.length === 0}
+                    onChange={toggleAll}
+                  />
+                </th>
+              )}
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -186,6 +283,11 @@ export function DataTable<T>({
             {loading &&
               Array.from({ length: 4 }).map((_, i) => (
                 <tr key={`sk-${i}`} className="border-b border-line last:border-0">
+                  {checkable && (
+                    <td className="px-4 py-3">
+                      <div className="h-4 w-4 animate-pulse rounded bg-surface-muted" />
+                    </td>
+                  )}
                   {columns.map((col) => (
                     <td key={col.key} className="px-4 py-3">
                       <div className="h-4 w-full max-w-[160px] animate-pulse rounded bg-surface-muted" />
@@ -206,6 +308,20 @@ export function DataTable<T>({
                     rowClassName?.(row),
                   )}
                 >
+                  {checkable && (
+                    <td
+                      className="px-4 py-3 text-center align-middle"
+                      // 체크박스 클릭이 행 클릭(onRowClick)까지 번지지 않게 막습니다.
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Checkbox
+                        aria-label="행 선택"
+                        checked={selectedSet.has(rowKey(row))}
+                        disabled={!(isRowSelectable?.(row) ?? true)}
+                        onChange={() => toggleRow(row)}
+                      />
+                    </td>
+                  )}
                   {columns.map((col) => (
                     <td
                       key={col.key}
