@@ -6,8 +6,8 @@ export type AsyncInputStatus = "idle" | "loading" | "success" | "error";
 
 export interface AsyncInputProps<Res = unknown>
   extends Omit<InputProps, "value" | "onChange" | "trailing"> {
-  /** 제어값. */
-  value: string;
+  /** 제어값. API/DB 에서 온 `null` 도 그대로 받아 빈 문자열로 다룹니다. */
+  value: string | null;
   /** 값 변경(즉시 반영). 저장은 컨테이너 책임. */
   onChange: (value: string) => void;
   /**
@@ -53,7 +53,7 @@ export interface AsyncInputProps<Res = unknown>
  * **전부 주입된 콜백**입니다. 컴포넌트 내부에는 fetch/axios·도메인 규칙이 없습니다.
  */
 export function AsyncInput<Res = unknown>({
-  value,
+  value: rawValue,
   onChange,
   resolve,
   debounceMs = 400,
@@ -70,6 +70,7 @@ export function AsyncInput<Res = unknown>({
   readOnly,
   ...inputProps
 }: AsyncInputProps<Res>) {
+  const value = rawValue ?? "";
   const [status, setStatus] = useState<AsyncInputStatus>("idle");
   const [message, setMessage] = useState<ReactNode>(null);
 

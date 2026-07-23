@@ -1,18 +1,20 @@
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from "react";
 import { cn } from "../utils/cn";
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "value"> {
   label?: ReactNode;
   hint?: ReactNode;
   error?: ReactNode;
   leading?: ReactNode;
   /** 입력 오른쪽 끝 장식(스피너·상태 아이콘 등). */
   trailing?: ReactNode;
+  /** 제어값. API/DB 에서 온 `null` 도 그대로 받아 빈 문자열로 표시합니다. */
+  value?: InputHTMLAttributes<HTMLInputElement>["value"] | null;
 }
 
 /** 레이블·힌트·에러를 접근성 속성과 함께 연결한 입력 필드. */
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, hint, error, leading, trailing, id, className, required, readOnly, ...rest }, ref) => {
+  ({ label, hint, error, leading, trailing, id, className, required, readOnly, value, ...rest }, ref) => {
     const autoId = useId();
     const inputId = id ?? autoId;
     const describedBy = error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined;
@@ -36,6 +38,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             required={required}
             readOnly={readOnly}
+            value={value === null ? "" : value}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
             className={cn(
