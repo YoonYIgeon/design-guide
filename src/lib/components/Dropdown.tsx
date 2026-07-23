@@ -55,10 +55,14 @@ interface DropdownBaseProps {
    * 반환값으로 닫기를 막을 수 있습니다: `false` 를 반환하면 닫기를 취소하고 패널을
    * 유지합니다(예: "저장 안 된 변경이 있는데 닫을까요?" 확인이 필요할 때). 그 외
    * (반환 없음/`true`)에는 닫습니다.
+   *
+   * Promise 를 반환하면(예: 확인 다이얼로그를 `await`) 결과가 나올 때까지 패널을
+   * 열어둔 채 기다렸다가, `false` 로 resolve 되거나 reject 되면 유지하고 그 외에는
+   * 닫습니다. 대기 중 반복 dismiss(연속 Esc 등)는 무시됩니다.
    * (closeOnOutsideClick=false 면 바깥 클릭은 backdrop 에 막히므로 이때 onCancel 은
    * Esc 로만 발화합니다.)
    */
-  onCancel?: () => boolean | void;
+  onCancel?: () => boolean | void | Promise<boolean | void>;
   className?: string;
 }
 
@@ -155,11 +159,30 @@ export function Dropdown(props: DropdownProps) {
   // 의존성을 흔들지 않는다(onOpenChange 와 같은 패턴).
   const onCancelRef = useRef(onCancel);
   onCancelRef.current = onCancel;
+  // onCancel 이 Promise 를 반환한 동안(비동기 확인 대기 중)을 표시해 반복 dismiss 를 막는다.
+  const cancelingRef = useRef(false);
   // 바깥 클릭·Esc 로 닫는 경로. "취소" 로 간주해 onCancel 을 먼저 부르고 닫는다.
   // 항목 선택·트리거 재클릭·content 의 close() 는 이 경로를 타지 않는다.
-  // onCancel 이 false 를 반환하면 닫기를 취소하고 패널을 유지한다.
+  // onCancel 이 false 를 반환하면 닫기를 취소하고 패널을 유지한다. Promise 를
+  // 반환하면 열어둔 채 기다렸다가 결과로 판단한다(false/reject → 유지, 그 외 → 닫기).
   const dismiss = useCallback(() => {
-    if (onCancelRef.current?.() === false) return;
+    if (cancelingRef.current) return;
+    const result = onCancelRef.current?.();
+    if (result != null && typeof (result as PromiseLike<unknown>).then === "function") {
+      cancelingRef.current = true;
+      Promise.resolve(result).then(
+        (value) => {
+          cancelingRef.current = false;
+          if (value !== false) close();
+        },
+        () => {
+          // reject 는 취소로 간주 — 값 손실을 막기 위해 닫지 않고 재시도를 허용한다.
+          cancelingRef.current = false;
+        },
+      );
+      return;
+    }
+    if (result === false) return;
     close();
   }, [close]);
 
