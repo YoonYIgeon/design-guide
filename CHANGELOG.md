@@ -16,6 +16,10 @@
   데이터를 함께 준다(현재 페이지 행 한정). `isRowSelectable?: (row) => boolean` 으로 특정 행의 선택을
   비활성화(전체 선택 대상에서도 제외)할 수 있다. 체크박스 클릭은 `onRowClick` 으로 전파되지 않는다.
   기본 `false` 로 기존 동작과 하위 호환. 데모 하네스(`DashboardPage`)에 선택 상태·선택 개수 표시를 연결.
+- `DataTable` 에 `selectionMode?: "single" | "multiple"` prop 추가(기본 `"multiple"`) — `checkable` 의
+  선택 컨트롤 모양을 정한다. `"multiple"` 은 체크박스+전체 선택 헤더(기존 동작), `"single"` 은 라디오로
+  한 번에 한 행만 선택되고 전체 선택 헤더가 없다. 단일 모드에서 `value` 는 0~1개의 id 만 담고, 새 행을
+  고르면 이전 선택이 자동 대체되며 `onChange` 의 `changed` 에는 방금 고른 행 1건(`checked: true`)만 담긴다.
 - `Dropdown` 에 `onOpenChange?: (open: boolean) => void` prop 추가 — 패널이 열리거나
   닫힐 때(열림=`true`, 닫힘=`false`) 호출된다. 열림 상태는 컴포넌트가 내부에서 관리하는
   비제어 방식 그대로이며, 이 콜백은 상태 변화만 알려 준다(추적·포커스 이동 등 부수효과는 컨테이너 책임).
