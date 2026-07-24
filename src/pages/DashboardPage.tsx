@@ -190,6 +190,11 @@ export function DashboardPage({
             checkable
             value={selectedIds}
             onChange={(ids) => setSelectedIds(ids as number[])}
+            // 관리자 계정은 일괄 선택 대상에서 제외합니다(행 값 기반 조건부 disabled).
+            // 전체 선택(헤더)을 눌러도 이 행들의 선택 상태는 바뀌지 않습니다.
+            isRowSelectable={(u) => u.role !== "관리자"}
+            // 정지된 사용자 행을 시각적으로 구분합니다(행별 className).
+            rowClassName={(u) => (u.status === "정지" ? "bg-danger/5" : undefined)}
           />
         </div>
       </Card>
