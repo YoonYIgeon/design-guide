@@ -24,6 +24,16 @@ export interface ModalProps {
   dismissible?: boolean;
   /** 겹침 레이어 (기본 "modal"). AlertDialog/PromptDialog 는 "alert" 로 팝오버 위에 뜹니다. */
   layer?: ModalLayer;
+  /**
+   * 패널(카드) 커스텀 className (자유 조합용 이스케이프 해치).
+   * 예: 높이를 고정하고 본문만 스크롤 — `"h-[80vh] flex flex-col"`.
+   *
+   * 기본 클래스와 `size` 뒤에 이어 붙지만, Tailwind 는 클래스 나열 순서가 아니라
+   * CSS 순서로 이깁니다. 같은 속성을 덮어쓰려면 important 수정자를 쓰세요
+   * (`!max-w-none`). 최대 폭은 가능하면 `size` 로 지정하는 편이 낫습니다.
+   * 색·간격은 토큰 기반 유틸만 사용하고 하드코딩하지 마세요.
+   */
+  panelClassName?: string;
   onClose: () => void;
 }
 
@@ -44,6 +54,7 @@ export function Modal({
   size = "md",
   dismissible = true,
   layer = "modal",
+  panelClassName,
   onClose,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -92,6 +103,7 @@ export function Modal({
         className={cn(
           "relative z-10 w-full rounded-lg border border-line bg-surface shadow-3 focus-visible:outline-none",
           sizeClass[size],
+          panelClassName,
         )}
       >
         <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
