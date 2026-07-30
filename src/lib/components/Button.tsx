@@ -23,16 +23,32 @@ const sizeClass: Record<Size, string> = {
   md: "h-10 px-4 text-sm gap-2",
 };
 
-/** 액션 버튼. loading 시 중복 클릭을 차단합니다. */
+/**
+ * 액션 버튼. loading 시 중복 클릭을 차단합니다.
+ *
+ * `type` 기본값은 `"button"` 입니다 — HTML 기본값(`"submit"`)을 그대로 두면
+ * `<form>` 안에 놓인 모든 버튼(테이블 페이지네이션, 툴바 액션 등)이 클릭만으로
+ * 폼을 제출해 버립니다. 제출 버튼은 `type="submit"` 을 명시하세요.
+ */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { variant = "secondary", size = "md", loading = false, disabled, className, children, ...rest },
+    {
+      variant = "secondary",
+      size = "md",
+      loading = false,
+      type = "button",
+      disabled,
+      className,
+      children,
+      ...rest
+    },
     ref,
   ) => {
     const isDisabled = disabled || loading;
     return (
       <button
         ref={ref}
+        type={type}
         disabled={isDisabled}
         aria-busy={loading || undefined}
         className={cn(
