@@ -13,6 +13,9 @@
 - `RadioGroup` 옵션 영역의 높이가 다른 입력(`h-10`)보다 낮던 문제 수정 — 최소 높이(`2.5rem`) 확보 후 세로 가운데 정렬로 맞춤.
 
 ### Added
+- `Modal` 에 `panelClassName` prop 추가 — 패널(카드)에 커스텀 클래스를 덧입히는 이스케이프 해치.
+  기본 클래스와 `size` 뒤에 이어 붙으며(예: 높이 고정 + 본문 스크롤 `"h-[80vh] flex flex-col"`),
+  같은 속성을 덮어쓸 땐 important 수정자(`!max-w-none`)를 쓴다. 생략 시 기존 동작과 동일.
 - `DataTable` 에 `checkable` prop 추가 — `true` 면 맨 왼쪽에 체크박스 열(전체 선택 헤더 포함,
   부분 선택 시 indeterminate)을 렌더한다. 선택 상태는 컨트롤드로, 선택된 행의 `rowKey` 값 배열을
   `value` 로 내려주고 `onChange(selectedIds, changed)` 로 올려받는다. `changed` 는 이번에 토글된
