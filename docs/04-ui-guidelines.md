@@ -47,6 +47,10 @@
 | `Pagination` | 페이지 이동 | |
 | `EmptyState` | 빈 데이터 | |
 
+- `DataTable` 의 열 너비는 `Column.width`(고정 CSS 길이) 또는 `Column.size` 로 정한다.
+  `size: "fit"` 은 내용 폭에 맞춰 줄이고(배지·날짜·액션 버튼 열), `size: "grow"` 는 남는 공간을
+  가져간다(제목·이름처럼 길어지는 열). 둘 다 주면 `width` 가 이긴다.
+  테이블은 항상 컨테이너 폭을 채우므로 `"grow"` 열을 최소 한 개 두는 편이 예측 가능하다.
 - `Button` 의 `type` 기본값은 `"button"` 이다. HTML 기본값(`"submit"`)을 그대로 두면 `<form>` 안에
   놓인 모든 버튼(`DataTable` 페이지네이션, 툴바 액션 등)이 클릭만으로 폼을 제출한다.
   제출 버튼에만 `type="submit"` 을 명시한다.
