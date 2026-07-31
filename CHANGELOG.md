@@ -11,6 +11,9 @@
   `type="submit"` 을 명시하면 된다(저장소 안의 제출 버튼은 모두 이미 명시하고 있어 동작 변화 없음).
 - `RadioGroup` 이 `readOnly` 일 때 `(필수)` 표시가 사라지던 문제 수정 — 읽기 전용 표시에도 `required` 를 전달해 항상 노출.
 - `RadioGroup` 옵션 영역의 높이가 다른 입력(`h-10`)보다 낮던 문제 수정 — 최소 높이(`2.5rem`) 확보 후 세로 가운데 정렬로 맞춤.
+- `AsyncInput` 이 내부 `<input>` 으로 ref 를 넘기지 않던 문제 수정 — `forwardRef` 로 감싸
+  react-hook-form `Controller` 처럼 ref 를 주입하는 컨테이너와 호환되게 했다.
+  제네릭 `Res` 는 `forwardRef` 로 소실되므로 캐스팅으로 시그니처를 보존한다.
 
 ### Added
 - `DataTable` 의 `Column` 에 `size?: "fit" | "grow"` 옵션 추가 — 열 너비 배분 방식을 정한다.
