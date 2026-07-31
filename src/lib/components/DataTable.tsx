@@ -10,7 +10,23 @@ export interface Column<T> {
   /** 셀 렌더러. 생략 시 row[key] 를 그대로 표시. */
   render?: (row: T) => ReactNode;
   align?: "left" | "right" | "center";
+  /**
+   * 고정 너비(CSS 길이 문자열). 주면 `size` 보다 우선합니다.
+   * 예: `"12rem"`, `"120px"`, `"20%"`.
+   */
   width?: string;
+  /**
+   * 너비 배분 방식(선택). `width` 가 없을 때만 적용됩니다.
+   * - `"fit"`: 내용 폭에 딱 맞춰 줄어듭니다(줄바꿈 없음). 배지·날짜·액션 버튼 열처럼
+   *   내용이 짧고 늘어날 필요가 없는 열에 씁니다.
+   * - `"grow"`: 남는 가로 공간을 가져갑니다(flex-grow: 1 과 같은 역할).
+   *   여러 열에 주면 남는 공간을 나눠 갖습니다.
+   * - 생략: 브라우저 기본 배분(내용 비례).
+   *
+   * 테이블은 항상 컨테이너 전체 폭을 채우므로, `"fit"` 열만 있으면 남는 공간이
+   * 결국 어딘가에 배분됩니다. 의도한 열이 늘어나게 하려면 `"grow"` 를 한 개 이상 지정하세요.
+   */
+  size?: "fit" | "grow";
 }
 
 /**
@@ -118,6 +134,21 @@ const alignClass = {
   right: "text-right",
   center: "text-center",
 } as const;
+
+/**
+ * 열 너비를 CSS `width` 값으로 환산합니다.
+ *
+ * 테이블 레이아웃(`table-layout: auto` + `w-full`)에서는 flexbox 가 아니라 셀 너비 힌트로
+ * 배분이 정해집니다. 그래서 `"fit"` 은 최소 폭(`1%`, 실제로는 내용 폭까지만 줄어듦),
+ * `"grow"` 는 최대 폭(`100%`, 남는 공간을 흡수)으로 옮깁니다.
+ * `"fit"` 은 `whitespace-nowrap` 과 함께 써야 내용 폭이 유지됩니다(아래 cellClass 참고).
+ */
+function widthStyle<T>(col: Column<T>): string | undefined {
+  if (col.width) return col.width;
+  if (col.size === "fit") return "1%";
+  if (col.size === "grow") return "100%";
+  return undefined;
+}
 
 /** 테이블 하단 페이지 컨트롤. 이동/크기 변경은 콜백으로만 냅니다(프레젠테이션 전용). */
 function PaginationBar({
@@ -290,7 +321,7 @@ export function DataTable<T>({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  style={{ width: col.width }}
+                  style={{ width: widthStyle(col) }}
                   className={cn(
                     "whitespace-nowrap px-4 py-2.5 font-medium text-text-muted",
                     alignClass[col.align ?? "left"],
@@ -315,8 +346,17 @@ export function DataTable<T>({
                     </td>
                   )}
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3">
-                      <div className="h-4 w-full max-w-[160px] animate-pulse rounded bg-surface-muted" />
+                    <td
+                      key={col.key}
+                      className={cn("px-4 py-3", col.size === "fit" && "whitespace-nowrap")}
+                    >
+                      {/* fit 열은 스켈레톤이 셀 폭을 결정해 버리므로 고정 폭으로 그립니다. */}
+                      <div
+                        className={cn(
+                          "h-4 animate-pulse rounded bg-surface-muted",
+                          col.size === "fit" ? "w-16" : "w-full max-w-[160px]",
+                        )}
+                      />
                     </td>
                   ))}
                 </tr>
@@ -372,6 +412,8 @@ export function DataTable<T>({
                       className={cn(
                         "px-4 py-3 text-text",
                         alignClass[col.align ?? "left"],
+                        // fit 열은 줄바꿈을 막아야 "내용 폭"이 그대로 유지됩니다.
+                        col.size === "fit" && "whitespace-nowrap",
                       )}
                     >
                       {col.render

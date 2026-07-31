@@ -75,6 +75,8 @@ export function DashboardPage({
     {
       key: "name",
       header: "이름",
+      // 남는 가로 공간은 이름 열이 가져갑니다(나머지는 내용 폭에 맞춤).
+      size: "grow",
       render: (u) => (
         <div>
           <p className="font-medium">{u.name}</p>
@@ -85,6 +87,7 @@ export function DashboardPage({
     {
       key: "role",
       header: "권한",
+      size: "fit",
       render: (u) => (
         <Badge tone={u.role === "관리자" ? "info" : "neutral"}>{u.role}</Badge>
       ),
@@ -92,15 +95,17 @@ export function DashboardPage({
     {
       key: "status",
       header: "상태",
+      size: "fit",
       render: (u) => (
         <Badge tone={u.status === "활성" ? "success" : "danger"}>{u.status}</Badge>
       ),
     },
-    { key: "lastLogin", header: "최근 로그인" },
+    { key: "lastLogin", header: "최근 로그인", size: "fit" },
     {
       key: "actions",
       header: "",
       align: "right",
+      size: "fit",
       render: (u) => (
         <div className="flex justify-end gap-1">
           <Button

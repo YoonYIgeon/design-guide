@@ -13,6 +13,11 @@
 - `RadioGroup` 옵션 영역의 높이가 다른 입력(`h-10`)보다 낮던 문제 수정 — 최소 높이(`2.5rem`) 확보 후 세로 가운데 정렬로 맞춤.
 
 ### Added
+- `DataTable` 의 `Column` 에 `size?: "fit" | "grow"` 옵션 추가 — 열 너비 배분 방식을 정한다.
+  `"fit"` 은 내용 폭에 딱 맞춰 줄어들고(줄바꿈 없음, 배지·날짜·액션 버튼 열용),
+  `"grow"` 는 남는 가로 공간을 가져간다(`flex-grow: 1` 과 같은 역할, 여러 열이면 나눠 가짐).
+  기존 `width` 는 그대로 동작하며 `size` 보다 우선한다. 생략 시 기존과 동일한 브라우저 기본 배분.
+  데모 하네스(`DashboardPage`)의 이름 열을 `"grow"`, 권한·상태·최근 로그인·액션 열을 `"fit"` 으로 연결.
 - `DataTable` 에 `checkable` prop 추가 — `true` 면 맨 왼쪽에 체크박스 열(전체 선택 헤더 포함,
   부분 선택 시 indeterminate)을 렌더한다. 선택 상태는 컨트롤드로, 선택된 행의 `rowKey` 값 배열을
   `value` 로 내려주고 `onChange(selectedIds, changed)` 로 올려받는다. `changed` 는 이번에 토글된
