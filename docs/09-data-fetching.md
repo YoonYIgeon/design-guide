@@ -148,6 +148,45 @@ function LoginContainer() {
 }
 ```
 
+#### 인증 앱 미등록 계정은 QR 등록 단계로
+
+인증 앱이 **이미 등록된** 계정은 코드 입력만 필요하지만(`step="otp"`), **아직 등록하지 않은**
+계정은 먼저 QR 코드를 스캔해 앱을 등록해야 한다(`step="otp-enroll"`). 어느 쪽인지도 서버 응답을
+보고 컨테이너가 정한다.
+
+**QR 은 폼이 만들지 않는다.** 시크릿 발급·`otpauth://` URI 구성·QR 이미지 생성은 전부 서버(또는
+컨테이너)의 몫이고, 폼은 받은 것을 슬롯에 그리기만 한다. 격리망 원칙상 외부 QR 생성 서비스
+URL 은 쓰지 않고, 서버가 만든 이미지를 data URI 나 `URL.createObjectURL` 로 넘긴다.
+
+```tsx
+const res = await login.mutateAsync({ id, password });
+if (res.mfaRequired) {
+  setMfaToken(res.mfaToken);
+  // 등록 여부 판단도 컨테이너가 한다.
+  if (res.mfaEnrolled) {
+    setStep("otp");
+  } else {
+    setEnrollment({ qr: res.otpQrPng, secret: res.otpSecret }); // 서버가 발급
+    setStep("otp-enroll");
+  }
+}
+```
+
+```tsx
+<LoginForm
+  step={step}                                  // "otp-enroll"
+  otpQrImageSrc={enrollment?.qr}               // data URI (또는 otpQrCode 로 노드 전달)
+  otpSecret={enrollment?.secret}               // QR 을 못 읽을 때 직접 입력하는 키
+  onSubmitOtpEnroll={({ code }) => enroll.mutate({ mfaToken, code })}
+  onBack={() => setStep("credentials")}
+/>
+```
+
+- `onSubmitOtpEnroll` 을 생략하면 코드 제출은 `onSubmitOtp` 로 간다(등록 확인 엔드포인트가
+  로그인 검증과 같은 경우).
+- 등록 단계에는 재전송 버튼을 그리지 않는다 — TOTP 앱은 코드를 "받는" 방식이 아니다.
+- QR 이 아직 없으면(발급 대기) 자리표시자가 그려진다. 문구는 `otpQrPlaceholder` 로 바꾼다.
+
 ## 새 리소스 추가하기 (소비 시스템)
 
 1. `src/api/index.ts` 에 섹션을 추가한다: 타입 + 엔드포인트 함수 + 쿼리 키(`orderKeys` …).

@@ -4,8 +4,15 @@ import { Button } from "./Button";
 import { Input } from "./Input";
 import { IconShield } from "../icons";
 
-/** 폼이 그릴 단계. 어떤 단계인지 판단(2차 인증 필요 여부)은 소비 시스템이 합니다. */
-export type LoginFormStep = "credentials" | "otp";
+/**
+ * 폼이 그릴 단계. 어떤 단계인지 판단(2차 인증 필요 여부, 인증 앱 등록 여부)은
+ * 소비 시스템이 합니다.
+ *
+ * - `"credentials"` — 아이디/비밀번호
+ * - `"otp"` — 인증 앱이 이미 등록된 경우. 코드 입력만 그립니다.
+ * - `"otp-enroll"` — 인증 앱이 아직 등록되지 않은 경우. QR 코드와 등록 키를 함께 그립니다.
+ */
+export type LoginFormStep = "credentials" | "otp" | "otp-enroll";
 
 export interface LoginFormProps {
   /** 상단 제품명. 문자열 또는 임의의 노드(로고 등). */
@@ -15,8 +22,10 @@ export interface LoginFormProps {
   /** 상단 로고 자리. 기본 실드 아이콘을 대체합니다. */
   logo?: ReactNode;
   /**
-   * 그릴 단계. `"credentials"`(기본) 는 아이디/비밀번호, `"otp"` 는 2차 인증 코드 입력을 그립니다.
-   * 1차 인증 응답에 2차 인증이 필요한지 판단해 이 값을 바꾸는 것은 소비 시스템의 몫입니다.
+   * 그릴 단계. `"credentials"`(기본) 는 아이디/비밀번호, `"otp"` 는 2차 인증 코드 입력,
+   * `"otp-enroll"` 은 QR 코드 등록 + 첫 코드 입력을 그립니다.
+   * 1차 인증 응답을 보고 2차 인증이 필요한지, 인증 앱이 이미 등록돼 있는지 판단해
+   * 이 값을 바꾸는 것은 소비 시스템의 몫입니다.
    */
   step?: LoginFormStep;
   /** 제출 중 여부(스피너/중복 제출 차단). 소비 시스템이 제어. 두 단계 공통. */
@@ -67,6 +76,41 @@ export interface LoginFormProps {
   backText?: ReactNode;
   /** 2차 단계의 하단 자리. 생략하면 `footer` 를 그대로 씁니다. */
   otpFooter?: ReactNode;
+
+  // ── 2차 인증 등록(`step === "otp-enroll"`) 단계 ──────────────────────
+  /** 등록 영역 제목. */
+  otpEnrollTitle?: ReactNode;
+  /** 등록 안내 문구. 기본값은 `otpLength` 를 반영합니다. */
+  otpEnrollDescription?: ReactNode;
+  /**
+   * QR 코드 자리를 통째로 대체하는 노드(`<svg>`·`<img>`·커스텀 컴포넌트 등).
+   * 생략하면 `otpQrImageSrc` 로 `<img>` 를 그리고, 그것도 없으면 자리표시자를 그립니다.
+   */
+  otpQrCode?: ReactNode;
+  /**
+   * QR 이미지 주소. 서버가 만든 QR 을 data URI(`data:image/png;base64,…`) 나
+   * `URL.createObjectURL` 로 넘기세요. 격리망 원칙상 외부 QR 생성 서비스 URL 은 쓰지 않습니다.
+   */
+  otpQrImageSrc?: string;
+  /** QR 이미지 대체 텍스트(`otpQrImageSrc` 로 그릴 때). */
+  otpQrAlt?: string;
+  /** QR 이 아직 없을 때 그 자리에 그릴 문구(발급 대기 등). */
+  otpQrPlaceholder?: ReactNode;
+  /** QR 을 스캔할 수 없을 때 인증 앱에 직접 입력하는 등록 키. 넘긴 경우에만 보입니다. */
+  otpSecret?: ReactNode;
+  /** 등록 키 레이블. */
+  otpSecretLabel?: ReactNode;
+  /** 등록 단계 코드 입력 힌트. 생략하면 `otpHint` 를 씁니다. */
+  otpEnrollHint?: ReactNode;
+  /** 등록 단계 제출 버튼 문구. */
+  otpEnrollSubmitText?: ReactNode;
+  /**
+   * 등록 확인 코드 제출. 생략하면 `onSubmitOtp` 로 갑니다.
+   * 등록 완료 처리(서버에 시크릿 확정 등)는 소비 시스템이 합니다.
+   */
+  onSubmitOtpEnroll?: (payload: { code: string }) => void;
+  /** 등록 단계의 하단 자리. 생략하면 `otpFooter ?? footer` 를 씁니다. */
+  otpEnrollFooter?: ReactNode;
 }
 
 /**
@@ -99,26 +143,53 @@ export function LoginForm({
   onBack,
   backText = "이전 단계",
   otpFooter,
+  otpEnrollTitle = "2단계 인증 등록",
+  otpEnrollDescription,
+  otpQrCode,
+  otpQrImageSrc,
+  otpQrAlt = "2단계 인증 등록용 QR 코드",
+  otpQrPlaceholder = "QR 코드를 준비하고 있습니다.",
+  otpSecret,
+  otpSecretLabel = "QR 을 못 읽는다면, 이 키를 직접 입력하세요",
+  otpEnrollHint,
+  otpEnrollSubmitText = "등록하고 인증",
+  onSubmitOtpEnroll,
+  otpEnrollFooter,
 }: LoginFormProps) {
   const [id, setId] = useState("");
   const [pw, setPw] = useState("");
   const [code, setCode] = useState("");
 
+  const isEnroll = step === "otp-enroll";
   const isOtp = step === "otp";
+  /** 코드 입력을 그리는 단계(등록/일반 공통). */
+  const isCodeStep = isOtp || isEnroll;
 
-  // 단계를 벗어나면 이전에 입력한 코드를 남기지 않습니다(순수 UI 상태 정리).
+  // 단계가 바뀌면 이전에 입력한 코드를 남기지 않습니다(순수 UI 상태 정리).
   useEffect(() => {
-    if (!isOtp) setCode("");
-  }, [isOtp]);
+    setCode("");
+  }, [step]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (isEnroll) {
+      // 등록 전용 콜백이 없으면 일반 코드 제출로 보냅니다.
+      (onSubmitOtpEnroll ?? onSubmitOtp)?.({ code: code.trim() });
+      return;
+    }
     if (isOtp) {
       onSubmitOtp?.({ code: code.trim() });
       return;
     }
     onSubmit({ id: id.trim(), password: pw });
   }
+
+  // QR 자리: 커스텀 노드 > 이미지 주소 > 자리표시자.
+  const qr =
+    otpQrCode ??
+    (otpQrImageSrc ? (
+      <img src={otpQrImageSrc} alt={otpQrAlt} className="h-full w-full object-contain" />
+    ) : null);
 
   return (
     <div className={cn("w-full max-w-sm", className)}>
@@ -137,20 +208,54 @@ export function LoginForm({
         className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-6 shadow-2"
         noValidate
       >
-        {isOtp ? (
+        {isCodeStep ? (
           <>
             <div className="flex flex-col gap-1">
-              <h2 className="text-base font-semibold text-text">{otpTitle}</h2>
+              <h2 className="text-base font-semibold text-text">
+                {isEnroll ? otpEnrollTitle : otpTitle}
+              </h2>
               <p className="text-sm text-text-muted">
-                {otpDescription ??
-                  (otpLength
-                    ? `인증 앱에 표시된 ${otpLength}자리 코드를 입력하세요.`
-                    : "인증 코드를 입력하세요.")}
+                {isEnroll
+                  ? (otpEnrollDescription ??
+                    (otpLength
+                      ? `인증 앱으로 QR 코드를 스캔한 뒤, 앱에 표시된 ${otpLength}자리 코드를 입력하세요.`
+                      : "인증 앱으로 QR 코드를 스캔한 뒤, 앱에 표시된 코드를 입력하세요."))
+                  : (otpDescription ??
+                    (otpLength
+                      ? `인증 앱에 표시된 ${otpLength}자리 코드를 입력하세요.`
+                      : "인증 코드를 입력하세요."))}
               </p>
             </div>
+
+            {isEnroll && (
+              <div className="flex flex-col items-center gap-3">
+                <div
+                  className={cn(
+                    "flex h-44 w-44 items-center justify-center overflow-hidden rounded-lg border p-2",
+                    // QR 은 테마와 무관하게 밝은 바탕이어야 스캔됩니다(surface-fixed).
+                    qr ? "border-line bg-surface-fixed" : "border-dashed border-line bg-surface-muted",
+                  )}
+                >
+                  {qr ?? (
+                    <span className="px-2 text-center text-xs text-text-muted">
+                      {otpQrPlaceholder}
+                    </span>
+                  )}
+                </div>
+                {otpSecret && (
+                  <div className="w-full rounded-md border border-line bg-surface-muted px-3 py-2 text-center">
+                    <p className="text-xs text-text-muted">{otpSecretLabel}</p>
+                    <p className="mt-0.5 break-all font-mono text-sm font-medium text-text">
+                      {otpSecret}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <Input
               label={otpLabel}
-              hint={otpHint}
+              hint={isEnroll ? (otpEnrollHint ?? otpHint) : otpHint}
               autoComplete="one-time-code"
               inputMode="numeric"
               maxLength={otpLength}
@@ -193,10 +298,11 @@ export function LoginForm({
         )}
 
         <Button type="submit" variant="primary" loading={loading} className="w-full">
-          {isOtp ? otpSubmitText : submitText}
+          {isEnroll ? otpEnrollSubmitText : isOtp ? otpSubmitText : submitText}
         </Button>
 
-        {isOtp && (onResendOtp || onBack) && (
+        {/* 재전송은 코드를 "받는" 방식(문자/이메일)에만 해당하므로 등록 단계에는 그리지 않습니다. */}
+        {isCodeStep && (onBack || (isOtp && onResendOtp)) && (
           <div className="flex items-center justify-between gap-2">
             {onBack ? (
               <Button variant="ghost" size="sm" onClick={onBack} disabled={loading}>
@@ -205,7 +311,7 @@ export function LoginForm({
             ) : (
               <span />
             )}
-            {onResendOtp && (
+            {isOtp && onResendOtp && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -218,7 +324,11 @@ export function LoginForm({
           </div>
         )}
 
-        {isOtp ? (otpFooter ?? footer) : footer}
+        {isEnroll
+          ? (otpEnrollFooter ?? otpFooter ?? footer)
+          : isOtp
+            ? (otpFooter ?? footer)
+            : footer}
       </form>
     </div>
   );
