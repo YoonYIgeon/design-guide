@@ -16,6 +16,23 @@
   제네릭 `Res` 는 `forwardRef` 로 소실되므로 캐스팅으로 시그니처를 보존한다.
 
 ### Added
+- `LoginForm` 에 인증 앱 등록(QR) 단계 추가 — `step` 에 `"otp-enroll"` 이 생겼다. 인증 앱이 이미
+  등록된 계정은 기존대로 `"otp"`(코드 입력만), 아직 등록하지 않은 계정은 `"otp-enroll"` 로 QR 코드와
+  수동 등록 키를 함께 그린다. 어느 쪽인지 판단하는 것은 서버 응답을 보는 소비 시스템의 몫이다.
+  **QR 은 폼이 만들지 않는다** — 시크릿 발급·`otpauth://` URI 구성·이미지 생성은 서버가 하고,
+  폼은 `otpQrCode`(노드) 또는 `otpQrImageSrc`(data URI) 로 받아 그리기만 한다(격리망 준수:
+  외부 QR 생성 서비스 URL 금지). 등록 확인 코드는 `onSubmitOtpEnroll({ code })` 로 올려보내며,
+  생략하면 `onSubmitOtp` 로 간다. 표시 자리는 모두 노드 슬롯이다: `otpEnrollTitle`·
+  `otpEnrollDescription`·`otpSecret`·`otpSecretLabel`·`otpQrPlaceholder`·`otpEnrollHint`·
+  `otpEnrollSubmitText`, 하단은 `otpEnrollFooter ?? otpFooter ?? footer`. 등록 단계에는 재전송
+  버튼을 그리지 않는다(TOTP 앱은 코드를 받는 방식이 아니다). `step` 이 바뀌면 입력한 코드는 비운다.
+  기존 `"credentials"`/`"otp"` 사용처는 동작 변화 없음.
+- 토큰 `--au-color-surface-fixed`(Tailwind `bg-surface-fixed`) 추가 — 다크 테마에서 재정의하지 않는
+  항상 밝은 표면. QR/바코드처럼 어두운 바탕에서는 스캔이 되지 않는 영역에만 쓴다.
+- 2차 인증 로그인 샘플 페이지에 등록 단계 데모 추가 — "인증 앱이 이미 등록됨" 체크를 풀면 미등록
+  계정으로 로그인해 `"otp-enroll"` 단계를 볼 수 있다. QR 자리에는 격리망 원칙에 따라 네트워크·인코더
+  의존성 없이 만든 **더미 패턴(실제 스캔 불가)** 을 그리고, 실제 시스템은 서버가 만든 이미지를
+  `otpQrImageSrc` 로 넘기면 된다는 점을 주석으로 표시했다.
 - 데모 하네스에 2차 인증 로그인 샘플 페이지 추가(`/login-sample`, `src/pages/LoginTwoFactorPage.tsx`) —
   단계 전환·코드 검증·재전송 쿨다운을 컨테이너가 갖는 소비 시스템 쪽 예시. API 호출 자리는
   네트워크 없이 지연으로 흉내내며(격리망 준수), 실제 시스템은 `src/api` + `useMutation` 으로 바꿔 끼운다.

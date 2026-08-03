@@ -68,7 +68,7 @@ yarn typecheck  # 타입만 검사
 | `/` | 대시보드 (지표 + 사용자 관리) |
 | `/posts` | 게시글 (axios·react-query·react-markdown 데이터 패칭 예시) → [docs/09](docs/09-data-fetching.md) |
 | `/forms` | 입력 폼 (Select·Checkbox·Radio·FileUpload + 파일 업로드 API 동적 연동) → [docs/10](docs/10-form-inputs.md) |
-| `/login-sample` | 2차 인증(OTP) 로그인 샘플 (`LoginForm` 의 `step`·`onSubmitOtp` 컨테이너 연동 예시) → [docs/09](docs/09-data-fetching.md) |
+| `/login-sample` | 2차 인증(OTP) 로그인 샘플 (`LoginForm` 의 `step`·`onSubmitOtp`·QR 등록 단계 컨테이너 연동 예시) → [docs/09](docs/09-data-fetching.md) |
 | `/users` · `/audit` · `/settings` | 각 관리 화면 |
 
 미인증 상태로 보호 경로에 접근하면 `/login` 으로 리다이렉트됩니다. `AdminShell` 은 라우터를 모르며
@@ -92,7 +92,7 @@ yarn typecheck  # 타입만 검사
 | `Badge` | 의미색 상태 배지 |
 | `EmptyState` | 빈 데이터 안내 |
 | `Markdown` | 마크다운 → React 렌더링 (react-markdown, 토큰 스타일) |
-| `LoginForm` | 프레젠테이션 전용 로그인 폼 (1차/2차 인증 단계는 `step` props, 값은 `onSubmit`·`onSubmitOtp` 로 전달) |
+| `LoginForm` | 프레젠테이션 전용 로그인 폼 (1차/2차 인증·인증 앱 QR 등록 단계는 `step` props, 값은 `onSubmit`·`onSubmitOtp`·`onSubmitOtpEnroll` 로 전달) |
 | `Icons` | 인라인 SVG 아이콘 (외부 CDN 미사용) |
 
 모든 컴포넌트는 **props 로 값을 받고 callback 으로 상호작용을 내보내는** 프레젠테이션 전용입니다.

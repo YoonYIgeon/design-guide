@@ -44,6 +44,8 @@ export default {
         bg: withAlpha("--au-color-bg"),
         surface: withAlpha("--au-color-surface"),
         "surface-muted": withAlpha("--au-color-surface-muted"),
+        // 테마 무관 밝은 표면(QR/바코드 등 스캔 대비가 필요한 영역).
+        "surface-fixed": withAlpha("--au-color-surface-fixed"),
         line: withAlpha("--au-color-border"),
         text: withAlpha("--au-color-text"),
         "text-muted": withAlpha("--au-color-text-muted"),
