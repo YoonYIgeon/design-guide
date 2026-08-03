@@ -14,6 +14,30 @@ import { IconShield } from "../icons";
  */
 export type LoginFormStep = "credentials" | "otp" | "otp-enroll";
 
+/** 그릴 수 있는 단계 목록. 아래 미지의 값 경고에만 쓰입니다. */
+const KNOWN_STEPS: readonly string[] = ["credentials", "otp", "otp-enroll"];
+
+/** 같은 값으로 렌더마다 경고가 쌓이지 않게, 값당 한 번만 알립니다. */
+const warnedSteps = new Set<string>();
+
+/**
+ * 모르는 `step` 값은 1차 인증 화면으로 폴백되는데, 조용히 폴백되면 "폼이 안 바뀐다"로만
+ * 보여 원인을 찾기 어렵습니다. 그래서 한 번은 콘솔로 알립니다.
+ *
+ * 프로덕션에서도 켜 둡니다 — 값당 한 번이라 비용이 없고, 빌드 환경 감지(`import.meta.env`)는
+ * 라이브러리에 두지 않기 때문입니다(docs/09-data-fetching.md 리뷰 기준).
+ */
+function warnUnknownStep(step: string) {
+  if (warnedSteps.has(step)) return;
+  warnedSteps.add(step);
+  console.warn(
+    `[LoginForm] 알 수 없는 step 값입니다: ${JSON.stringify(step)}. ` +
+      `${KNOWN_STEPS.map((s) => `"${s}"`).join(" | ")} 중 하나여야 합니다. ` +
+      "1차 인증(아이디/비밀번호) 화면으로 그립니다 — " +
+      "라이브러리 사본이 오래됐거나 값에 오타가 있는지 확인하세요.",
+  );
+}
+
 export interface LoginFormProps {
   /** 상단 제품명. 문자열 또는 임의의 노드(로고 등). */
   brand?: ReactNode;
@@ -168,6 +192,7 @@ export function LoginForm({
   // 단계가 바뀌면 이전에 입력한 코드를 남기지 않습니다(순수 UI 상태 정리).
   useEffect(() => {
     setCode("");
+    if (!KNOWN_STEPS.includes(step)) warnUnknownStep(step);
   }, [step]);
 
   function handleSubmit(e: FormEvent) {
