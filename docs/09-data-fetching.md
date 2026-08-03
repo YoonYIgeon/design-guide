@@ -109,6 +109,42 @@ AuthProvider (하네스, src/providers)
 > 데모 모드(`VITE_API_BASE_URL` 미설정)에서는 실제 호출 없이 발급을 흉내낸 토큰을 돌려준다.
 > 환경변수를 주입하면 동일 코드가 `AUTH_LOGIN_PATH` 로 실제 POST 한다.
 
+### 2차 인증(OTP)도 컨테이너가 판단한다
+
+`LoginForm` 은 **어느 단계를 그릴지만** `step` props 로 받는다. "2차 인증이 필요한가"를
+판단하고(1차 응답의 플래그·`mfaToken` 등), 코드 검증 API 를 호출하고, 재전송 쿨다운을
+세는 것은 전부 컨테이너의 몫이다.
+
+```tsx
+function LoginContainer() {
+  const [step, setStep] = useState<LoginFormStep>("credentials");
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const login = useLogin();      // useMutation
+  const verify = useVerifyOtp(); // useMutation
+
+  return (
+    <LoginForm
+      step={step}
+      loading={login.isPending || verify.isPending}
+      error={(login.error ?? verify.error)?.message}
+      onSubmit={async ({ id, password }) => {
+        const res = await login.mutateAsync({ id, password });
+        // 2차 인증 필요 여부는 서버 응답으로 컨테이너가 판단한다.
+        if (res.mfaRequired) {
+          setMfaToken(res.mfaToken);
+          setStep("otp");
+        }
+      }}
+      onSubmitOtp={({ code }) => verify.mutate({ mfaToken, code })}
+      onResendOtp={() => verify.reset() /* 재전송 API 호출 */}
+      resendDisabled={cooldown > 0}
+      resendText={cooldown > 0 ? `${cooldown}초 후 다시 보내기` : "코드 다시 받기"}
+      onBack={() => setStep("credentials")}
+    />
+  );
+}
+```
+
 ## 새 리소스 추가하기 (소비 시스템)
 
 1. `src/api/index.ts` 에 섹션을 추가한다: 타입 + 엔드포인트 함수 + 쿼리 키(`orderKeys` …).

@@ -33,7 +33,11 @@ export {
   type FileItem,
   type FileStatus,
 } from "./components/FileUpload";
-export { LoginForm, type LoginFormProps } from "./components/LoginForm";
+export {
+  LoginForm,
+  type LoginFormProps,
+  type LoginFormStep,
+} from "./components/LoginForm";
 export { EmptyState, type EmptyStateProps } from "./components/EmptyState";
 export {
   DataTable,

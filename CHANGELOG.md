@@ -16,6 +16,15 @@
   제네릭 `Res` 는 `forwardRef` 로 소실되므로 캐스팅으로 시그니처를 보존한다.
 
 ### Added
+- `LoginForm` 에 2차 인증(OTP) 단계 props 추가 — `step?: "credentials" | "otp"`(기본 `"credentials"`)
+  로 어느 단계를 그릴지 받고, 코드 제출은 `onSubmitOtp({ code })` 로 올려보낸다. "2차 인증이
+  필요한가"의 판단·검증 API 호출·재전송 쿨다운은 모두 소비 시스템의 몫이다(프레젠테이션 전용 유지).
+  표시 자리는 모두 노드 슬롯으로 열었다: `otpTitle`·`otpDescription`·`otpLabel`·`otpHint`·
+  `otpSubmitText`·`submitText`·`resendText`·`backText`, 하단은 `otpFooter ?? footer`.
+  `otpLength`(기본 6)는 입력 `maxLength` 와 기본 안내 문구에 반영되고, 코드 입력은
+  `autoComplete="one-time-code"`·`inputMode="numeric"` 로 그린다. `onResendOtp`/`onBack` 은
+  넘긴 경우에만 각각 재전송·이전 단계 버튼이 보이며, `resendDisabled` 로 쿨다운을 표현한다.
+  단계가 `"otp"` 를 벗어나면 입력한 코드는 비운다. 기존 사용처는 `step` 생략 시 동작 변화 없음.
 - `DataTable` 의 `Column` 에 `size?: "fit" | "grow"` 옵션 추가 — 열 너비 배분 방식을 정한다.
   `"fit"` 은 내용 폭에 딱 맞춰 줄어들고(줄바꿈 없음, 배지·날짜·액션 버튼 열용),
   `"grow"` 는 남는 가로 공간을 가져간다(`flex-grow: 1` 과 같은 역할, 여러 열이면 나눠 가짐).

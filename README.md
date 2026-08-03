@@ -91,7 +91,7 @@ yarn typecheck  # 타입만 검사
 | `Badge` | 의미색 상태 배지 |
 | `EmptyState` | 빈 데이터 안내 |
 | `Markdown` | 마크다운 → React 렌더링 (react-markdown, 토큰 스타일) |
-| `LoginForm` | 프레젠테이션 전용 로그인 폼 (onSubmit 으로 값만 전달) |
+| `LoginForm` | 프레젠테이션 전용 로그인 폼 (1차/2차 인증 단계는 `step` props, 값은 `onSubmit`·`onSubmitOtp` 로 전달) |
 | `Icons` | 인라인 SVG 아이콘 (외부 CDN 미사용) |
 
 모든 컴포넌트는 **props 로 값을 받고 callback 으로 상호작용을 내보내는** 프레젠테이션 전용입니다.
