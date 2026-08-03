@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { NavItem } from "./lib";
 import {
+  IconCheckCircle,
   IconDashboard,
   IconFileText,
   IconInbox,
@@ -11,6 +12,7 @@ import {
 import { PlaceholderPage } from "./pages/PlaceholderPage";
 import { PostsPage } from "./pages/PostsPage";
 import { FormsPage } from "./pages/FormsPage";
+import { LoginTwoFactorPage } from "./pages/LoginTwoFactorPage";
 
 /**
  * 앱 라우트 정의 — 라우팅의 단일 원천(single source of truth).
@@ -64,6 +66,12 @@ export function createAppRoutes({ dashboard }: RouteSlots): AppRoute[] {
       label: "입력 폼",
       icon: <IconInbox {...ICON_SIZE} />,
       element: <FormsPage />,
+    },
+    {
+      path: "/login-sample",
+      label: "로그인 샘플",
+      icon: <IconCheckCircle {...ICON_SIZE} />,
+      element: <LoginTwoFactorPage />,
     },
     {
       path: "/audit",

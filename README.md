@@ -68,6 +68,7 @@ yarn typecheck  # 타입만 검사
 | `/` | 대시보드 (지표 + 사용자 관리) |
 | `/posts` | 게시글 (axios·react-query·react-markdown 데이터 패칭 예시) → [docs/09](docs/09-data-fetching.md) |
 | `/forms` | 입력 폼 (Select·Checkbox·Radio·FileUpload + 파일 업로드 API 동적 연동) → [docs/10](docs/10-form-inputs.md) |
+| `/login-sample` | 2차 인증(OTP) 로그인 샘플 (`LoginForm` 의 `step`·`onSubmitOtp` 컨테이너 연동 예시) → [docs/09](docs/09-data-fetching.md) |
 | `/users` · `/audit` · `/settings` | 각 관리 화면 |
 
 미인증 상태로 보호 경로에 접근하면 `/login` 으로 리다이렉트됩니다. `AdminShell` 은 라우터를 모르며

@@ -16,6 +16,9 @@
   제네릭 `Res` 는 `forwardRef` 로 소실되므로 캐스팅으로 시그니처를 보존한다.
 
 ### Added
+- 데모 하네스에 2차 인증 로그인 샘플 페이지 추가(`/login-sample`, `src/pages/LoginTwoFactorPage.tsx`) —
+  단계 전환·코드 검증·재전송 쿨다운을 컨테이너가 갖는 소비 시스템 쪽 예시. API 호출 자리는
+  네트워크 없이 지연으로 흉내내며(격리망 준수), 실제 시스템은 `src/api` + `useMutation` 으로 바꿔 끼운다.
 - `LoginForm` 에 2차 인증(OTP) 단계 props 추가 — `step?: "credentials" | "otp"`(기본 `"credentials"`)
   로 어느 단계를 그릴지 받고, 코드 제출은 `onSubmitOtp({ code })` 로 올려보낸다. "2차 인증이
   필요한가"의 판단·검증 API 호출·재전송 쿨다운은 모두 소비 시스템의 몫이다(프레젠테이션 전용 유지).

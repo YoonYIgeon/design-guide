@@ -111,6 +111,9 @@ AuthProvider (하네스, src/providers)
 
 ### 2차 인증(OTP)도 컨테이너가 판단한다
 
+> 동작 데모: `/login-sample` 경로 (`src/pages/LoginTwoFactorPage.tsx`) — 아래 뼈대를
+> 그대로 구현한 샘플이다. 데모라 API 호출 자리만 지연으로 흉내낸다(격리망 준수).
+
 `LoginForm` 은 **어느 단계를 그릴지만** `step` props 로 받는다. "2차 인증이 필요한가"를
 판단하고(1차 응답의 플래그·`mfaToken` 등), 코드 검증 API 를 호출하고, 재전송 쿨다운을
 세는 것은 전부 컨테이너의 몫이다.
