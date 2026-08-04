@@ -2,7 +2,9 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { cn } from "../utils/cn";
 import { Button } from "./Button";
 import { Input } from "./Input";
+import { QrCode } from "./QrCode";
 import { IconShield } from "../icons";
+import type { QrErrorCorrection } from "../utils/qr";
 
 /**
  * 폼이 그릴 단계. 어떤 단계인지 판단(2차 인증 필요 여부, 인증 앱 등록 여부)은
@@ -107,13 +109,25 @@ export interface LoginFormProps {
   /** 등록 안내 문구. 기본값은 `otpLength` 를 반영합니다. */
   otpEnrollDescription?: ReactNode;
   /**
+   * TOTP 등록용 `otpauth://totp/…` URI. 넘기면 폼이 QR 코드를 직접 그립니다
+   * (인코딩은 라이브러리 안에서 하므로 외부 QR 생성 서비스가 필요 없습니다).
+   *
+   * 서버가 주는 URI 를 그대로 넘기면 됩니다:
+   * `otpauth://totp/발급자:계정?secret=BASE32&issuer=발급자`
+   */
+  otpQrValue?: string;
+  /** `otpQrValue` 의 오류 정정 수준. 기본 `"M"`(약 15% 복원). */
+  otpQrLevel?: QrErrorCorrection;
+  /**
    * QR 코드 자리를 통째로 대체하는 노드(`<svg>`·`<img>`·커스텀 컴포넌트 등).
-   * 생략하면 `otpQrImageSrc` 로 `<img>` 를 그리고, 그것도 없으면 자리표시자를 그립니다.
+   * 셋 다 넘기면 `otpQrCode` → `otpQrImageSrc` → `otpQrValue` 순으로 우선합니다
+   * (직접 만든 것이 먼저, 없으면 라이브러리가 URI 로 그림).
    */
   otpQrCode?: ReactNode;
   /**
-   * QR 이미지 주소. 서버가 만든 QR 을 data URI(`data:image/png;base64,…`) 나
+   * 이미 이미지로 만들어진 QR 의 주소. 서버가 만든 QR 을 data URI(`data:image/png;base64,…`) 나
    * `URL.createObjectURL` 로 넘기세요. 격리망 원칙상 외부 QR 생성 서비스 URL 은 쓰지 않습니다.
+   * URI 만 있다면 `otpQrValue` 를 쓰는 편이 간단합니다.
    */
   otpQrImageSrc?: string;
   /** QR 이미지 대체 텍스트(`otpQrImageSrc` 로 그릴 때). */
@@ -169,6 +183,8 @@ export function LoginForm({
   otpFooter,
   otpEnrollTitle = "2단계 인증 등록",
   otpEnrollDescription,
+  otpQrValue,
+  otpQrLevel = "M",
   otpQrCode,
   otpQrImageSrc,
   otpQrAlt = "2단계 인증 등록용 QR 코드",
@@ -209,11 +225,16 @@ export function LoginForm({
     onSubmit({ id: id.trim(), password: pw });
   }
 
-  // QR 자리: 커스텀 노드 > 이미지 주소 > 자리표시자.
+  // QR 자리: 커스텀 노드 > 이미지 주소 > otpauth URI 인코딩 > 자리표시자.
+  const qrPlaceholder = (
+    <span className="px-2 text-center text-xs text-text-muted">{otpQrPlaceholder}</span>
+  );
   const qr =
     otpQrCode ??
     (otpQrImageSrc ? (
       <img src={otpQrImageSrc} alt={otpQrAlt} className="h-full w-full object-contain" />
+    ) : otpQrValue ? (
+      <QrCode value={otpQrValue} level={otpQrLevel} alt={otpQrAlt} fallback={qrPlaceholder} />
     ) : null);
 
   return (
@@ -261,11 +282,7 @@ export function LoginForm({
                     qr ? "border-line bg-surface-fixed" : "border-dashed border-line bg-surface-muted",
                   )}
                 >
-                  {qr ?? (
-                    <span className="px-2 text-center text-xs text-text-muted">
-                      {otpQrPlaceholder}
-                    </span>
-                  )}
+                  {qr ?? qrPlaceholder}
                 </div>
                 {otpSecret && (
                   <div className="w-full rounded-md border border-line bg-surface-muted px-3 py-2 text-center">

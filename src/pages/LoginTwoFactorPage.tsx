@@ -59,61 +59,6 @@ async function requestLogin(
   };
 }
 
-/**
- * 데모용 QR 자리 그림 — **실제로 스캔되지 않는 더미 패턴**이다.
- * 격리망 원칙상 외부 QR 생성 서비스를 부를 수 없고, 인코더 의존성도 두지 않는다.
- * 실제 소비 시스템은 서버가 만든 QR 이미지를 `otpQrImageSrc`(data URI) 로 넘기면 된다.
- * 같은 입력에는 항상 같은 패턴이 나오도록 난수 없이 문자열 해시로만 만든다.
- */
-function DemoQrPattern({ value }: { value: string }) {
-  const size = 21; // QR 버전 1과 같은 21×21 격자
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
-
-  // 세 모서리의 위치 검출 패턴(7×7) 영역은 비워 두고 따로 그린다.
-  const inFinder = (r: number, c: number) =>
-    (r < 8 && c < 8) || (r < 8 && c >= size - 8) || (r >= size - 8 && c < 8);
-
-  let state = hash || 1;
-  const cells: { r: number; c: number }[] = [];
-  for (let r = 0; r < size; r += 1) {
-    for (let c = 0; c < size; c += 1) {
-      // xorshift — 결정적 의사난수(렌더마다 동일).
-      state ^= (state << 13) >>> 0;
-      state = state >>> 0;
-      state ^= state >>> 17;
-      state ^= (state << 5) >>> 0;
-      state = state >>> 0;
-      if (!inFinder(r, c) && (state & 1) === 1) cells.push({ r, c });
-    }
-  }
-
-  const finder = (r: number, c: number) => (
-    <g key={`f-${r}-${c}`}>
-      <rect x={c} y={r} width={7} height={7} fill="#111827" />
-      <rect x={c + 1} y={r + 1} width={5} height={5} fill="#ffffff" />
-      <rect x={c + 2} y={r + 2} width={3} height={3} fill="#111827" />
-    </g>
-  );
-
-  return (
-    <svg
-      viewBox={`0 0 ${size} ${size}`}
-      className="h-full w-full"
-      role="img"
-      aria-label="데모용 QR 코드 자리 그림 (실제 스캔 불가)"
-    >
-      <rect width={size} height={size} fill="#ffffff" />
-      {cells.map(({ r, c }) => (
-        <rect key={`${r}-${c}`} x={c} y={r} width={1} height={1} fill="#111827" />
-      ))}
-      {finder(0, 0)}
-      {finder(0, size - 7)}
-      {finder(size - 7, 0)}
-    </svg>
-  );
-}
-
 /** 2차 인증 코드 검증. 실패는 예외로 알린다(에러 문구 표시는 폼이 props 로 받아 그린다). */
 async function verifyOtp(payload: { mfaToken: string; code: string }) {
   await sleep(600);
@@ -297,9 +242,10 @@ export function LoginTwoFactorPage() {
               등록 키 + 코드 입력) 중 무엇을 그릴지 정하는 것은 이 페이지(컨테이너)입니다.
             </li>
             <li>
-              QR 이미지도 서버가 만든 것을 <code>otpQrCode</code>(노드) 또는{" "}
-              <code>otpQrImageSrc</code>(data URI) 로 넘겨 그리기만 합니다. 폼은 QR 을 만들지
-              않습니다.
+              서버가 준 <code>otpauth://totp/…</code> URI 를 <code>otpQrValue</code> 로 넘기면
+              폼이 QR 을 직접 그립니다(인코딩은 라이브러리 안에서 — 외부 QR 생성 서비스 없음).
+              이미 이미지로 받았다면 <code>otpQrImageSrc</code>, 완전히 다른 걸 그리려면{" "}
+              <code>otpQrCode</code> 노드를 씁니다.
             </li>
             <li>
               2차 인증 필요 여부 판단·코드 검증·재전송 쿨다운은 이 페이지(컨테이너)가 합니다.
@@ -343,13 +289,14 @@ export function LoginTwoFactorPage() {
               </p>
             }
             // ── 미등록 계정: 등록용 QR 자리 ──
-            // 실제 시스템은 서버가 만든 QR 이미지를 otpQrImageSrc 로 넘기면 된다.
-            otpQrCode={enrollment ? <DemoQrPattern value={enrollment.uri} /> : undefined}
+            // 서버가 준 otpauth URI 를 그대로 넘기면 폼이 QR 을 그린다(외부 서비스 없음).
+            otpQrValue={enrollment?.uri}
             otpSecret={enrollment?.secret}
             otpEnrollHint="Google Authenticator·Microsoft Authenticator 등에서 코드를 확인하세요."
             otpEnrollFooter={
               <p className="text-center text-xs text-text-muted">
-                데모 프리뷰 — QR 은 자리 그림(스캔 불가)이고, 코드는 {DEMO_OTP_CODE} 입니다.
+                데모 프리뷰 — QR 은 실제로 스캔되지만 코드 검증은 흉내이고, 정답은{" "}
+                {DEMO_OTP_CODE} 입니다.
               </p>
             }
             footer={
