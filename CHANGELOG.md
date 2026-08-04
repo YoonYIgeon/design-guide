@@ -16,6 +16,16 @@
   제네릭 `Res` 는 `forwardRef` 로 소실되므로 캐스팅으로 시그니처를 보존한다.
 
 ### Added
+- `QrCode` 컴포넌트와 QR 인코더(`src/lib/utils/qr.ts`) 추가 — 문자열을 QR 코드 SVG 로 그린다.
+  격리망에서 외부 QR 생성 서비스를 부를 수 없으므로 인코딩(ISO/IEC 18004, 바이트 모드,
+  버전 1~40, 오류 정정 L/M/Q/H)을 라이브러리 안에서 직접 한다. **외부 의존성은 추가하지 않았다.**
+  입력은 UTF-8 로 인코딩하므로 한글이 섞인 URI 도 된다. 담을 수 없이 긴 값이면 예외 대신
+  `fallback` 을 그리고 콘솔로 한 번 알린다(렌더 중 크래시 방지).
+- `LoginForm` 에 `otpQrValue` 추가 — 서버가 준 `otpauth://totp/…` URI 를 그대로 넘기면 폼이 QR 을
+  그린다. 오류 정정 수준은 `otpQrLevel`(기본 `"M"`). QR 자리는 `otpQrCode`(노드) →
+  `otpQrImageSrc`(이미지) → `otpQrValue`(URI) → 자리표시자 순으로 우선한다.
+- 토큰 `--au-color-text-fixed`(Tailwind `text-text-fixed`) 추가 — `--au-color-surface-fixed` 와 짝을
+  이루는, 테마와 무관한 고정 전경색. QR 처럼 밝고 어두운 색이 뒤집히면 스캔이 안 되는 곳에 쓴다.
 - `LoginForm` 이 모르는 `step` 값을 받으면 콘솔로 한 번 경고한다 — 모르는 값은 1차 인증
   화면으로 폴백되는데, 조용히 폴백되면 "`step` 을 바꿨는데 폼이 안 바뀐다"로만 보여 원인을
   찾기 어렵다. 값당 한 번만 찍고(렌더마다 쌓이지 않음), 오타·구버전 사본을 함께 안내한다.
@@ -23,9 +33,9 @@
 - `LoginForm` 에 인증 앱 등록(QR) 단계 추가 — `step` 에 `"otp-enroll"` 이 생겼다. 인증 앱이 이미
   등록된 계정은 기존대로 `"otp"`(코드 입력만), 아직 등록하지 않은 계정은 `"otp-enroll"` 로 QR 코드와
   수동 등록 키를 함께 그린다. 어느 쪽인지 판단하는 것은 서버 응답을 보는 소비 시스템의 몫이다.
-  **QR 은 폼이 만들지 않는다** — 시크릿 발급·`otpauth://` URI 구성·이미지 생성은 서버가 하고,
-  폼은 `otpQrCode`(노드) 또는 `otpQrImageSrc`(data URI) 로 받아 그리기만 한다(격리망 준수:
-  외부 QR 생성 서비스 URL 금지). 등록 확인 코드는 `onSubmitOtpEnroll({ code })` 로 올려보내며,
+  시크릿 발급과 `otpauth://` URI 구성은 서버가 하고, 폼은 받은 것을 그리기만 한다
+  (QR 인코딩은 라이브러리 안에서 — 위 `QrCode` 항목 참고, 외부 서비스 호출 없음).
+  등록 확인 코드는 `onSubmitOtpEnroll({ code })` 로 올려보내며,
   생략하면 `onSubmitOtp` 로 간다. 표시 자리는 모두 노드 슬롯이다: `otpEnrollTitle`·
   `otpEnrollDescription`·`otpSecret`·`otpSecretLabel`·`otpQrPlaceholder`·`otpEnrollHint`·
   `otpEnrollSubmitText`, 하단은 `otpEnrollFooter ?? otpFooter ?? footer`. 등록 단계에는 재전송
@@ -34,9 +44,8 @@
 - 토큰 `--au-color-surface-fixed`(Tailwind `bg-surface-fixed`) 추가 — 다크 테마에서 재정의하지 않는
   항상 밝은 표면. QR/바코드처럼 어두운 바탕에서는 스캔이 되지 않는 영역에만 쓴다.
 - 2차 인증 로그인 샘플 페이지에 등록 단계 데모 추가 — "인증 앱이 이미 등록됨" 체크를 풀면 미등록
-  계정으로 로그인해 `"otp-enroll"` 단계를 볼 수 있다. QR 자리에는 격리망 원칙에 따라 네트워크·인코더
-  의존성 없이 만든 **더미 패턴(실제 스캔 불가)** 을 그리고, 실제 시스템은 서버가 만든 이미지를
-  `otpQrImageSrc` 로 넘기면 된다는 점을 주석으로 표시했다.
+  계정으로 로그인해 `"otp-enroll"` 단계를 볼 수 있다. QR 은 데모용 `otpauth://` URI 를 실제로
+  인코딩한 것이라 인증 앱으로 스캔된다(코드 검증만 지연으로 흉내낸다).
 - 데모 하네스에 2차 인증 로그인 샘플 페이지 추가(`/login-sample`, `src/pages/LoginTwoFactorPage.tsx`) —
   단계 전환·코드 검증·재전송 쿨다운을 컨테이너가 갖는 소비 시스템 쪽 예시. API 호출 자리는
   네트워크 없이 지연으로 흉내내며(격리망 준수), 실제 시스템은 `src/api` + `useMutation` 으로 바꿔 끼운다.

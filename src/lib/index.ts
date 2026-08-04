@@ -38,6 +38,8 @@ export {
   type LoginFormProps,
   type LoginFormStep,
 } from "./components/LoginForm";
+export { QrCode, type QrCodeProps } from "./components/QrCode";
+export { encodeQr, type QrErrorCorrection } from "./utils/qr";
 export { EmptyState, type EmptyStateProps } from "./components/EmptyState";
 export {
   DataTable,

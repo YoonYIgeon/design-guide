@@ -154,9 +154,9 @@ function LoginContainer() {
 계정은 먼저 QR 코드를 스캔해 앱을 등록해야 한다(`step="otp-enroll"`). 어느 쪽인지도 서버 응답을
 보고 컨테이너가 정한다.
 
-**QR 은 폼이 만들지 않는다.** 시크릿 발급·`otpauth://` URI 구성·QR 이미지 생성은 전부 서버(또는
-컨테이너)의 몫이고, 폼은 받은 것을 슬롯에 그리기만 한다. 격리망 원칙상 외부 QR 생성 서비스
-URL 은 쓰지 않고, 서버가 만든 이미지를 data URI 나 `URL.createObjectURL` 로 넘긴다.
+**시크릿은 폼이 만들지 않는다.** 시크릿 발급과 `otpauth://` URI 구성은 서버의 몫이다. 폼은 받은
+URI 를 QR 로 그리기만 한다 — 인코딩은 라이브러리 안에서 하므로(`utils/qr.ts`) 외부 QR 생성
+서비스를 부르지 않는다(격리망 준수).
 
 ```tsx
 const res = await login.mutateAsync({ id, password });
@@ -166,7 +166,7 @@ if (res.mfaRequired) {
   if (res.mfaEnrolled) {
     setStep("otp");
   } else {
-    setEnrollment({ qr: res.otpQrPng, secret: res.otpSecret }); // 서버가 발급
+    setEnrollment({ uri: res.otpauthUri, secret: res.otpSecret }); // 서버가 발급
     setStep("otp-enroll");
   }
 }
@@ -175,11 +175,25 @@ if (res.mfaRequired) {
 ```tsx
 <LoginForm
   step={step}                                  // "otp-enroll"
-  otpQrImageSrc={enrollment?.qr}               // data URI (또는 otpQrCode 로 노드 전달)
+  otpQrValue={enrollment?.uri}                 // otpauth://totp/발급자:계정?secret=…&issuer=발급자
   otpSecret={enrollment?.secret}               // QR 을 못 읽을 때 직접 입력하는 키
   onSubmitOtpEnroll={({ code }) => enroll.mutate({ mfaToken, code })}
   onBack={() => setStep("credentials")}
 />
+```
+
+QR 자리에 넣을 수 있는 것은 세 가지이고, 겹치면 아래 순서로 우선한다.
+
+| props | 언제 | 비고 |
+| --- | --- | --- |
+| `otpQrCode` | 완전히 다른 것을 그릴 때 | 노드를 그대로 그린다 |
+| `otpQrImageSrc` | 서버에서 **이미지**로 받았을 때 | data URI / `URL.createObjectURL`. 외부 URL 금지 |
+| `otpQrValue` | 서버에서 **URI**로 받았을 때 | 폼이 인코딩해 SVG 로 그린다. 오류 정정 수준은 `otpQrLevel`(기본 `"M"`) |
+
+QR 만 따로 그릴 일이 있으면 `QrCode` 컴포넌트를 직접 쓴다.
+
+```tsx
+<QrCode value={otpauthUri} className="h-40 w-40" alt="2단계 인증 등록용 QR 코드" />
 ```
 
 - `onSubmitOtpEnroll` 을 생략하면 코드 제출은 `onSubmitOtp` 로 간다(등록 확인 엔드포인트가

@@ -26,9 +26,10 @@
 
 - **네이밍**: `--au-<범주>-<의미>` (예: `--au-color-danger`). 색상 raw 값(`--au-blue-500`)은 내부 팔레트로만.
 - **다크모드/테마**: 토큰을 `:root`와 `[data-theme="dark"]`에서 재정의.
-- **테마 무관 토큰**: `--au-color-surface-fixed`(Tailwind `bg-surface-fixed`)는 다크 테마에서
-  재정의하지 않는 **항상 밝은 표면**입니다. QR/바코드처럼 어두운 바탕에서는 스캔이 되지 않는
-  영역에만 쓰고, 일반 카드·패널에는 `surface`/`surface-muted` 를 씁니다.
+- **테마 무관 토큰**: `--au-color-surface-fixed`/`--au-color-text-fixed`(Tailwind
+  `bg-surface-fixed`/`text-text-fixed`)는 다크 테마에서 재정의하지 않는 **고정 배경/전경 한 쌍**
+  입니다. QR/바코드처럼 밝고 어두운 색이 뒤집히면 스캔이 되지 않는 영역에만 쓰고,
+  일반 카드·패널에는 `surface`/`surface-muted`·`text`/`text-muted` 를 씁니다.
 
 ## 레이아웃 규칙
 
