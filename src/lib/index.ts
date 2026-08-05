@@ -37,6 +37,7 @@ export {
   LoginForm,
   type LoginFormProps,
   type LoginFormStep,
+  type LoginFormInputProps,
 } from "./components/LoginForm";
 export { QrCode, type QrCodeProps } from "./components/QrCode";
 export { encodeQr, type QrErrorCorrection } from "./utils/qr";
