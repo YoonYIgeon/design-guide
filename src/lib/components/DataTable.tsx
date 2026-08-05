@@ -141,7 +141,7 @@ const alignClass = {
  * 테이블 레이아웃(`table-layout: auto` + `w-full`)에서는 flexbox 가 아니라 셀 너비 힌트로
  * 배분이 정해집니다. 그래서 `"fit"` 은 최소 폭(`1%`, 실제로는 내용 폭까지만 줄어듦),
  * `"grow"` 는 최대 폭(`100%`, 남는 공간을 흡수)으로 옮깁니다.
- * `"fit"` 은 `whitespace-nowrap` 과 함께 써야 내용 폭이 유지됩니다(아래 cellClass 참고).
+ * 셀은 헤더·본문 모두 `whitespace-nowrap` 이라 내용 폭이 그대로 유지됩니다.
  */
 function widthStyle<T>(col: Column<T>): string | undefined {
   if (col.width) return col.width;
@@ -346,10 +346,7 @@ export function DataTable<T>({
                     </td>
                   )}
                   {columns.map((col) => (
-                    <td
-                      key={col.key}
-                      className={cn("px-4 py-3", col.size === "fit" && "whitespace-nowrap")}
-                    >
+                    <td key={col.key} className="whitespace-nowrap px-4 py-3">
                       {/* fit 열은 스켈레톤이 셀 폭을 결정해 버리므로 고정 폭으로 그립니다. */}
                       <div
                         className={cn(
@@ -376,7 +373,7 @@ export function DataTable<T>({
                 >
                   {checkable && (
                     <td
-                      className="px-4 py-3 text-center align-middle"
+                      className="whitespace-nowrap px-4 py-3 text-center align-middle"
                       // 선택 컨트롤 클릭이 행 클릭(onRowClick)까지 번지지 않게 막습니다.
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -410,10 +407,9 @@ export function DataTable<T>({
                     <td
                       key={col.key}
                       className={cn(
-                        "px-4 py-3 text-text",
+                        // 셀 내용은 항상 한 줄로 유지합니다(넘치면 컨테이너가 가로 스크롤).
+                        "whitespace-nowrap px-4 py-3 text-text",
                         alignClass[col.align ?? "left"],
-                        // fit 열은 줄바꿈을 막아야 "내용 폭"이 그대로 유지됩니다.
-                        col.size === "fit" && "whitespace-nowrap",
                       )}
                     >
                       {col.render
