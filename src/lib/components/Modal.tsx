@@ -26,7 +26,8 @@ export interface ModalProps {
   layer?: ModalLayer;
   /**
    * 패널(카드) 커스텀 className (자유 조합용 이스케이프 해치).
-   * 예: 높이를 고정하고 본문만 스크롤 — `"h-[80vh] flex flex-col"`.
+   * 패널은 이미 `flex flex-col max-h-full` 이라 본문만 스크롤하는 동작은 기본이며,
+   * 높이를 더 조이고 싶을 때만 씁니다. 예: `"h-[80vh]"`.
    *
    * 기본 클래스와 `size` 뒤에 이어 붙지만, Tailwind 는 클래스 나열 순서가 아니라
    * CSS 순서로 이깁니다. 같은 속성을 덮어쓰려면 important 수정자를 쓰세요
@@ -34,6 +35,12 @@ export interface ModalProps {
    * 색·간격은 토큰 기반 유틸만 사용하고 하드코딩하지 마세요.
    */
   panelClassName?: string;
+  /**
+   * 본문 영역 커스텀 className (자유 조합용 이스케이프 해치, `Card.bodyClassName` 과 같은 층위).
+   * 기본값(`min-h-0 flex-1 overflow-auto px-4 py-4`) 뒤에 이어 붙습니다.
+   * 예: 여백 없이 꽉 채우기 — `"p-0"`. 색·간격은 토큰 기반 유틸만 사용하세요.
+   */
+  bodyClassName?: string;
   onClose: () => void;
 }
 
@@ -55,6 +62,7 @@ export function Modal({
   dismissible = true,
   layer = "modal",
   panelClassName,
+  bodyClassName,
   onClose,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -101,12 +109,14 @@ export function Modal({
         ref={panelRef}
         tabIndex={-1}
         className={cn(
-          "relative z-10 w-full rounded-lg border border-line bg-surface shadow-3 focus-visible:outline-none",
+          // 패널은 항상 세로 flex + 최대 높이 제한입니다. 그래야 내용이 길어져도
+          // 헤더·푸터는 제자리에 남고 본문만 스크롤됩니다(본문이 flex-1 + overflow-auto).
+          "relative z-10 flex max-h-full w-full flex-col rounded-lg border border-line bg-surface shadow-3 focus-visible:outline-none",
           sizeClass[size],
           panelClassName,
         )}
       >
-        <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-3">
           <h2 className="text-base font-semibold text-text">{title}</h2>
           {dismissible && (
             <Button
@@ -120,9 +130,12 @@ export function Modal({
             </Button>
           )}
         </header>
-        <div className="px-4 py-4">{children}</div>
+        {/* min-h-0 이 없으면 flex 자식의 기본 min-height:auto 때문에 스크롤 대신 패널이 늘어납니다. */}
+        <div className={cn("min-h-0 flex-1 overflow-auto px-4 py-4", bodyClassName)}>
+          {children}
+        </div>
         {footer && (
-          <footer className="flex justify-end gap-2 border-t border-line px-4 py-3">
+          <footer className="flex shrink-0 justify-end gap-2 border-t border-line px-4 py-3">
             {footer}
           </footer>
         )}
