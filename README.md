@@ -79,7 +79,7 @@ yarn typecheck  # 타입만 검사
 | 컴포넌트 | 설명 |
 | --- | --- |
 | `AdminShell` | 사이드바 + 상단바 + 콘텐츠 공통 레이아웃 |
-| `DataTable` | 제네릭 목록 테이블 (loading/empty/error 상태) |
+| `DataTable` | 제네릭 목록 테이블 (loading/empty/error 상태, 정렬·페이지네이션·행 선택은 controlled) |
 | `Button` | primary/secondary/danger/ghost, loading |
 | `Input` | 레이블·힌트·에러를 A11y 속성과 연결 (leading/trailing 슬롯) |
 | `AsyncInput` | 디바운스 비동기 검사 입력 (조회·에러 해석은 주입 콜백, 로딩/성공/에러 표시) |

@@ -7,7 +7,15 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { AdminShell, Button, LoginForm, useAlert, useToast, type NavItem } from "./lib";
+import {
+  AdminShell,
+  Button,
+  LoginForm,
+  useAlert,
+  useToast,
+  type DataTableSort,
+  type NavItem,
+} from "./lib";
 import { DashboardPage, type UserRow } from "./pages/DashboardPage";
 import { useAuth } from "./providers";
 import { createAppRoutes, toNavItems, toTitleMap } from "./routes";
@@ -139,6 +147,7 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
+  const [sort, setSort] = useState<DataTableSort | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -148,17 +157,28 @@ export default function App() {
     );
   }, [users, query]);
 
+  // DataTable 은 행을 정렬하지 않습니다. 비교 규칙과 재배열은 하네스(컨테이너)의 몫입니다.
+  const sorted = useMemo(() => {
+    if (!sort) return filtered;
+    const dir = sort.direction === "asc" ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      const av = String(a[sort.key as keyof UserRow] ?? "");
+      const bv = String(b[sort.key as keyof UserRow] ?? "");
+      return av.localeCompare(bv, "ko") * dir;
+    });
+  }, [filtered, sort]);
+
   // 검색어가 바뀌면 항상 첫 페이지부터 다시 봅니다.
   useEffect(() => {
     setPage(1);
   }, [query]);
 
   // 목록 수·페이지 크기 변화로 현재 페이지가 범위를 벗어나면 마지막 페이지로 보정.
-  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const pageCount = Math.max(1, Math.ceil(sorted.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const pagedUsers = useMemo(
-    () => filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
-    [filtered, currentPage, pageSize],
+    () => sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [sorted, currentPage, pageSize],
   );
 
   const stats = useMemo(
@@ -205,10 +225,16 @@ export default function App() {
       stats={stats}
       query={query}
       onQueryChange={setQuery}
+      sort={sort}
+      onSortChange={(next) => {
+        setSort(next);
+        // 정렬이 바뀌면 첫 페이지부터 다시 봅니다(소비 시스템 책임).
+        setPage(1);
+      }}
       pagination={{
         page: currentPage,
         pageSize,
-        total: filtered.length,
+        total: sorted.length,
         onPageChange: setPage,
         pageSizeOptions: PAGE_SIZE_OPTIONS,
         onPageSizeChange: (size) => {

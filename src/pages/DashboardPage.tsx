@@ -9,6 +9,7 @@ import {
   StatCard,
   type Column,
   type DataTablePagination,
+  type DataTableSort,
 } from "../lib";
 import { IconPencil, IconPlus, IconSearch, IconTrash, IconUsers } from "../lib/icons";
 
@@ -45,6 +46,9 @@ export interface DashboardPageProps {
   onRenameUser: (id: number) => void;
   /** 페이지네이션(controlled). 페이지·페이지 크기 상태는 컨테이너가 보유합니다. */
   pagination?: DataTablePagination;
+  /** 정렬 상태(controlled). 실제 행 재배열은 컨테이너가 수행합니다. */
+  sort?: DataTableSort | null;
+  onSortChange?: (next: DataTableSort | null) => void;
 }
 
 /**
@@ -65,6 +69,8 @@ export function DashboardPage({
   onDeleteUser,
   onRenameUser,
   pagination,
+  sort,
+  onSortChange,
 }: DashboardPageProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "" });
@@ -77,6 +83,7 @@ export function DashboardPage({
       header: "이름",
       // 남는 가로 공간은 이름 열이 가져갑니다(나머지는 내용 폭에 맞춤).
       size: "grow",
+      sortable: true,
       render: (u) => (
         <div>
           <p className="font-medium">{u.name}</p>
@@ -100,7 +107,14 @@ export function DashboardPage({
         <Badge tone={u.status === "활성" ? "success" : "danger"}>{u.status}</Badge>
       ),
     },
-    { key: "lastLogin", header: "최근 로그인", size: "fit" },
+    {
+      key: "lastLogin",
+      header: "최근 로그인",
+      size: "fit",
+      sortable: true,
+      // 날짜는 "최신 먼저"가 자연스럽습니다.
+      defaultSortDirection: "desc",
+    },
     {
       key: "actions",
       header: "",
@@ -191,6 +205,8 @@ export function DashboardPage({
             error={error}
             emptyText={query ? "검색 결과가 없습니다." : "등록된 사용자가 없습니다."}
             pagination={pagination}
+            sort={sort}
+            onSortChange={onSortChange}
             fillHeight
             checkable
             value={selectedIds}

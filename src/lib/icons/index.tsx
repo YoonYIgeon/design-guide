@@ -84,6 +84,26 @@ export const IconChevronDown = (p: IconProps) => (
   </svg>
 );
 
+export const IconArrowUp = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M12 19V5M5 12l7-7 7 7" />
+  </svg>
+);
+
+export const IconArrowDown = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M12 5v14M19 12l-7 7-7-7" />
+  </svg>
+);
+
+/** 정렬 가능하지만 아직 정렬 기준이 아닌 열의 인디케이터. */
+export const IconArrowUpDown = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M8 20V4M4 8l4-4 4 4" />
+    <path d="M16 4v16M12 16l4 4 4-4" />
+  </svg>
+);
+
 export const IconTrash = (p: IconProps) => (
   <svg {...base(p)}>
     <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />

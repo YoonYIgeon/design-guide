@@ -1,6 +1,6 @@
 # 기획 — DataTable 정렬(sortable)
 
-> 상태: 기획(구현 전) · 대상: `src/lib/components/DataTable.tsx`
+> 상태: 구현 완료 · 대상: `src/lib/components/DataTable.tsx`
 
 ## 1. 목표와 원칙
 
@@ -85,11 +85,15 @@ export interface DataTableProps<T> {
 
 ### 2-3. 토글 규칙 (컴포넌트 내부, 순수 계산)
 
+열 A 의 `first` = `A.defaultSortDirection ?? "asc"`, `second` = 그 반대 방향.
+
 | 지금 상태 | 클릭한 열 | 다음 |
 | --- | --- | --- |
-| 없음 / 다른 열 | A | `{ key: A, direction: A.defaultSortDirection ?? "asc" }` |
-| `A asc` | A | `A desc` |
-| `A desc` | A | `sortClearable` ? `null` : `A asc` |
+| 없음 / 다른 열 | A | `{ key: A, direction: first }` |
+| `A first` | A | `A second` |
+| `A second` | A | `sortClearable` ? `null` : `A first` |
+
+`defaultSortDirection: "desc"` 인 열도 `desc → asc → (해제)` 로 같은 순환을 돈다.
 
 "다음 정렬 상태" 계산은 UI 토글 규칙일 뿐 비즈니스 로직이 아니므로 컴포넌트가 갖는다
 (체크박스 `emitChange` 가 다음 선택 전체를 계산해 내보내는 것과 동일).

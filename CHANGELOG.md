@@ -4,6 +4,37 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/) 를, 버전은 [SemVer](https://semver.org/lang/ko/) 를 따릅니다.
 
 ## [Unreleased]
+### Added
+- `DataTable` 열 정렬(sortable) 추가 — `Column.sortable` 을 준 열은 헤더가 정렬 버튼이 되고,
+  현재 정렬 상태는 `sort`(`{ key, direction }` 또는 `null`)로 내려주고 `onSortChange` 로 올려받는다.
+  페이지네이션과 같은 controlled 계약이라 **행 재배열은 컴포넌트가 하지 않는다** — `rows` 에는
+  이미 정렬된 행을 넘긴다(클라이언트면 소비 측에서 정렬, 서버면 정렬 파라미터로 fetch).
+  정렬이 바뀔 때 페이지를 1로 되돌리는 것도 소비 시스템의 몫이다.
+  헤더는 `<button type="button">` 이라 키보드로 토글되고 `<th aria-sort>` 로 상태를 알린다.
+  인디케이터는 비활성일 때도 자리를 차지해(투명도만 변화) hover 시 열 폭이 흔들리지 않는다.
+  아이콘 `IconArrowUp`·`IconArrowDown`·`IconArrowUpDown` 추가.
+  `sortable` 을 주지 않은 기존 사용처는 마크업·동작 변화 없음.
+
+  ```tsx
+  const columns = [
+    { key: "name", header: "이름", size: "grow", sortable: true },
+    // 날짜는 "최신 먼저"가 자연스러우므로 첫 클릭 방향을 desc 로
+    { key: "lastLogin", header: "최근 로그인", size: "fit", sortable: true, defaultSortDirection: "desc" },
+  ];
+
+  <DataTable
+    columns={columns}
+    rows={sortedRows}                       // 정렬은 소비 시스템이 끝내서 넘긴다
+    rowKey={(u) => u.id}
+    sort={sort}
+    onSortChange={(next) => { setSort(next); setPage(1); }}
+  />
+  ```
+
+  - `Column.sortKey`: 표시 열과 정렬 키가 다를 때(서버 필드명 등). 생략 시 `key`.
+  - `Column.defaultSortDirection`: 그 열을 처음 눌렀을 때의 방향(기본 `"asc"`).
+  - `sortClearable`: 같은 열 반복 클릭을 `기본 방향 → 반대 방향 → 해제(null)` 3단계로(기본 false).
+
 ### Changed
 - **(파괴적)** `LoginForm` 의 1차 인증 입력을 `idInput`·`passwordInput` 덮어쓰기 객체로 받는다 —
   직전에 추가했던 평면 props `idLabel`·`passwordLabel` 은 제거했다(릴리스 전 교체).
