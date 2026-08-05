@@ -21,6 +21,14 @@ callback"이라면, 이 문서는 **그 값을 얼마나 유연하게 받을지*
   자주 쓰는 형태(예: 이름+역할+아바타)는 구조화 객체로 받아 일관된 레이아웃을
   보장하고, 완전 커스텀이 필요하면 노드를 그대로 받아 그린다
   (`구조화객체 | ReactNode` 유니온 + 타입 가드).
+- **내부 입력을 열 때는 props 하나하나가 아니라 "덮어쓰기 객체"로.**
+  컴포넌트가 안에서 그리는 입력에 소비 시스템이 손댈 자리가 여럿이면
+  (`label`·`placeholder`·`autoComplete`·`hint`·`error`…), 접두사 붙은 평면 props 를
+  늘리는 대신 그 입력의 props 를 통째로 받는 객체 하나를 연다
+  (예: `LoginForm` 의 `idInput`·`passwordInput`).
+  **단, 컴포넌트가 소유한 상태는 열지 않는다** — 타입에서 `value`/`onChange` 를 빼고
+  (`Omit<InputProps, "value" | "onChange">`), JSX 에서도
+  `기본값 → {...덮어쓰기} → value/onChange` 순으로 놓아 무엇을 넘겨도 상태는 컴포넌트가 지킨다.
 
 ## 예시 — 헤더(AdminShell) 사용자 영역
 
@@ -86,7 +94,7 @@ interface AdminShellProps {
 | 컴포넌트 | 유연화된 슬롯 |
 | --- | --- |
 | `AdminShell` | `brand`(node), `logo`, `user`(구조화 객체 \| node), `user.avatar` |
-| `LoginForm` | `brand`(node), `subtitle`(node), `logo`, `idLabel`·`passwordLabel`·`submitText`·`otpTitle`·`otpDescription`·`otpLabel`·`resendText`·`backText`(node), `otpFooter`(생략 시 `footer`), `otpQrCode`(QR 자리 대체 노드, 생략 시 `otpQrImageSrc` → `otpQrValue` → 자리표시자), `otpSecret`·`otpEnrollTitle`·`otpEnrollDescription`(node), `otpEnrollFooter`(생략 시 `otpFooter ?? footer`) |
+| `LoginForm` | `brand`(node), `subtitle`(node), `logo`, `idInput`·`passwordInput`(Input props 덮어쓰기), `submitText`·`otpTitle`·`otpDescription`·`otpLabel`·`resendText`·`backText`(node), `otpFooter`(생략 시 `footer`), `otpQrCode`(QR 자리 대체 노드, 생략 시 `otpQrImageSrc` → `otpQrValue` → 자리표시자), `otpSecret`·`otpEnrollTitle`·`otpEnrollDescription`(node), `otpEnrollFooter`(생략 시 `otpFooter ?? footer`) |
 | `PromptDialog` | `title`·`description`·`label`·`hint`·`error`(node) |
 | `Tooltip` | `content`(node), `children`(트리거 노드) |
 

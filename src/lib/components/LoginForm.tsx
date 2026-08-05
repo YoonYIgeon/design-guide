@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { cn } from "../utils/cn";
 import { Button } from "./Button";
-import { Input } from "./Input";
+import { Input, type InputProps } from "./Input";
 import { QrCode } from "./QrCode";
 import { IconShield } from "../icons";
 import type { QrErrorCorrection } from "../utils/qr";
@@ -40,6 +40,17 @@ function warnUnknownStep(step: string) {
   );
 }
 
+/**
+ * 1차 인증 입력에 덧씌울 수 있는 props.
+ *
+ * `Input` 이 받는 것은 거의 그대로 열려 있습니다 — `label`·`placeholder`·`autoComplete`·
+ * `hint`·`error`·`leading`·`type`·`required` 등. 폼이 정한 기본값 위에 덮어씁니다.
+ *
+ * 다만 입력값은 폼이 보유하는 순수 UI 상태이므로 `value`/`onChange` 는 열지 않습니다.
+ * 값은 제출 시 `onSubmit` 으로 올라갑니다. (docs/08-presentational-only.md)
+ */
+export type LoginFormInputProps = Omit<InputProps, "value" | "onChange">;
+
 export interface LoginFormProps {
   /** 상단 제품명. 문자열 또는 임의의 노드(로고 등). */
   brand?: ReactNode;
@@ -54,10 +65,18 @@ export interface LoginFormProps {
    * 이 값을 바꾸는 것은 소비 시스템의 몫입니다.
    */
   step?: LoginFormStep;
-  /** 아이디 입력 레이블. */
-  idLabel?: ReactNode;
-  /** 비밀번호 입력 레이블. */
-  passwordLabel?: ReactNode;
+  /**
+   * 아이디 입력에 덮어쓸 props. 기본값은
+   * `{ label: "아이디", placeholder: "사내 계정 아이디", autoComplete: "username", required: true }`.
+   * 예: `idInput={{ label: "사번", placeholder: "10자리 사번" }}`
+   */
+  idInput?: LoginFormInputProps;
+  /**
+   * 비밀번호 입력에 덮어쓸 props. 기본값은
+   * `{ label: "비밀번호", placeholder: "비밀번호", type: "password", autoComplete: "current-password", required: true }`.
+   * `type` 도 열려 있어 "비밀번호 표시" 토글 같은 것을 소비 시스템이 만들 수 있습니다.
+   */
+  passwordInput?: LoginFormInputProps;
   /** 제출 중 여부(스피너/중복 제출 차단). 소비 시스템이 제어. 두 단계 공통. */
   loading?: boolean;
   /** 표시할 에러 메시지. 값 판단은 소비 시스템이 함. 두 단계 공통. */
@@ -165,8 +184,8 @@ export function LoginForm({
   subtitle = "관리자 콘솔에 로그인하세요.",
   logo,
   step = "credentials",
-  idLabel = "아이디",
-  passwordLabel = "비밀번호",
+  idInput,
+  passwordInput,
   loading = false,
   error,
   onSubmit,
@@ -316,22 +335,28 @@ export function LoginForm({
           </>
         ) : (
           <>
+            {/*
+              폼 기본값 → 소비 시스템 덮어쓰기 → 폼이 소유한 값/핸들러 순서로 놓습니다.
+              value/onChange 를 마지막에 둬, 어떤 props 를 넘겨도 입력 상태는 폼이 지킵니다.
+            */}
             <Input
-              label={idLabel}
-              autoComplete="username"
+              label="아이디"
               placeholder="사내 계정 아이디"
+              autoComplete="username"
+              required
+              {...idInput}
               value={id}
               onChange={(e) => setId(e.target.value)}
-              required
             />
             <Input
-              label={passwordLabel}
+              label="비밀번호"
+              placeholder="비밀번호"
               type="password"
               autoComplete="current-password"
-              placeholder="비밀번호"
+              required
+              {...passwordInput}
               value={pw}
               onChange={(e) => setPw(e.target.value)}
-              required
             />
           </>
         )}

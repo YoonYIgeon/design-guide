@@ -4,6 +4,24 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/) 를, 버전은 [SemVer](https://semver.org/lang/ko/) 를 따릅니다.
 
 ## [Unreleased]
+### Changed
+- **(파괴적)** `LoginForm` 의 1차 인증 입력을 `idInput`·`passwordInput` 덮어쓰기 객체로 받는다 —
+  직전에 추가했던 평면 props `idLabel`·`passwordLabel` 은 제거했다(릴리스 전 교체).
+  레이블뿐 아니라 `placeholder`·`autoComplete`·`hint`·`error`·`type` 등 `Input` 이 받는 것을
+  거의 그대로 열어, 필드마다 props 를 새로 다는(`idAutoComplete`, `idHint`…) 일을 없앤다.
+  타입은 `LoginFormInputProps`(= `Omit<InputProps, "value" | "onChange">`)로 내보낸다.
+  입력값은 폼이 보유하는 UI 상태이므로 `value`/`onChange` 는 열지 않으며, JSX 에서도
+  `기본값 → 덮어쓰기 → value/onChange` 순으로 놓아 무엇을 넘겨도 상태는 폼이 지킨다.
+  기본값(`"아이디"`·`"사내 계정 아이디"`·`"비밀번호"` 등)은 그대로라 아무것도 안 넘기면 동작 변화 없음.
+
+  ```tsx
+  <LoginForm
+    idInput={{ label: "사번", placeholder: "10자리 사번" }}
+    passwordInput={{ placeholder: "••••••••" }}
+    onSubmit={handleLogin}
+  />
+  ```
+
 ### Fixed
 - `AdminShell` 의 사이드바에 모바일에서 접근할 방법이 아예 없던 문제 수정 — 사이드바는
   `md` 미만에서 `hidden` 처리만 돼 있고 여는 수단이 없어, 좁은 화면에서는 내비게이션 전체가
