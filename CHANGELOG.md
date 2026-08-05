@@ -4,6 +4,19 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/) 를, 버전은 [SemVer](https://semver.org/lang/ko/) 를 따릅니다.
 
 ## [Unreleased]
+### Fixed
+- `Modal` 본문이 길면 패널이 화면 밖으로 밀려 나가 헤더·푸터(확인/취소 버튼)에 손이 닿지 않던 문제 수정.
+  패널을 `flex flex-col max-h-full` 로, 본문을 `min-h-0 flex-1 overflow-auto` 로 바꿔
+  **헤더·푸터는 고정되고 본문만 스크롤**되게 했다. 이전에는 `panelClassName="h-[80vh] flex flex-col"`
+  처럼 소비 측이 직접 조립해야 겨우 비슷하게 만들 수 있었고, 그마저도 본문에 `overflow` 가 없어
+  스크롤은 되지 않았다.
+  - `min-h-0`: flex 자식의 기본 `min-height: auto` 때문에 스크롤 대신 패널이 늘어나는 것을 막는다.
+  - Select·Dropdown·Tooltip 패널은 포털로 `fixed z-popover` 에 그려지므로 본문 `overflow-auto` 에
+    잘리지 않는다.
+  - 본문이 짧은 기존 모달은 높이·여백이 그대로다(스크롤 미발생).
+- `Modal` 에 `bodyClassName` prop 추가 — 본문 기본값(`min-h-0 flex-1 overflow-auto px-4 py-4`) 뒤에
+  이어 붙는 이스케이프 해치(`Card.bodyClassName` 과 같은 층위). 예: 여백 없이 꽉 채우기 `"p-0"`.
+
 ### Added
 - `DataTable` 열 정렬(sortable) 추가 — `Column.sortable` 을 준 열은 헤더가 정렬 버튼이 되고,
   현재 정렬 상태는 `sort`(`{ key, direction }` 또는 `null`)로 내려주고 `onSortChange` 로 올려받는다.
