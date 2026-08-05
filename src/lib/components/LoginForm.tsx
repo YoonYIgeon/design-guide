@@ -54,6 +54,10 @@ export interface LoginFormProps {
    * 이 값을 바꾸는 것은 소비 시스템의 몫입니다.
    */
   step?: LoginFormStep;
+  /** 아이디 입력 레이블. */
+  idLabel?: ReactNode;
+  /** 비밀번호 입력 레이블. */
+  passwordLabel?: ReactNode;
   /** 제출 중 여부(스피너/중복 제출 차단). 소비 시스템이 제어. 두 단계 공통. */
   loading?: boolean;
   /** 표시할 에러 메시지. 값 판단은 소비 시스템이 함. 두 단계 공통. */
@@ -161,6 +165,8 @@ export function LoginForm({
   subtitle = "관리자 콘솔에 로그인하세요.",
   logo,
   step = "credentials",
+  idLabel = "아이디",
+  passwordLabel = "비밀번호",
   loading = false,
   error,
   onSubmit,
@@ -311,7 +317,7 @@ export function LoginForm({
         ) : (
           <>
             <Input
-              label="아이디"
+              label={idLabel}
               autoComplete="username"
               placeholder="사내 계정 아이디"
               value={id}
@@ -319,7 +325,7 @@ export function LoginForm({
               required
             />
             <Input
-              label="비밀번호"
+              label={passwordLabel}
               type="password"
               autoComplete="current-password"
               placeholder="비밀번호"

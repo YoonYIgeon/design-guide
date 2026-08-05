@@ -86,7 +86,7 @@ interface AdminShellProps {
 | 컴포넌트 | 유연화된 슬롯 |
 | --- | --- |
 | `AdminShell` | `brand`(node), `logo`, `user`(구조화 객체 \| node), `user.avatar` |
-| `LoginForm` | `brand`(node), `subtitle`(node), `logo`, `submitText`·`otpTitle`·`otpDescription`·`otpLabel`·`resendText`·`backText`(node), `otpFooter`(생략 시 `footer`), `otpQrCode`(QR 자리 대체 노드, 생략 시 `otpQrImageSrc` → `otpQrValue` → 자리표시자), `otpSecret`·`otpEnrollTitle`·`otpEnrollDescription`(node), `otpEnrollFooter`(생략 시 `otpFooter ?? footer`) |
+| `LoginForm` | `brand`(node), `subtitle`(node), `logo`, `idLabel`·`passwordLabel`·`submitText`·`otpTitle`·`otpDescription`·`otpLabel`·`resendText`·`backText`(node), `otpFooter`(생략 시 `footer`), `otpQrCode`(QR 자리 대체 노드, 생략 시 `otpQrImageSrc` → `otpQrValue` → 자리표시자), `otpSecret`·`otpEnrollTitle`·`otpEnrollDescription`(node), `otpEnrollFooter`(생략 시 `otpFooter ?? footer`) |
 | `PromptDialog` | `title`·`description`·`label`·`hint`·`error`(node) |
 | `Tooltip` | `content`(node), `children`(트리거 노드) |
 
