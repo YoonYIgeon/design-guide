@@ -1,8 +1,25 @@
 import { useId, type ReactNode } from "react";
 import { cn } from "../utils/cn";
+import { IconArrowDown, IconArrowUp, IconArrowUpDown } from "../icons";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { EmptyState } from "./EmptyState";
+
+export type SortDirection = "asc" | "desc";
+
+/**
+ * 정렬 상태(controlled).
+ *
+ * 프레젠테이션 전용 원칙에 따라 DataTable 은 행을 직접 정렬하지 않습니다.
+ * `rows` 에는 항상 "이미 정렬된 행"을 전달하세요(클라이언트 정렬이면 소비 측에서 sort,
+ * 서버 정렬이면 정렬 파라미터를 붙여 fetch). 이 컴포넌트는 인디케이터를 그리고
+ * 정렬 의도만 콜백으로 냅니다.
+ */
+export interface DataTableSort {
+  /** 정렬 기준. `Column.sortKey ?? Column.key` 와 매칭됩니다. */
+  key: string;
+  direction: SortDirection;
+}
 
 export interface Column<T> {
   key: string;
@@ -27,6 +44,22 @@ export interface Column<T> {
    * 결국 어딘가에 배분됩니다. 의도한 열이 늘어나게 하려면 `"grow"` 를 한 개 이상 지정하세요.
    */
   size?: "fit" | "grow";
+  /**
+   * 헤더를 정렬 버튼으로 렌더합니다. 기본 false.
+   * `DataTableProps.onSortChange` 가 함께 있어야 실제로 눌립니다.
+   */
+  sortable?: boolean;
+  /**
+   * 정렬 기준 식별자(선택). 생략 시 `key` 를 씁니다.
+   * 표시 열과 정렬 키가 다를 때 씁니다(예: `key: "author"`, `sortKey: "author.name"`).
+   * 서버 정렬이면 API 가 받는 필드명을 그대로 적습니다.
+   */
+  sortKey?: string;
+  /**
+   * 이 열을 처음 눌렀을 때의 방향. 기본 `"asc"`.
+   * 날짜·수량처럼 "큰 값 먼저"가 자연스러운 열은 `"desc"` 를 줍니다.
+   */
+  defaultSortDirection?: SortDirection;
 }
 
 /**
@@ -120,6 +153,24 @@ export interface DataTableProps<T> {
   /** 페이지네이션(controlled). 주면 테이블 하단에 페이지 컨트롤을 렌더합니다. */
   pagination?: DataTablePagination;
   /**
+   * 현재 정렬 상태(controlled). `null`/생략이면 정렬 없음.
+   * 어느 열과도 매칭되지 않는 `key` 는 조용히 무시합니다.
+   */
+  sort?: DataTableSort | null;
+  /**
+   * 정렬 변경 요청. 인자는 "다음 정렬 상태 전체"라 그대로 `sort` 에 넣으면 됩니다.
+   * 이 콜백이 없으면 `sortable` 열도 눌리지 않는 정적 헤더로 렌더합니다.
+   *
+   * 참고: 정렬이 바뀔 때 페이지를 1로 되돌리는 것은 소비 시스템의 책임입니다.
+   */
+  onSortChange?: (next: DataTableSort | null) => void;
+  /**
+   * 같은 열을 계속 누를 때 정렬 해제 단계를 포함할지. 기본 false.
+   * - false: `기본 방향 ⇄ 반대 방향` 2단계
+   * - true: `기본 방향 → 반대 방향 → 해제(null)` 3단계
+   */
+  sortClearable?: boolean;
+  /**
    * 상위 컨테이너의 높이를 꽉 채우고, 헤더·푸터(페이지네이션)를 고정한 채
    * 본문(tbody)만 세로 스크롤합니다. 기본 false(내용 높이만큼만 차지).
    *
@@ -134,6 +185,60 @@ const alignClass = {
   right: "text-right",
   center: "text-center",
 } as const;
+
+/** 정렬 헤더는 flex 버튼이라 text-align 대신 justify 로 정렬 위치를 맞춥니다. */
+const justifyClass = {
+  left: "justify-start",
+  right: "justify-end",
+  center: "justify-center",
+} as const;
+
+/**
+ * 헤더를 눌렀을 때의 "다음 정렬 상태"를 계산합니다.
+ *
+ * 다른 열이면 그 열의 기본 방향으로 시작하고, 같은 열이면 반대 방향으로 뒤집습니다.
+ * `clearable` 이면 한 바퀴 돈 뒤 정렬 해제(null)로 빠집니다.
+ * UI 토글 규칙일 뿐이라 컴포넌트가 갖되, 실제 행 재배열은 소비 시스템의 몫입니다.
+ */
+function nextSort<T>(
+  col: Column<T>,
+  current: DataTableSort | null | undefined,
+  clearable: boolean,
+): DataTableSort | null {
+  const key = col.sortKey ?? col.key;
+  const first = col.defaultSortDirection ?? "asc";
+  const second: SortDirection = first === "asc" ? "desc" : "asc";
+  if (!current || current.key !== key) return { key, direction: first };
+  if (current.direction === first) return { key, direction: second };
+  return clearable ? null : { key, direction: first };
+}
+
+/**
+ * 정렬 인디케이터.
+ * 비활성 상태에서도 자리를 그대로 차지해야(투명도만 조절) hover 시 헤더 폭이 흔들리지 않습니다.
+ * `size: "fit"` 열은 헤더 폭이 곧 열 폭이라 특히 중요합니다.
+ */
+function SortIndicator({
+  active,
+  direction,
+}: {
+  active: boolean;
+  direction: SortDirection;
+}) {
+  const Icon = !active ? IconArrowUpDown : direction === "asc" ? IconArrowUp : IconArrowDown;
+  return (
+    <Icon
+      width={14}
+      height={14}
+      className={cn(
+        "shrink-0 transition-opacity",
+        active
+          ? "opacity-100"
+          : "opacity-0 group-hover:opacity-40 group-focus-visible:opacity-40",
+      )}
+    />
+  );
+}
 
 /**
  * 열 너비를 CSS `width` 값으로 환산합니다.
@@ -228,6 +333,9 @@ export function DataTable<T>({
   onRowClick,
   rowClassName,
   pagination,
+  sort,
+  onSortChange,
+  sortClearable = false,
   fillHeight = false,
   checkable = false,
   selectionMode = "multiple",
@@ -318,22 +426,59 @@ export function DataTable<T>({
                   )}
                 </th>
               )}
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  style={{ width: widthStyle(col) }}
-                  className={cn(
-                    "whitespace-nowrap px-4 py-2.5 font-medium text-text-muted",
-                    alignClass[col.align ?? "left"],
-                    // border-collapse 에서는 sticky 헤더의 아래 테두리가 스크롤 시
-                    // 사라지므로 inset box-shadow 로 구분선을 보강한다.
-                    fillHeight &&
-                      "sticky top-0 z-10 bg-surface-muted shadow-[inset_0_-1px_0_var(--au-color-border)]",
-                  )}
-                >
-                  {col.header}
-                </th>
-              ))}
+              {columns.map((col) => {
+                // 정렬은 controlled 라 콜백이 없으면 누를 수 없는 정적 헤더로 둡니다.
+                const interactive = Boolean(col.sortable && onSortChange);
+                const active = Boolean(sort && sort.key === (col.sortKey ?? col.key));
+                const align = col.align ?? "left";
+                return (
+                  <th
+                    key={col.key}
+                    style={{ width: widthStyle(col) }}
+                    aria-sort={
+                      active
+                        ? sort?.direction === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : col.sortable
+                          ? "none"
+                          : undefined
+                    }
+                    className={cn(
+                      "whitespace-nowrap font-medium text-text-muted",
+                      // 정렬 열은 셀 전체가 클릭 영역이 되도록 패딩을 버튼이 가져갑니다.
+                      interactive ? "p-0" : "px-4 py-2.5",
+                      alignClass[align],
+                      // border-collapse 에서는 sticky 헤더의 아래 테두리가 스크롤 시
+                      // 사라지므로 inset box-shadow 로 구분선을 보강한다.
+                      fillHeight &&
+                        "sticky top-0 z-10 bg-surface-muted shadow-[inset_0_-1px_0_var(--au-color-border)]",
+                    )}
+                  >
+                    {interactive ? (
+                      <button
+                        type="button"
+                        onClick={() => onSortChange?.(nextSort(col, sort, sortClearable))}
+                        className={cn(
+                          "group flex w-full select-none items-center gap-1 px-4 py-2.5",
+                          "transition-colors hover:text-text",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40",
+                          justifyClass[align],
+                          active && "text-text",
+                        )}
+                      >
+                        <span>{col.header}</span>
+                        <SortIndicator
+                          active={active}
+                          direction={sort?.direction ?? "asc"}
+                        />
+                      </button>
+                    ) : (
+                      col.header
+                    )}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>

@@ -47,6 +47,8 @@ export {
   type DataTableProps,
   type DataTablePagination,
   type DataTableSelectionChange,
+  type DataTableSort,
+  type SortDirection,
   type Column,
 } from "./components/DataTable";
 export { Modal, type ModalProps, type ModalSize } from "./components/Modal";
