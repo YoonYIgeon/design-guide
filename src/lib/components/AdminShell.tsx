@@ -1,6 +1,6 @@
-import { isValidElement, useEffect, useState, type ReactNode } from "react";
+import { isValidElement, useEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "../utils/cn";
-import { IconChevronDown, IconShield } from "../icons";
+import { IconChevronDown, IconClose, IconMenu, IconShield } from "../icons";
 
 export interface NavItem {
   key: string;
@@ -231,8 +231,59 @@ function SideNav({
 }
 
 /**
+ * 사이드바 내용(브랜드 + 내비 + 하단). 데스크톱 고정 사이드바와 모바일 서랍이
+ * 같은 것을 그리도록 한 곳에 모읍니다.
+ */
+function SidebarBody({
+  brand,
+  logo,
+  nav,
+  activeKey,
+  onNavigate,
+  defaultOpenKeys,
+  sidebarFooter,
+  header,
+}: {
+  brand: ReactNode;
+  logo?: ReactNode;
+  nav: NavItem[];
+  activeKey: string;
+  onNavigate: (key: string) => void;
+  defaultOpenKeys?: string[];
+  sidebarFooter?: ReactNode;
+  /** 상단 브랜드 줄 오른쪽 자리(모바일 서랍의 닫기 버튼). */
+  header?: ReactNode;
+}) {
+  return (
+    <>
+      <div className="flex h-14 shrink-0 items-center gap-2 border-b border-line px-4">
+        <span className="text-primary">
+          {logo ?? <IconShield width={22} height={22} />}
+        </span>
+        <span className="truncate text-sm font-semibold">{brand}</span>
+        {header}
+      </div>
+      <SideNav
+        nav={nav}
+        activeKey={activeKey}
+        onNavigate={onNavigate}
+        defaultOpenKeys={defaultOpenKeys}
+      />
+      {sidebarFooter != null && (
+        <div className="shrink-0 border-t border-line p-3 text-xs text-text-muted">
+          {sidebarFooter}
+        </div>
+      )}
+    </>
+  );
+}
+
+/**
  * 관리자 셸: 사이드바(내비) + 상단바(컨텍스트/사용자) + 콘텐츠 영역.
  * 모든 관리자 화면의 공통 레이아웃 뼈대입니다.
+ *
+ * 사이드바는 `md` 이상에서 고정으로 붙고, 그 아래(모바일)에서는 상단바의 메뉴 버튼으로
+ * 여는 서랍으로 그립니다. 열림 여부는 순수 UI 상태라 이 컴포넌트가 보유합니다.
  */
 export function AdminShell({
   brand = "Admin Console",
@@ -247,34 +298,98 @@ export function AdminShell({
   sidebarFooter = "격리망 전용 · v0.1.0",
   children,
 }: AdminShellProps) {
+  const [navOpen, setNavOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  // 서랍이 열리면 포커스를 안으로 옮기고, 닫히면 메뉴 버튼으로 되돌립니다.
+  // ESC 로도 닫습니다(Modal 과 같은 규칙).
+  useEffect(() => {
+    if (!navOpen) return;
+    drawerRef.current?.focus();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setNavOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      menuButtonRef.current?.focus();
+    };
+  }, [navOpen]);
+
+  // 이동하면 서랍은 닫습니다(모바일에서 메뉴가 화면을 덮은 채 남지 않도록).
+  function handleNavigate(key: string) {
+    setNavOpen(false);
+    onNavigate(key);
+  }
+
+  const sidebar = (closeButton?: ReactNode) => (
+    <SidebarBody
+      brand={brand}
+      logo={logo}
+      nav={nav}
+      activeKey={activeKey}
+      onNavigate={handleNavigate}
+      defaultOpenKeys={defaultOpenKeys}
+      sidebarFooter={sidebarFooter}
+      header={closeButton}
+    />
+  );
+
   return (
     <div className="flex h-full min-h-screen bg-bg text-text">
-      {/* 사이드바 */}
+      {/* 사이드바(md 이상 고정) */}
       <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-surface md:flex">
-        <div className="flex h-14 items-center gap-2 border-b border-line px-4">
-          <span className="text-primary">
-            {logo ?? <IconShield width={22} height={22} />}
-          </span>
-          <span className="text-sm font-semibold">{brand}</span>
-        </div>
-        <SideNav
-          nav={nav}
-          activeKey={activeKey}
-          onNavigate={onNavigate}
-          defaultOpenKeys={defaultOpenKeys}
-        />
-        {sidebarFooter != null && (
-          <div className="border-t border-line p-3 text-xs text-text-muted">
-            {sidebarFooter}
-          </div>
-        )}
+        {sidebar()}
       </aside>
+
+      {/* 사이드바(md 미만 서랍) */}
+      {navOpen && (
+        <div className="fixed inset-0 z-modal md:hidden">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setNavOpen(false)}
+            aria-hidden
+          />
+          <div
+            ref={drawerRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label="메뉴"
+            className="relative flex h-full w-64 max-w-[85%] flex-col border-r border-line bg-surface shadow-3 focus-visible:outline-none"
+          >
+            {sidebar(
+              <button
+                type="button"
+                onClick={() => setNavOpen(false)}
+                aria-label="메뉴 닫기"
+                className="-mr-1 ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
+              >
+                <IconClose width={20} height={20} />
+              </button>,
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 본문 영역 */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* 상단바 */}
         <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-line bg-surface px-4">
-          <h1 className="truncate text-base font-semibold">{title}</h1>
+          <div className="flex min-w-0 items-center gap-2">
+            <button
+              ref={menuButtonRef}
+              type="button"
+              onClick={() => setNavOpen(true)}
+              aria-label="메뉴 열기"
+              aria-expanded={navOpen}
+              className="-ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-muted hover:text-text md:hidden"
+            >
+              <IconMenu width={20} height={20} />
+            </button>
+            <h1 className="truncate text-base font-semibold">{title}</h1>
+          </div>
           <div className="flex items-center gap-3">
             {actions}
             {user != null &&
