@@ -85,6 +85,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // 첨부 용량 제한(데모). 이 값을 넘는 파일은 업로드 없이 즉시 실패 항목으로 표시됩니다.
 const MAX_UPLOAD_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPT = "image/*,.pdf";
 const formatMb = (bytes: number) => `${Math.round(bytes / (1024 * 1024))}MB`;
 
 // 이미 사용 중인 아이디(데모용 정적 목록). 실제 소비 시스템은 이 자리를 API 호출로 대체한다.
@@ -172,6 +173,21 @@ export function FormsPage() {
 
   function patchFile(id: string, patch: Partial<FileItem>) {
     setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
+  }
+
+  // accept 밖 파일은 FileUpload 가 걸러서 여기로 넘긴다(선택창 "모든 파일"·드래그&드롭 모두).
+  // 컴포넌트는 그리기만 하므로 안내 문구는 컨테이너가 정한다.
+  function handleReject(rejected: File[]) {
+    setFiles((prev) => [
+      ...prev,
+      ...rejected.map((file) => ({
+        id: `f${(idRef.current += 1)}`,
+        name: file.name,
+        size: file.size,
+        status: "error" as const,
+        error: `허용되지 않는 형식입니다(${ACCEPT}).`,
+      })),
+    ]);
   }
 
   function handleSelect(picked: File[]) {
@@ -582,12 +598,13 @@ export function FormsPage() {
             />
             <FileUpload
               label="첨부 파일"
-              hint="드래그&드롭 또는 클릭. 5MB 초과 파일을 넣으면 에러 상태를 볼 수 있습니다."
-              accept="image/*,.pdf"
+              hint="드래그&드롭 또는 클릭. 5MB 초과·허용 형식 밖 파일을 넣으면 에러 상태를 볼 수 있습니다."
+              accept={ACCEPT}
               multiple
               items={files}
               error={uploadError}
               onSelect={handleSelect}
+              onReject={handleReject}
               onRemove={handleRemove}
               preview={previewEnabled}
             />

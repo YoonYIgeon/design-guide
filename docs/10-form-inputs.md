@@ -179,12 +179,48 @@ FileUpload items 로 다시 렌더(진행 막대 → 완료 링크)
 | prop | 타입 | 설명 |
 | --- | --- | --- |
 | `items` | `FileItem[]` | 현재 파일 목록(제어값) |
-| `onSelect` | `(files: File[]) => void` | 선택/드롭된 원본 File 목록 |
+| `onSelect` | `(files: File[]) => void` | 선택/드롭된 원본 File 목록 (**`accept` 통과분만**) |
+| `onReject` | `(files: File[]) => void` | `accept` 에 안 맞아 걸러진 파일 |
 | `onRemove` | `(id: string) => void` | 개별 항목 제거/취소 |
 | `accept` | `string` | 허용 형식(예: `"image/*,.pdf"`) |
 | `multiple` | `boolean` | 다중 선택(기본 true) |
 | `label` `hint` `error` `required` `disabled` | — | 공통 규칙 |
 | `dropLabel` | `ReactNode` | 드롭존 안내 문구 |
+
+### `accept` 는 컴포넌트가 직접 걸러낸다
+
+`<input accept>` 는 **파일 선택창의 필터 힌트일 뿐**이다. 사용자가 선택창에서 "모든 파일"로
+바꾸거나 **드래그&드롭**하면 그대로 통과한다. 그래서 FileUpload 는 선택/드롭된 파일을
+같은 `accept` 규칙으로 한 번 더 검사해서, 통과한 것만 `onSelect` 로 넘기고
+나머지는 `onReject` 로 넘긴다(안내 문구는 컨테이너가 정한다).
+
+토큰 매칭 규칙 — `.pdf`(확장자, 대소문자 무시) · `image/*`(MIME 대분류) ·
+`application/pdf`(MIME 완전 일치) · 전체 와일드카드는 전부 허용. `accept` 가 없으면 전부 허용.
+드롭된 파일은 브라우저가 형식을 못 알아내 `File.type` 이 빈 문자열일 수 있으므로,
+그때는 MIME 토큰이 아니라 **확장자 토큰으로만** 통과한다.
+
+```tsx
+<FileUpload
+  accept="image/*,.pdf"
+  items={files}
+  onSelect={handleSelect}
+  onReject={(rejected) =>
+    setFiles((prev) => [
+      ...prev,
+      ...rejected.map((f) => ({
+        id: nextId(),
+        name: f.name,
+        size: f.size,
+        status: "error" as const,
+        error: "허용되지 않는 형식입니다(image/*,.pdf).",
+      })),
+    ])
+  }
+/>
+```
+
+> 클라이언트 검사는 UX 용이다. **용량·형식 최종 검증은 서버에서 반드시 다시 한다.**
+> 같은 규칙이 필요하면 `isFileAccepted(file, accept)` 를 라이브러리에서 그대로 가져다 쓴다.
 
 `FileItem` (컨테이너가 채우는 값):
 

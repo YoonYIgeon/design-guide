@@ -40,13 +40,23 @@ export interface FileUploadProps {
   items: FileItem[];
   /**
    * 사용자가 파일을 고르거나 드롭했을 때 원본 File 목록을 넘깁니다.
+   * `accept` 에 맞지 않는 파일은 여기로 오지 않습니다(→ onReject).
    * 실제 서버 업로드(HTTP)는 컨테이너가 수행하고 결과를 items 로 되돌립니다.
    * (docs/08-presentational-only.md)
    */
   onSelect: (files: File[]) => void;
+  /**
+   * `accept` 에 맞지 않아 걸러진 파일 목록. 안내 문구/에러 표시는 컨테이너 몫입니다.
+   * (주지 않으면 조용히 무시됩니다.)
+   */
+  onReject?: (files: File[]) => void;
   /** 개별 항목 제거/취소 의도. */
   onRemove?: (id: string) => void;
-  /** 허용 확장자/타입(예: "image/*,.pdf"). */
+  /**
+   * 허용 확장자/타입(예: "image/*,.pdf").
+   * `<input accept>` 는 파일 선택창의 힌트일 뿐이라("모든 파일" 선택·드래그&드롭으로 우회됨)
+   * 컴포넌트가 선택/드롭된 파일을 같은 규칙으로 다시 걸러냅니다.
+   */
   accept?: string;
   /** 다중 선택 허용(기본 true). */
   multiple?: boolean;
@@ -76,6 +86,36 @@ function isImageFile(name: string): boolean {
 }
 
 /**
+ * `accept` 한 토큰이 파일과 맞는지 검사합니다.
+ * - `.pdf` : 파일명 확장자(대소문자 무시)
+ * - `image/*` : MIME 대분류
+ * - `application/pdf` : MIME 완전 일치
+ * - `*` 또는 `star/star` 형태의 전체 와일드카드 : 전부 허용
+ *
+ * 드롭된 파일은 `type` 이 빈 문자열일 수 있어(브라우저가 못 알아본 경우)
+ * MIME 토큰은 매칭되지 않고 확장자 토큰만 통과합니다.
+ */
+function matchesAcceptToken(file: File, token: string): boolean {
+  if (token === "*" || token === "*/*") return true;
+  if (token.startsWith(".")) return file.name.toLowerCase().endsWith(token);
+
+  const type = file.type.toLowerCase();
+  if (!type) return false;
+  if (token.endsWith("/*")) return type.startsWith(token.slice(0, -1));
+  return type === token;
+}
+
+/** `accept` 문자열(비어 있으면 전부 허용)에 파일이 부합하는지. */
+export function isFileAccepted(file: File, accept?: string): boolean {
+  const tokens = (accept ?? "")
+    .split(",")
+    .map((t) => t.trim().toLowerCase())
+    .filter(Boolean);
+  if (tokens.length === 0) return true;
+  return tokens.some((token) => matchesAcceptToken(file, token));
+}
+
+/**
  * 파일 업로드(드래그&드롭 + 찾아보기) — 프레젠테이션 전용.
  *
  * 이 컴포넌트는 네트워크를 모릅니다. 선택된 파일을 onSelect 로 넘기면,
@@ -89,6 +129,7 @@ export function FileUpload({
   error,
   items,
   onSelect,
+  onReject,
   onRemove,
   accept,
   multiple = true,
@@ -112,8 +153,18 @@ export function FileUpload({
 
   function emit(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
-    const files = Array.from(fileList);
-    onSelect(multiple ? files : files.slice(0, 1));
+
+    // `<input accept>` 은 선택창 힌트일 뿐이라("모든 파일" 선택·드래그&드롭으로 우회됨)
+    // 여기서 같은 규칙으로 한 번 더 걸러야 accept 밖 파일이 올라가지 않는다.
+    const accepted: File[] = [];
+    const rejected: File[] = [];
+    for (const file of Array.from(fileList)) {
+      (isFileAccepted(file, accept) ? accepted : rejected).push(file);
+    }
+
+    if (rejected.length > 0) onReject?.(rejected);
+    if (accepted.length === 0) return;
+    onSelect(multiple ? accepted : accepted.slice(0, 1));
   }
 
   function handleDrop(e: DragEvent<HTMLDivElement>) {
