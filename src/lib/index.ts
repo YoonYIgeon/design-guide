@@ -29,6 +29,7 @@ export {
 } from "./components/AddableInputForm";
 export {
   FileUpload,
+  isFileAccepted,
   type FileUploadProps,
   type FileItem,
   type FileStatus,
