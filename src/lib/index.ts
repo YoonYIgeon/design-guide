@@ -90,6 +90,7 @@ export {
 export {
   ToastProvider,
   useToast,
+  useOptionalToast,
   type ToastApi,
   type ToastOptions,
 } from "./providers/ToastProvider";

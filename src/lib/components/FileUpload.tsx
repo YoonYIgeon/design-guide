@@ -1,5 +1,6 @@
 import { useId, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { cn } from "../utils/cn";
+import { useOptionalToast } from "../providers/ToastProvider";
 import {
   IconAlertCircle,
   IconCheckCircle,
@@ -46,8 +47,11 @@ export interface FileUploadProps {
    */
   onSelect: (files: File[]) => void;
   /**
-   * `accept` 에 맞지 않아 걸러진 파일 목록. 안내 문구/에러 표시는 컨테이너 몫입니다.
-   * (주지 않으면 조용히 무시됩니다.)
+   * `accept` 에 맞지 않아 걸러진 파일 목록.
+   *
+   * 주지 않으면 기본 동작으로 **토스트 에러**를 띄웁니다(ToastProvider 가 있을 때).
+   * 목록에 에러 항목으로 남기는 등 다르게 처리하려면 이 콜백을 주세요 —
+   * 주는 순간 기본 토스트는 뜨지 않습니다.
    */
   onReject?: (files: File[]) => void;
   /** 개별 항목 제거/취소 의도. */
@@ -105,6 +109,15 @@ function matchesAcceptToken(file: File, token: string): boolean {
   return type === token;
 }
 
+/** onReject 를 주지 않았을 때 띄우는 기본 토스트 문구. */
+function rejectMessage(rejected: File[], accept?: string): string {
+  const [first, ...rest] = rejected;
+  const names = rest.length > 0 ? `${first.name} 외 ${rest.length}개` : first.name;
+  return accept
+    ? `${names} — 허용 형식이 아닙니다(${accept}).`
+    : `${names} — 업로드할 수 없는 파일입니다.`;
+}
+
 /** `accept` 문자열(비어 있으면 전부 허용)에 파일이 부합하는지. */
 export function isFileAccepted(file: File, accept?: string): boolean {
   const tokens = (accept ?? "")
@@ -150,6 +163,8 @@ export function FileUpload({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
+  // onReject 미지정 시의 기본 안내용. ToastProvider 가 없으면 null(→ 조용히 무시).
+  const toast = useOptionalToast();
 
   function emit(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
@@ -162,7 +177,10 @@ export function FileUpload({
       (isFileAccepted(file, accept) ? accepted : rejected).push(file);
     }
 
-    if (rejected.length > 0) onReject?.(rejected);
+    if (rejected.length > 0) {
+      if (onReject) onReject(rejected);
+      else toast?.error(rejectMessage(rejected, accept));
+    }
     if (accepted.length === 0) return;
     onSelect(multiple ? accepted : accepted.slice(0, 1));
   }
