@@ -108,7 +108,18 @@ export function ToastProvider({
 
 /** 토스트 API 훅. ToastProvider 하위에서만 사용합니다. */
 export function useToast(): ToastApi {
-  const ctx = useContext(ToastContext);
+  const ctx = useOptionalToast();
   if (!ctx) throw new Error("useToast 는 <ToastProvider> 안에서만 사용할 수 있습니다.");
   return ctx;
+}
+
+/**
+ * 프로바이더가 없으면 throw 대신 `null` 을 돌려주는 토스트 훅.
+ *
+ * 토스트를 **보조 안내로만** 쓰는 컴포넌트용입니다(예: FileUpload 가 accept 밖 파일을
+ * 알릴 때). 라이브러리 컴포넌트는 ToastProvider 없이도 동작해야 하므로,
+ * 토스트가 필수인 화면이 아니라면 useToast 대신 이 훅을 씁니다.
+ */
+export function useOptionalToast(): ToastApi | null {
+  return useContext(ToastContext);
 }

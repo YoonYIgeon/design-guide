@@ -175,21 +175,8 @@ export function FormsPage() {
     setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
   }
 
-  // accept 밖 파일은 FileUpload 가 걸러서 여기로 넘긴다(선택창 "모든 파일"·드래그&드롭 모두).
-  // 컴포넌트는 그리기만 하므로 안내 문구는 컨테이너가 정한다.
-  function handleReject(rejected: File[]) {
-    setFiles((prev) => [
-      ...prev,
-      ...rejected.map((file) => ({
-        id: `f${(idRef.current += 1)}`,
-        name: file.name,
-        size: file.size,
-        status: "error" as const,
-        error: `허용되지 않는 형식입니다(${ACCEPT}).`,
-      })),
-    ]);
-  }
-
+  // accept 밖 파일은 FileUpload 가 걸러낸다(선택창 "모든 파일"·드래그&드롭 모두).
+  // onReject 를 주지 않았으므로 기본 동작인 토스트 에러가 뜬다.
   function handleSelect(picked: File[]) {
     for (const file of picked) {
       const id = `f${(idRef.current += 1)}`;
@@ -598,13 +585,12 @@ export function FormsPage() {
             />
             <FileUpload
               label="첨부 파일"
-              hint="드래그&드롭 또는 클릭. 5MB 초과·허용 형식 밖 파일을 넣으면 에러 상태를 볼 수 있습니다."
+              hint="드래그&드롭 또는 클릭. 5MB 초과는 에러 항목, 허용 형식 밖 파일은 토스트로 안내됩니다."
               accept={ACCEPT}
               multiple
               items={files}
               error={uploadError}
               onSelect={handleSelect}
-              onReject={handleReject}
               onRemove={handleRemove}
               preview={previewEnabled}
             />

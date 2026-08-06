@@ -180,7 +180,7 @@ FileUpload items 로 다시 렌더(진행 막대 → 완료 링크)
 | --- | --- | --- |
 | `items` | `FileItem[]` | 현재 파일 목록(제어값) |
 | `onSelect` | `(files: File[]) => void` | 선택/드롭된 원본 File 목록 (**`accept` 통과분만**) |
-| `onReject` | `(files: File[]) => void` | `accept` 에 안 맞아 걸러진 파일 |
+| `onReject` | `(files: File[]) => void` | `accept` 에 안 맞아 걸러진 파일 (**미지정 시 토스트 에러**) |
 | `onRemove` | `(id: string) => void` | 개별 항목 제거/취소 |
 | `accept` | `string` | 허용 형식(예: `"image/*,.pdf"`) |
 | `multiple` | `boolean` | 다중 선택(기본 true) |
@@ -191,13 +191,25 @@ FileUpload items 로 다시 렌더(진행 막대 → 완료 링크)
 
 `<input accept>` 는 **파일 선택창의 필터 힌트일 뿐**이다. 사용자가 선택창에서 "모든 파일"로
 바꾸거나 **드래그&드롭**하면 그대로 통과한다. 그래서 FileUpload 는 선택/드롭된 파일을
-같은 `accept` 규칙으로 한 번 더 검사해서, 통과한 것만 `onSelect` 로 넘기고
-나머지는 `onReject` 로 넘긴다(안내 문구는 컨테이너가 정한다).
+같은 `accept` 규칙으로 한 번 더 검사해서, 통과한 것만 `onSelect` 로 넘긴다.
 
 토큰 매칭 규칙 — `.pdf`(확장자, 대소문자 무시) · `image/*`(MIME 대분류) ·
 `application/pdf`(MIME 완전 일치) · 전체 와일드카드는 전부 허용. `accept` 가 없으면 전부 허용.
 드롭된 파일은 브라우저가 형식을 못 알아내 `File.type` 이 빈 문자열일 수 있으므로,
 그때는 MIME 토큰이 아니라 **확장자 토큰으로만** 통과한다.
+
+걸러진 파일 안내는 **기본값이 토스트 에러**다. 따로 처리할 게 없으면 그냥 두면 된다:
+
+```tsx
+// "a.exe 외 2개 — 허용 형식이 아닙니다(image/*,.pdf)." 토스트가 뜬다
+<FileUpload accept="image/*,.pdf" items={files} onSelect={handleSelect} />
+```
+
+이 기본 토스트는 프레젠테이션 전용 원칙의 예외인 `ToastProvider` 를 통해 뜬다
+([08](08-presentational-only.md)). 프로바이더로 감싸지 않은 화면에서는 조용히 무시되므로,
+안내가 반드시 필요하면 `<ToastProvider>` 로 감싸거나 `onReject` 를 준다.
+
+목록에 에러 항목으로 남기는 등 다르게 처리하려면 `onReject` 를 준다 — **주는 순간 기본 토스트는 뜨지 않는다**:
 
 ```tsx
 <FileUpload
