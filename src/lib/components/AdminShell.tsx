@@ -1,4 +1,11 @@
-import { isValidElement, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  isValidElement,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { cn } from "../utils/cn";
 import { IconChevronDown, IconClose, IconMenu, IconShield } from "../icons";
 
@@ -31,6 +38,11 @@ export interface AdminShellProps {
   /** 사이드바 상단 로고 자리. 기본 실드 아이콘을 대체합니다. */
   logo?: ReactNode;
   nav: NavItem[];
+  /**
+   * 현재 위치. 항목 key 와 정확히 같거나, key 를 상위 경로로 갖는 하위 경로여도 활성 처리합니다.
+   * (예: key `/posts` 는 `/posts`, `/posts/12`, `/posts/12/edit` 에서 활성)
+   * 여러 항목이 걸리면 가장 구체적인(긴) key 하나만 활성이 됩니다.
+   */
   activeKey: string;
   onNavigate: (key: string) => void;
   /**
@@ -71,9 +83,46 @@ function initialOf(name: ReactNode): string {
 }
 
 /** 어떤 항목(또는 그 하위)이 활성 key 를 포함하는지. */
-function containsKey(item: NavItem, key: string): boolean {
+function containsKey(item: NavItem, key: string | null): boolean {
+  if (key === null) return false;
   if (item.key === key) return true;
   return item.children?.some((child) => containsKey(child, key)) ?? false;
+}
+
+/**
+ * `itemKey` 가 `activeKey` 자신이거나 그 상위 경로인지.
+ * 경계(`/`) 단위로 비교하므로 `/user` 가 `/users/1` 에 걸리지 않습니다.
+ * 루트(`/`)는 모든 경로의 상위가 되어버리므로 정확히 일치할 때만 활성입니다.
+ */
+function isKeyPrefixOf(itemKey: string, activeKey: string): boolean {
+  if (itemKey === activeKey) return true;
+  const base = itemKey.endsWith("/") ? itemKey.slice(0, -1) : itemKey;
+  if (base === "") return false;
+  return activeKey.startsWith(`${base}/`);
+}
+
+/**
+ * 트리에서 실제로 활성 표시할 항목 key 하나를 고릅니다.
+ * - 이동 대상인 잎(children 없는 항목)만 후보입니다(그룹 헤더는 이동하지 않으므로 제외).
+ * - 여러 개가 걸리면 가장 구체적인(긴) key 가 이깁니다.
+ *   (예: `/posts` 와 `/posts/new` 가 함께 있고 현재가 `/posts/new` 면 후자만 활성)
+ * 걸리는 항목이 없으면 null.
+ */
+function resolveActiveKey(items: NavItem[], activeKey: string): string | null {
+  let best: string | null = null;
+  const walk = (list: NavItem[]) => {
+    for (const item of list) {
+      if (item.children?.length) {
+        walk(item.children);
+        continue;
+      }
+      if (isKeyPrefixOf(item.key, activeKey) && (best === null || item.key.length > best.length)) {
+        best = item.key;
+      }
+    }
+  };
+  walk(items);
+  return best;
 }
 
 /** 활성 key 로 가는 경로상의 "조상 그룹 key" 목록(활성 항목 자신은 제외). 없으면 null. */
@@ -132,15 +181,19 @@ function SideNav({
   onNavigate: (key: string) => void;
   defaultOpenKeys?: string[];
 }) {
+  // 하위 경로(`/posts/12`)에서도 상위 항목(`/posts`)이 활성이 되도록, 실제 활성 key 를 먼저 해석합니다.
+  const resolvedKey = useMemo(() => resolveActiveKey(nav, activeKey), [nav, activeKey]);
+
   const [openKeys, setOpenKeys] = useState<Set<string>>(() => {
     const initial = new Set(defaultOpenKeys ?? []);
-    ancestorKeysOf(nav, activeKey)?.forEach((k) => initial.add(k));
+    if (resolvedKey !== null) ancestorKeysOf(nav, resolvedKey)?.forEach((k) => initial.add(k));
     return initial;
   });
 
   // 활성 항목이 바뀌면 그 항목이 속한 그룹을 펼쳐 항상 보이게 합니다(수동 토글은 유지).
   useEffect(() => {
-    const ancestors = ancestorKeysOf(nav, activeKey);
+    if (resolvedKey === null) return;
+    const ancestors = ancestorKeysOf(nav, resolvedKey);
     if (!ancestors?.length) return;
     setOpenKeys((prev) => {
       const next = new Set(prev);
@@ -153,9 +206,9 @@ function SideNav({
       });
       return changed ? next : prev;
     });
-    // activeKey 변화에만 반응(nav 는 매 렌더 새 배열이라 의도적으로 제외).
+    // 활성 항목 변화에만 반응(nav 는 매 렌더 새 배열이라 의도적으로 제외).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeKey]);
+  }, [resolvedKey]);
 
   function toggle(key: string) {
     setOpenKeys((prev) => {
@@ -171,7 +224,7 @@ function SideNav({
       const hasChildren = !!item.children?.length;
 
       if (!hasChildren) {
-        const active = item.key === activeKey;
+        const active = item.key === resolvedKey;
         return (
           <button
             key={item.key}
@@ -187,7 +240,7 @@ function SideNav({
       }
 
       const open = openKeys.has(item.key);
-      const branchActive = containsKey(item, activeKey);
+      const branchActive = containsKey(item, resolvedKey);
       return (
         <div key={item.key}>
           <button
