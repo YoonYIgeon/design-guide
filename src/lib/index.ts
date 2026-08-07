@@ -104,4 +104,5 @@ export {
 } from "./providers/AlertProvider";
 
 export { cn } from "./utils/cn";
+export { filterAllowedChars } from "./utils/allow";
 export * as Icons from "./icons";

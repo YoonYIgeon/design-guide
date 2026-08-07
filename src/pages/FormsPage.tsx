@@ -83,6 +83,10 @@ interface SignupForm {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Input 의 allow 는 "값 전체"가 아니라 "한 글자"를 검사하는 문자 클래스다.
+const SLUG_CHARS = /[a-z0-9-]/; // 영소문자·숫자·하이픈
+const DIGIT_CHARS = /[0-9]/;
+
 // 첨부 용량 제한(데모). 이 값을 넘는 파일은 업로드 없이 즉시 실패 항목으로 표시됩니다.
 const MAX_UPLOAD_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPT = "image/*,.pdf";
@@ -128,6 +132,10 @@ export function FormsPage() {
   // 마지막 적용값으로 되돌립니다.
   const [statusFilter, setStatusFilter] = useState<string[]>(["active"]);
   const [statusDraft, setStatusDraft] = useState<string[]>(statusFilter);
+
+  // 입력 문자 제한(allow) 데모 — 값은 컨테이너가 보유하고, 필터는 Input 이 담당한다.
+  const [slug, setSlug] = useState("");
+  const [phone, setPhone] = useState("");
 
   // 스텝 셀렉터(다섯 단계) 상태 — 와인 감각 평가 예시.
   const [sweetness, setSweetness] = useState(1);
@@ -415,6 +423,32 @@ export function FormsPage() {
               <Icons.IconChevronDown width={16} height={16} />
             </Button>
           </Dropdown>
+        </div>
+      </Card>
+
+      {/* 입력 가능한 문자 제한 (Input allow) */}
+      <Card title="입력 문자 제한 (Input allow)">
+        <div className="flex flex-col gap-5">
+          <Input
+            label="주소(slug)"
+            allow={SLUG_CHARS}
+            placeholder="예: summer-event-2026"
+            hint="영소문자·숫자·하이픈만 입력됩니다. 대문자/한글/공백은 타이핑해도 들어가지 않습니다."
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+          />
+          <Input
+            label="연락처"
+            allow={DIGIT_CHARS}
+            inputMode="numeric"
+            placeholder="01012345678"
+            hint="숫자만 입력됩니다. 하이픈이 섞인 값을 붙여넣어도 숫자만 남습니다."
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+          <p className="text-xs text-text-muted">
+            제한은 입력 편의(UX)일 뿐입니다 — 형식의 최종 검증은 컨테이너/서버에서 다시 합니다.
+          </p>
         </div>
       </Card>
 
