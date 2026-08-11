@@ -84,12 +84,14 @@ function ProtectedLayout({
   dark,
   onToggleTheme,
   onLogout,
+  onUserClick,
 }: {
   nav: NavItem[];
   titles: Record<string, string>;
   dark: boolean;
   onToggleTheme: () => void;
   onLogout: () => void;
+  onUserClick: () => void;
 }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -102,6 +104,7 @@ function ProtectedLayout({
       onNavigate={(key) => navigate(key)}
       title={titles[location.pathname] ?? ""}
       user={{ name: "관리자", role: "시스템 관리자" }}
+      onUserClick={onUserClick}
       sidebarFooter="격리망 전용 · v0.1.0"
       actions={
         <>
@@ -314,6 +317,9 @@ export default function App() {
               dark={dark}
               onToggleTheme={toggleTheme}
               onLogout={handleLogout}
+              onUserClick={() =>
+                toast.info("관리자(시스템 관리자) 계정으로 로그인되어 있습니다.")
+              }
             />
           ) : (
             <Navigate to="/login" replace />

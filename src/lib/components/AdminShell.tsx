@@ -57,6 +57,12 @@ export interface AdminShellProps {
    * - 완전 커스텀이 필요하면 노드를 직접 넘기면 그대로 렌더합니다.
    */
   user?: AdminShellUser | ReactNode;
+  /**
+   * 사용자 영역(아바타+이름/역할) 클릭 콜백. 지정하면 영역 전체가 버튼이 됩니다.
+   * `user` 가 구조화 객체(`AdminShellUser`)일 때만 적용되며,
+   * 커스텀 노드를 넘긴 경우 상호작용은 그 노드가 스스로 책임집니다.
+   */
+  onUserClick?: () => void;
   actions?: ReactNode;
   /**
    * 사이드바 하단 영역(버전·환경 표기 등). 문자열 또는 임의의 노드.
@@ -141,10 +147,15 @@ function ancestorKeysOf(
   return null;
 }
 
-/** 구조화 객체를 받은 기본 사용자 영역 렌더. */
-function UserBadge({ name, role, avatar }: AdminShellUser) {
-  return (
-    <div className="flex items-center gap-2">
+/** 구조화 객체를 받은 기본 사용자 영역 렌더. `onClick` 이 있으면 전체가 버튼이 됩니다. */
+function UserBadge({
+  name,
+  role,
+  avatar,
+  onClick,
+}: AdminShellUser & { onClick?: () => void }) {
+  const content = (
+    <>
       <div
         className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xs font-semibold text-primary"
         aria-hidden
@@ -155,8 +166,21 @@ function UserBadge({ name, role, avatar }: AdminShellUser) {
         <p className="text-sm font-medium leading-tight">{name}</p>
         {role && <p className="text-xs leading-tight text-text-muted">{role}</p>}
       </div>
-    </div>
+    </>
   );
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={typeof name === "string" ? name : undefined}
+        className="-mx-2 -my-1 flex items-center gap-2 rounded-md px-2 py-1 transition-colors hover:bg-surface-muted"
+      >
+        {content}
+      </button>
+    );
+  }
+  return <div className="flex items-center gap-2">{content}</div>;
 }
 
 const ROW_BASE =
@@ -347,6 +371,7 @@ export function AdminShell({
   defaultOpenKeys,
   title,
   user,
+  onUserClick,
   actions,
   sidebarFooter = "격리망 전용 · v0.1.0",
   children,
@@ -446,7 +471,11 @@ export function AdminShell({
           <div className="flex items-center gap-3">
             {actions}
             {user != null &&
-              (isUserDescriptor(user) ? <UserBadge {...user} /> : user)}
+              (isUserDescriptor(user) ? (
+                <UserBadge {...user} onClick={onUserClick} />
+              ) : (
+                user
+              ))}
           </div>
         </header>
 

@@ -28,6 +28,13 @@
   이어 붙는 이스케이프 해치(`Card.bodyClassName` 과 같은 층위). 예: 여백 없이 꽉 채우기 `"p-0"`.
 
 ### Added
+- `AdminShell` 에 `onUserClick` prop 추가 — 상단바 우측 사용자 영역(아바타+이름/역할)이
+  클릭 가능해진다. 지정하면 영역 전체가 `<button type="button">` 으로 렌더되어 키보드로도
+  동작하고, 이름 텍스트가 숨는 좁은 화면에서는 이름이 문자열일 때 `aria-label` 로 노출된다.
+  무엇을 할지는 콜백을 넘기는 소비 시스템의 몫이다(프레젠테이션 전용 계약).
+  - `user` 가 구조화 객체(`AdminShellUser`)일 때만 적용된다. 커스텀 노드를 넘긴 경우
+    상호작용은 그 노드가 스스로 책임진다.
+  - `onUserClick` 을 주지 않은 기존 사용처는 마크업·동작 변화 없음(기존 `<div>` 유지).
 - `DataTable` 열 정렬(sortable) 추가 — `Column.sortable` 을 준 열은 헤더가 정렬 버튼이 되고,
   현재 정렬 상태는 `sort`(`{ key, direction }` 또는 `null`)로 내려주고 `onSortChange` 로 올려받는다.
   페이지네이션과 같은 controlled 계약이라 **행 재배열은 컴포넌트가 하지 않는다** — `rows` 에는
