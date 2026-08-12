@@ -28,6 +28,22 @@
   이어 붙는 이스케이프 해치(`Card.bodyClassName` 과 같은 층위). 예: 여백 없이 꽉 채우기 `"p-0"`.
 
 ### Added
+- 폰트 토큰을 **역할 축**으로 분리 — `--au-font-sans`(본문) / `--au-font-heading`(제목) /
+  `--au-font-mono`(코드·고정폭). Tailwind 프리셋에 `font-heading`·`font-mono` 유틸리티가 함께 열린다.
+  `--au-font-heading` 의 기본값은 `--au-font-sans` 라, **본문 폰트만 덮어써도 제목이 따라온다**.
+  - 지금까지 `font-mono` 는 토큰을 거치지 않고 Tailwind 기본 고정폭 스택으로 새고 있었다
+    (`Markdown` 인라인 코드, `LoginForm` 백업 코드). 이제 `--au-font-mono` 로 교체 가능하다.
+  - 제목 슬롯에 `font-heading` 적용: `AdminShell` 제목·브랜드, `Card`/`Modal` 제목,
+    `EmptyState` 제목, `Markdown` h1–h3. 기본값이 본문 폰트와 같으므로 **기존 화면의 렌더 결과는 동일**하다.
+- **폰트 오버라이드가 CSS 로드 순서를 타지 않는다** — `tokens.css` 는 위 세 변수를 **선언하지 않고**
+  기본값을 `--au-font-*-default` 에 두며, 사용처에서 `var(--au-font-sans, var(--au-font-sans-default))`
+  로 폴백한다. 덮어쓸 선언 자체가 없으니 소비 쪽 값이 `:root` 든 `@layer base` 안이든 항상 이긴다.
+  이전에는 양쪽 다 `:root`(명시도 동일)라 **나중에 로드된 쪽이 이겨**, 오버라이드를 레이어 안이나
+  토큰 import 앞에 두면 조용히 무시됐다.
+  - 소비 시스템이 지정하는 변수는 `--au-font-sans/heading/mono` 뿐이다.
+    `--au-font-*-default` 는 라이브러리 내부 기본값이므로 건드리지 않는다.
+  - 시스템 폰트 스택 값 자체는 그대로여서, 오버라이드하지 않은 사용처는 변화가 없다.
+  - 연동 방법은 `docs/03-getting-started.md#폰트-교체` 참고.
 - `AdminShell` 에 `onUserClick` prop 추가 — 상단바 우측 사용자 영역(아바타+이름/역할)이
   클릭 가능해진다. 지정하면 영역 전체가 `<button type="button">` 으로 렌더되어 키보드로도
   동작하고, 이름 텍스트가 숨는 좁은 화면에서는 이름이 문자열일 때 `aria-label` 로 노출된다.

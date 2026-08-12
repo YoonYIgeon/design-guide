@@ -18,13 +18,22 @@
 | 범주 | 예시 토큰 | 비고 |
 | --- | --- | --- |
 | 색상 | `--au-color-primary`, `--au-color-danger`, `--au-color-bg`, `--au-color-text` | 의미 기반 네이밍(용도) 우선 |
-| 타이포 | `--au-font-size-sm/md/lg`, `--au-font-weight-*` | 시스템 폰트 스택 기본, 웹폰트는 번들 포함 |
+| 타이포 | `--au-font-sans`(본문), `--au-font-heading`(제목), `--au-font-mono`(코드·고정폭) | 폰트 **패밀리만** 토큰. 크기·굵기는 Tailwind 유틸(`text-sm`, `font-semibold`)을 쓴다. 시스템 폰트 스택 기본, 웹폰트는 번들 포함 |
 | 간격 | `--au-space-1..8` (4px 스케일) | 마진/패딩은 스케일 값만 사용 |
 | 반경 | `--au-radius-sm/md/lg` | |
 | 그림자 | `--au-shadow-1/2/3` | 과도한 그림자 지양 |
 | z-index | `--au-z-modal/toast/popover/alert` | 레이어 충돌 방지. 겹침 순서: modal < toast < popover < alert |
 
 - **네이밍**: `--au-<범주>-<의미>` (예: `--au-color-danger`). 색상 raw 값(`--au-blue-500`)은 내부 팔레트로만.
+- **폰트 토큰은 선언하지 않고 폴백만 한다**: `tokens.css` 는 `--au-font-sans/heading/mono` 를
+  **선언하지 않고** 기본값을 `--au-font-*-default` 에 두며, 사용처에서
+  `var(--au-font-sans, var(--au-font-sans-default))` 로 폴백합니다. 소비 쪽 선언이
+  덮어쓸 대상 없이 그대로 적용되므로 **CSS 로드 순서에 좌우되지 않습니다**
+  (연동 방법은 [03-getting-started.md](03-getting-started.md#폰트-교체) 참고).
+  `--au-font-heading` 의 기본값은 `--au-font-sans` 라, 본문 폰트만 바꿔도 제목이 함께 따라옵니다.
+- **폰트 패밀리는 유틸리티로만 쓴다**: 컴포넌트는 `font-sans`(전역 기본) / `font-heading`(제목 슬롯)
+  / `font-mono`(코드·고정폭)만 쓰고 `font-family` 를 직접 선언하지 않습니다. 그래야 소비 시스템이
+  특정 영역에만 `style={{ "--au-font-sans": … }}` 로 다른 폰트를 씌우는 것도 그대로 동작합니다.
 - **다크모드/테마**: 토큰을 `:root`와 `[data-theme="dark"]`에서 재정의.
 - **테마 무관 토큰**: `--au-color-surface-fixed`/`--au-color-text-fixed`(Tailwind
   `bg-surface-fixed`/`text-text-fixed`)는 다크 테마에서 재정의하지 않는 **고정 배경/전경 한 쌍**

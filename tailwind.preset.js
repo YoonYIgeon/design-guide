@@ -62,8 +62,13 @@ export default {
         2: "var(--au-shadow-2)",
         3: "var(--au-shadow-3)",
       },
+      // 폰트 패밀리(역할 축). 기본값은 tokens.css 의 `--au-*-default`,
+      // 소비 시스템이 덮어쓰는 변수는 `--au-font-sans/heading/mono` 입니다.
+      // 라이브러리가 후자를 선언하지 않으므로 오버라이드는 로드 순서를 타지 않습니다.
       fontFamily: {
-        sans: "var(--au-font-sans)",
+        sans: "var(--au-font-sans, var(--au-font-sans-default))",
+        heading: "var(--au-font-heading, var(--au-font-heading-default))",
+        mono: "var(--au-font-mono, var(--au-font-mono-default))",
       },
       // z-index 레이어(겹침 순서의 단일 원천). 값의 원천은 tokens.css 의 --au-z-*.
       // 컴포넌트는 z-modal / z-toast / z-popover / z-alert 유틸리티만 사용합니다.

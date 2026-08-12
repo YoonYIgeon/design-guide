@@ -19,13 +19,22 @@ export interface MarkdownProps {
  */
 const components: Components = {
   h1: ({ node: _node, ...p }) => (
-    <h1 className="mb-3 mt-6 text-xl font-semibold text-text first:mt-0" {...p} />
+    <h1
+      className="mb-3 mt-6 font-heading text-xl font-semibold text-text first:mt-0"
+      {...p}
+    />
   ),
   h2: ({ node: _node, ...p }) => (
-    <h2 className="mb-2 mt-5 text-lg font-semibold text-text first:mt-0" {...p} />
+    <h2
+      className="mb-2 mt-5 font-heading text-lg font-semibold text-text first:mt-0"
+      {...p}
+    />
   ),
   h3: ({ node: _node, ...p }) => (
-    <h3 className="mb-2 mt-4 text-base font-semibold text-text first:mt-0" {...p} />
+    <h3
+      className="mb-2 mt-4 font-heading text-base font-semibold text-text first:mt-0"
+      {...p}
+    />
   ),
   p: ({ node: _node, ...p }) => <p className="my-3 leading-relaxed" {...p} />,
   a: ({ node: _node, ...p }) => (
