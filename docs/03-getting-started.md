@@ -146,6 +146,54 @@ yarn add axios @tanstack/react-query react-router-dom
 }
 ```
 
+### 폰트 교체
+
+폰트는 **패밀리 축만 토큰**입니다(크기·굵기는 Tailwind 유틸리티). 세 가지 역할이 있습니다.
+
+| 토큰 | 쓰이는 곳 | 기본값 |
+| --- | --- | --- |
+| `--au-font-sans` | 본문·UI 전반 | 시스템 폰트 스택 |
+| `--au-font-heading` | 제목 슬롯(`AdminShell` 제목·브랜드, `Card`/`Modal` 제목, `EmptyState` 제목, `Markdown` h1–h3) | `--au-font-sans` 와 동일 |
+| `--au-font-mono` | 코드·고정폭(`Markdown` 인라인 코드, `LoginForm` 백업 코드) | 시스템 고정폭 스택 |
+
+사내 폰트를 쓰려면 **폰트 파일을 앱에 함께 번들**하고(외부 CDN 금지 — [02-architecture.md](02-architecture.md))
+`--au-font-sans` 만 덮어쓰면 됩니다. 제목은 기본값이 `--au-font-sans` 라 자동으로 따라옵니다.
+
+```css
+@import "@company/admin-ui/styles";
+
+/* 폰트 파일은 소비 앱 저장소에 두고 번들합니다(경로는 예시). */
+@font-face {
+  font-family: "CompanySans";
+  src: url("./assets/fonts/CompanySans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "CompanySans";
+  src: url("./assets/fonts/CompanySans-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --au-font-sans: "CompanySans", -apple-system, "Apple SD Gothic Neo", sans-serif;
+  /* 제목만 다르게 가고 싶을 때 (지정하지 않으면 위 sans 를 그대로 따릅니다) */
+  /* --au-font-heading: "CompanyDisplay", "CompanySans", sans-serif; */
+}
+```
+
+- **로드 순서를 신경 쓰지 않아도 됩니다.** 라이브러리는 이 세 변수를 선언하지 않고
+  `var(--au-font-sans, var(--au-font-sans-default))` 로 **폴백만** 합니다. 덮어쓸 선언이 없으니
+  `@layer` 안에 넣든 토큰 import 앞에 두든 소비 쪽 값이 그대로 적용됩니다.
+- `--au-font-*-default` 는 라이브러리 내부 기본값입니다. **이 변수는 건드리지 말고** 위 세 개만 지정하세요.
+- **일부 영역만** 다른 폰트를 쓰려면 변수 상속을 이용해 해당 서브트리에서만 재정의합니다.
+  ```tsx
+  <div style={{ "--au-font-sans": '"D2Coding", monospace' } as CSSProperties}>…</div>
+  ```
+- 한글 웹폰트는 용량이 크므로 **서브셋 + `unicode-range` 분할**을 권장합니다. 폰트가 준비되기 전
+  텍스트가 사라지지 않도록 `font-display: swap` 을 씁니다.
+
 ### 다크/라이트 전환 + 저장 (사용처 구현)
 
 라이브러리는 **프레젠테이션 전용**이라 다크 토큰(`[data-theme="dark"]`)과 토글용

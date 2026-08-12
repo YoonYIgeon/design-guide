@@ -270,7 +270,7 @@ export function LoginForm({
             <IconShield width={26} height={26} />
           </span>
         )}
-        <h1 className="text-lg font-semibold text-text">{brand}</h1>
+        <h1 className="font-heading text-lg font-semibold text-text">{brand}</h1>
         <p className="text-sm text-text-muted">{subtitle}</p>
       </div>
 
@@ -282,7 +282,7 @@ export function LoginForm({
         {isCodeStep ? (
           <>
             <div className="flex flex-col gap-1">
-              <h2 className="text-base font-semibold text-text">
+              <h2 className="font-heading text-base font-semibold text-text">
                 {isEnroll ? otpEnrollTitle : otpTitle}
               </h2>
               <p className="text-sm text-text-muted">

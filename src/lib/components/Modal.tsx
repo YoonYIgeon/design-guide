@@ -117,7 +117,7 @@ export function Modal({
         )}
       >
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-3">
-          <h2 className="text-base font-semibold text-text">{title}</h2>
+          <h2 className="font-heading text-base font-semibold text-text">{title}</h2>
           {dismissible && (
             <Button
               variant="ghost"

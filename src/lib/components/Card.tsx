@@ -56,7 +56,9 @@ export function Card({
             headerClassName,
           )}
         >
-          {title && <h2 className="text-sm font-semibold text-current">{title}</h2>}
+          {title && (
+            <h2 className="font-heading text-sm font-semibold text-current">{title}</h2>
+          )}
           {action}
         </header>
       )}

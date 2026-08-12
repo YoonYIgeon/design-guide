@@ -337,7 +337,7 @@ function SidebarBody({
         <span className="text-primary">
           {logo ?? <IconShield width={22} height={22} />}
         </span>
-        <span className="truncate text-sm font-semibold">{brand}</span>
+        <span className="truncate font-heading text-sm font-semibold">{brand}</span>
         {header}
       </div>
       <SideNav
@@ -466,7 +466,7 @@ export function AdminShell({
             >
               <IconMenu width={20} height={20} />
             </button>
-            <h1 className="truncate text-base font-semibold">{title}</h1>
+            <h1 className="truncate font-heading text-base font-semibold">{title}</h1>
           </div>
           <div className="flex items-center gap-3">
             {actions}
