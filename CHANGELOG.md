@@ -53,6 +53,10 @@
   - `idle`(빈 값·최소 길이 미만 등으로 검사를 건너뛴 상태)은 막지 않는다 — 손대지 않은 prefill 값까지
     막지 않기 위해서이며, 그 값들은 `required`/`minLength` 등 컨테이너 자체 룰이 잡는 자리다.
   - `FormsPage` 데모가 직접 조립하던 ref + `trigger` 배선을 이 훅으로 대체했다.
+  - ⚠️ `resolver`(zodResolver 등)를 쓰는 폼에서는 react-hook-form 이 필드 레벨 `rules` 를 아예
+    돌리지 않으므로 `validate` 룰이 **조용히 무시된다**. 그런 폼은 `AsyncInput` 의 기본 제출
+    차단에 맡기고 버튼은 `isValid`/`isConfirmed` 로 막거나, resolver 를 감싸 병합한다
+    (`docs/10-form-inputs.md`).
 - 폰트 토큰을 **역할 축**으로 분리 — `--au-font-sans`(본문) / `--au-font-heading`(제목) /
   `--au-font-mono`(코드·고정폭). Tailwind 프리셋에 `font-heading`·`font-mono` 유틸리티가 함께 열린다.
   `--au-font-heading` 의 기본값은 `--au-font-sans` 라, **본문 폰트만 덮어써도 제목이 따라온다**.
