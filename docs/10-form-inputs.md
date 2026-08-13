@@ -548,8 +548,12 @@ const userId = useAsyncValidation();
 | --- | --- |
 | `<form>` + `type="submit"` | `setCustomValidity` (자동) |
 | `<form noValidate>` + `type="submit"` | `submit` 캡처 가로채기 (자동) |
+| 폼 바깥 버튼(`form="id"`) · `requestSubmit()` · 입력에서 Enter | 위와 동일 (자동) |
 | `type="button"` + `onClick` | **`useAsyncValidation`** 으로 버튼을 막아야 함 |
 | `onClick={handleSubmit(...)}` (RHF) | **`useAsyncValidation`** 의 `validate` 룰 |
+
+> `form.submit()`(DOM 메서드 직접 호출)만은 예외다 — `submit` 이벤트도, 제약 검증도 건너뛰는
+> 브라우저 동작이라 어떤 폼 검증으로도 막히지 않는다. `requestSubmit()` 을 쓰면 정상적으로 막힌다.
 
 ### react-hook-form 통합 — 두 갈래로 나눈다
 
