@@ -480,7 +480,14 @@ export function AdminShell({
         </header>
 
         {/* 콘텐츠 */}
-        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+        {/*
+          `relative` 는 장식이 아니라 스크롤 격리 장치입니다.
+          위치 기준 조상이 없는 `position:absolute` 자식(예: Tailwind `sr-only`)은
+          컨테이닝 블록이 문서 루트가 되어 이 스크롤 영역에 잘리지 않고
+          문서 전체 높이를 늘립니다(= 레이아웃 아래 빈 여백 + 바깥쪽 스크롤).
+          여기서 기준을 잡아 두면 콘텐츠가 무엇이든 스크롤이 <main> 안에 갇힙니다.
+        */}
+        <main className="relative flex-1 overflow-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   );
