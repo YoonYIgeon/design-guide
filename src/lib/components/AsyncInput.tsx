@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -12,6 +13,20 @@ import { Input, type InputProps } from "./Input";
 import { IconAlertCircle, IconCheckCircle } from "../icons";
 
 export type AsyncInputStatus = "idle" | "loading" | "success" | "error";
+
+/** 검사 중일 때의 기본 제출 차단 메시지. */
+const DEFAULT_PENDING_MESSAGE = "확인이 끝날 때까지 기다려 주세요.";
+/** 에러 메시지가 문자열이 아닐 때(엘리먼트 등) 쓰는 대체 문구. */
+const FALLBACK_INVALID_MESSAGE = "입력값을 다시 확인해 주세요.";
+
+/**
+ * `setCustomValidity` 는 문자열만 받는다. 메시지가 ReactNode 라 문자열로 못 쓰면 대체 문구를 쓴다.
+ */
+function toValidityText(node: ReactNode, fallback: string): string {
+  if (typeof node === "string") return node.trim() || fallback;
+  if (typeof node === "number") return String(node);
+  return fallback;
+}
 
 export interface AsyncInputProps<Res = unknown>
   extends Omit<InputProps, "value" | "onChange" | "trailing"> {
@@ -51,6 +66,19 @@ export interface AsyncInputProps<Res = unknown>
    * 이 값이 있으면(로컬 검증 실패) `resolve`(API 호출)를 건너뜁니다 — 로컬 검증이 성공했을 때만 네트워크 검사가 돕니다.
    */
   error?: ReactNode;
+  /**
+   * 검사 중(`loading`)·검사 실패(`error`)인 동안 내부 `<input>` 에 **네이티브 제약 검증**
+   * (`setCustomValidity`)을 걸어 **폼 제출을 막습니다**(기본 `true`).
+   *
+   * 이게 없으면 응답이 오기 전(로딩)이나 "이미 사용 중" 에러가 떠 있는 상태에서도
+   * 폼이 그대로 제출됩니다 — 에러 표시는 순전히 시각적일 뿐 폼 유효성과 무관하기 때문입니다.
+   *
+   * `<form noValidate>` 를 쓰거나 컨테이너가 이미 직접 게이팅한다면 `false` 로 끌 수 있습니다.
+   * (`noValidate` 폼이라면 `onStatusChange` 로 상태를 끌어올려 직접 제출을 막아야 합니다.)
+   */
+  blockSubmitWhileInvalid?: boolean;
+  /** 검사 중(`loading`)일 때 제출을 막으며 보여줄 네이티브 검증 메시지. */
+  pendingMessage?: string;
 }
 
 function AsyncInputInner<Res = unknown>(
@@ -67,6 +95,8 @@ function AsyncInputInner<Res = unknown>(
     skipEmpty = true,
     minLength = 0,
     error: errorProp,
+    blockSubmitWhileInvalid = true,
+    pendingMessage = DEFAULT_PENDING_MESSAGE,
     hint,
     disabled,
     readOnly,
@@ -85,6 +115,18 @@ function AsyncInputInner<Res = unknown>(
 
   const statusRef = useRef(status);
   statusRef.current = status;
+
+  // 네이티브 제약 검증(setCustomValidity)을 걸려면 실제 <input> 요소가 필요하다.
+  // 외부에서 넘어온 ref(react-hook-form 등)도 그대로 살려야 하므로 둘 다 채운다.
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const setRefs = useCallback(
+    (node: HTMLInputElement | null) => {
+      inputRef.current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) ref.current = node;
+    },
+    [ref],
+  );
 
   // 사용자가 값을 실제로 바꾸기 전(초기 마운트 값 그대로)에는 검사를 시작하지 않는다 —
   // prefill 된 값에 대해 아직 손대지 않았는데 에러가 뜨는 것을 막는다.
@@ -156,6 +198,23 @@ function AsyncInputInner<Res = unknown>(
   // 외부 에러(예: zod 검증 결과)가 있으면 내부 비동기 상태 에러보다 우선한다.
   const effectiveError = errorProp ?? (status === "error" ? message : undefined);
 
+  // 비동기 검사 상태를 폼 유효성에 연결한다.
+  // - loading: 응답을 아직 못 받았으므로 "통과"로 볼 수 없다 → 제출 차단.
+  // - error:   에러를 화면에만 그리면 폼은 그대로 제출된다 → 제출 차단.
+  // 로컬 에러(errorProp)는 그 값을 만든 컨테이너가 이미 알고 게이팅하는 자리라 여기서 건드리지 않는다.
+  const validityMessage = !blockSubmitWhileInvalid
+    ? ""
+    : status === "loading"
+      ? pendingMessage
+      : status === "error"
+        ? toValidityText(message, FALLBACK_INVALID_MESSAGE)
+        : "";
+
+  useEffect(() => {
+    // disabled/readOnly 인 입력은 브라우저가 제약 검증에서 제외하므로 별도 분기가 필요 없다.
+    inputRef.current?.setCustomValidity(validityMessage);
+  }, [validityMessage]);
+
   const trailing =
     status === "loading" ? (
       <span
@@ -171,7 +230,7 @@ function AsyncInputInner<Res = unknown>(
   return (
     <Input
       {...inputProps}
-      ref={ref}
+      ref={setRefs}
       disabled={disabled}
       readOnly={readOnly}
       value={value}

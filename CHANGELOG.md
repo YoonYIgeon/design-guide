@@ -5,6 +5,18 @@
 
 ## [Unreleased]
 ### Fixed
+- `AsyncInput` 이 **검사 중(응답 전)이거나 검사에 실패했는데도 폼이 그대로 제출되던** 문제 수정.
+  에러를 화면에 그리기만 했을 뿐 폼 유효성과는 아무 연결이 없어서, "이미 사용 중인 아이디입니다" 가
+  떠 있는 상태로 `submit` 이 통과했다. 검사 중(`loading`)·검사 실패(`error`) 구간에는 내부 `<input>` 에
+  네이티브 제약 검증(`setCustomValidity`)을 걸어 제출을 막는다.
+  - `loading`: 요청을 보냈지만 응답 전이라 통과로 볼 근거가 없다 → `pendingMessage` 로 차단.
+  - `error`: `getError`/`getRequestError` 가 돌려준 문구를 그대로 검증 메시지로 쓴다.
+    문자열이 아닌 `ReactNode` 면 대체 문구로 떨어지되 차단은 동일하게 동작한다.
+  - 로컬 에러(`error` prop)는 그 값을 만든 컨테이너가 이미 알고 게이팅하는 자리라 건드리지 않는다.
+  - 손대지 않은(prefill) 값·성공 상태는 그대로 유효하다.
+  - 끄려면 `blockSubmitWhileInvalid={false}`. `<form noValidate>` 는 네이티브 검증이 통째로 꺼지므로
+    기존대로 `onStatusChange` 로 상태를 끌어올려 직접 막아야 한다.
+  - 외부 `ref`(react-hook-form 등)는 내부 ref 와 함께 채워지므로 기존 배선은 그대로 동작한다.
 - `AdminShell` 사이드바가 `activeKey` 와 **정확히 일치**할 때만 활성 표시되던 문제 수정.
   이제 항목 key 의 하위 경로에서도 그 항목이 활성이 된다(예: key `/posts` 는 `/posts/12`,
   `/posts/12/edit` 에서도 활성). 상세 페이지로 들어가면 사이드바에서 현재 위치가 사라지던 증상이 없어진다.
