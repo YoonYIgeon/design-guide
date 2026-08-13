@@ -3,7 +3,6 @@ import { Controller, useFieldArray, useForm } from "react-hook-form";
 import {
   AddableInputForm,
   AsyncInput,
-  type AsyncInputStatus,
   Button,
   Card,
   Checkbox,
@@ -16,6 +15,7 @@ import {
   StepSelector,
   Tooltip,
   useToast,
+  useAsyncValidation,
   type DropdownItem,
   type FileItem,
   type SelectOption,
@@ -160,9 +160,11 @@ export function FormsPage() {
     mode: "onChange",
   });
 
-  // AsyncInput 의 최신 검사 상태. RHF 의 validate 룰이 이 값을 읽어 제출을 게이팅한다
-  // (백엔드 검사가 success 일 때만 폼이 valid). ref 라 렌더를 유발하지 않는다.
-  const userIdStatusRef = useRef<AsyncInputStatus>("idle");
+  // AsyncInput 의 검사 상태를 RHF 검증 파이프라인에 연결한다.
+  // useAsyncValidation 이 상태 보관·재검증 트리거·validate 룰을 한 자리에 묶어준다.
+  const userIdCheck = useAsyncValidation({
+    revalidate: () => void triggerSignup("userId"),
+  });
 
   // 파일 업로드 상태
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -519,10 +521,8 @@ export function FormsPage() {
             rules={{
               required: "아이디를 입력하세요.",
               minLength: { value: 4, message: "4자 이상 입력하세요." },
-              // 백엔드 검사(resolve)가 success 여야 통과 — 값 자체는 여기서 안 본다.
-              validate: () =>
-                userIdStatusRef.current === "success" ||
-                "아이디 중복 확인이 필요합니다.",
+              // 검사 중·검사 실패면 통과시키지 않는다 — 값 자체는 여기서 안 본다.
+              validate: userIdCheck.validate,
             }}
             render={({ field }) => (
               <AsyncInput
@@ -548,11 +548,8 @@ export function FormsPage() {
                 }
                 getSuccess={(res) => (res.available ? "사용 가능한 아이디입니다." : null)}
                 getRequestError={() => "중복 확인에 실패했습니다. 잠시 후 다시 시도하세요."}
-                // 검사 상태를 ref 로 끌어올리고, RHF 를 재검증해 validate 룰이 다시 돌게 한다.
-                onStatusChange={(status) => {
-                  userIdStatusRef.current = status;
-                  void triggerSignup("userId");
-                }}
+                // 검사 상태를 훅으로 끌어올린다(내부에서 RHF 재검증까지 트리거).
+                onStatusChange={userIdCheck.onStatusChange}
               />
             )}
           />
@@ -563,8 +560,8 @@ export function FormsPage() {
             <Button
               type="submit"
               variant="primary"
-              // 폼이 valid(로컬 검증 통과 + 백엔드 검사 success)일 때만 제출.
-              disabled={!signupValid}
+              // 로컬 검증 통과 + 중복 확인까지 끝났을 때만 제출.
+              disabled={!signupValid || !userIdCheck.isConfirmed}
             >
               가입
             </Button>

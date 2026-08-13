@@ -14,9 +14,13 @@
     문자열이 아닌 `ReactNode` 면 대체 문구로 떨어지되 차단은 동일하게 동작한다.
   - 로컬 에러(`error` prop)는 그 값을 만든 컨테이너가 이미 알고 게이팅하는 자리라 건드리지 않는다.
   - 손대지 않은(prefill) 값·성공 상태는 그대로 유효하다.
-  - 끄려면 `blockSubmitWhileInvalid={false}`. `<form noValidate>` 는 네이티브 검증이 통째로 꺼지므로
-    기존대로 `onStatusChange` 로 상태를 끌어올려 직접 막아야 한다.
+  - `<form noValidate>` 는 네이티브 제약 검증을 통째로 끄므로, 그 경우엔 소속 폼의 `submit` 을
+    캡처 단계에서 가로채 막는다(말풍선 없이 해당 입력으로 초점만 옮긴다).
+  - 끄려면 `blockSubmitWhileInvalid={false}`.
   - 외부 `ref`(react-hook-form 등)는 내부 ref 와 함께 채워지므로 기존 배선은 그대로 동작한다.
+  - **네이티브 제출을 거치지 않는 경로**(`<button type="button" onClick={handleSubmit(...)}>` 처럼
+    폼 라이브러리가 직접 제출하는 패턴)는 `submit` 이벤트 자체가 없어 컴포넌트가 개입할 수 없다.
+    이 경로는 아래 `useAsyncValidation` 으로 검증 파이프라인에 연결해야 막힌다.
 - `AdminShell` 사이드바가 `activeKey` 와 **정확히 일치**할 때만 활성 표시되던 문제 수정.
   이제 항목 key 의 하위 경로에서도 그 항목이 활성이 된다(예: key `/posts` 는 `/posts/12`,
   `/posts/12/edit` 에서도 활성). 상세 페이지로 들어가면 사이드바에서 현재 위치가 사라지던 증상이 없어진다.
@@ -40,6 +44,15 @@
   이어 붙는 이스케이프 해치(`Card.bodyClassName` 과 같은 층위). 예: 여백 없이 꽉 채우기 `"p-0"`.
 
 ### Added
+- `useAsyncValidation` — `AsyncInput` 의 검사 상태를 **폼 검증에 연결**하는 훅.
+  상태 보관·재검증 트리거·검증 룰을 한 자리에 묶는다. 특정 폼 라이브러리에 의존하지 않는다.
+  - `validate`: 폼 라이브러리의 검증 룰에 그대로 꽂는다(통과 `true`, 실패 시 문구).
+    참조가 고정돼 있고 최신 상태를 ref 로 읽어 **stale 클로저가 없다**.
+  - `onStatusChange`: `AsyncInput` 에 그대로 연결. 옵션 `revalidate` 로 RHF `trigger` 를 물린다.
+  - `status` · `isPending` · `isValid` · `isConfirmed` 로 버튼 게이팅.
+  - `idle`(빈 값·최소 길이 미만 등으로 검사를 건너뛴 상태)은 막지 않는다 — 손대지 않은 prefill 값까지
+    막지 않기 위해서이며, 그 값들은 `required`/`minLength` 등 컨테이너 자체 룰이 잡는 자리다.
+  - `FormsPage` 데모가 직접 조립하던 ref + `trigger` 배선을 이 훅으로 대체했다.
 - 폰트 토큰을 **역할 축**으로 분리 — `--au-font-sans`(본문) / `--au-font-heading`(제목) /
   `--au-font-mono`(코드·고정폭). Tailwind 프리셋에 `font-heading`·`font-mono` 유틸리티가 함께 열린다.
   `--au-font-heading` 의 기본값은 `--au-font-sans` 라, **본문 폰트만 덮어써도 제목이 따라온다**.

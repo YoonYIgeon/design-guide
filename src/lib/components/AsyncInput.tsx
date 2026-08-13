@@ -215,6 +215,26 @@ function AsyncInputInner<Res = unknown>(
     inputRef.current?.setCustomValidity(validityMessage);
   }, [validityMessage]);
 
+  // `<form noValidate>` 는 네이티브 제약 검증을 통째로 끄므로 위 setCustomValidity 가 무시된다.
+  // 그런 폼에서도 제출을 막기 위해 소속 폼의 submit 을 캡처 단계에서 가로챈다.
+  // (제약 검증이 살아 있는 폼이라면 애초에 submit 이벤트가 발생하지 않으므로 이 핸들러는 돌지 않는다.)
+  useEffect(() => {
+    if (!validityMessage) return;
+    const el = inputRef.current;
+    const form = el?.form;
+    if (!form) return;
+
+    const block = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // noValidate 폼은 네이티브 말풍선을 의도적으로 끈 것이므로 reportValidity 는 부르지 않는다.
+      // 대신 문제가 된 입력으로 초점만 옮긴다(에러 문구는 이미 필드 아래 렌더된다).
+      el?.focus();
+    };
+    form.addEventListener("submit", block, true);
+    return () => form.removeEventListener("submit", block, true);
+  }, [validityMessage]);
+
   const trailing =
     status === "loading" ? (
       <span
