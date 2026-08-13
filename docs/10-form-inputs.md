@@ -417,6 +417,8 @@ const { fields, append, remove } = useFieldArray({ control, name: "contacts" });
 | `debounceMs` | `number` | 디바운스 지연(기본 400). |
 | `skipEmpty` · `minLength` | `boolean` · `number` | 빈 값/최소 길이 미만이면 검사 건너뜀(기본 `true` / `0`). |
 | `error` | `ReactNode` | 컨테이너의 **로컬(클라이언트) 검증**(예: zod) 결과. 값이 있으면 내부 비동기 에러보다 우선 표시하며, **`resolve`(API 호출)를 건너뛴다** — 로컬 검증이 성공했을 때만 네트워크 검사가 돈다. |
+| `blockSubmitWhileInvalid` | `boolean` | 검사 중(`loading`)·검사 실패(`error`)인 동안 **폼 제출을 막는다**(기본 `true`). 내부 `<input>` 에 네이티브 제약 검증(`setCustomValidity`)을 건다. |
+| `pendingMessage` | `string` | 검사 중 제출을 막을 때 쓰는 네이티브 검증 메시지(기본 `"확인이 끝날 때까지 기다려 주세요."`). |
 | `onResolved` · `onStatusChange` | `(res) => void` · `(status) => void` | 성공 응답/상태 변화 통지(선택). |
 | 그 외 | — | `label`·`hint`·`placeholder`·`required` 등은 `Input` 으로 그대로 전달. |
 
@@ -453,9 +455,38 @@ const [userId, setUserId] = useState("");
   값을 그대로 마운트한 직후)에는 비동기 검사를 시작하지 않는다. 손대기 전 값에 대해 에러가 뜨는 것을 막는다.
 - **로컬 검증이 성공했을 때만 API 를 호출한다** — `error`(zod 등 클라이언트 검증 결과)가 있으면 `resolve` 를
   건너뛴다. 형식이 틀린 값(예: 이메일 형식 오류)으로 불필요한 네트워크 요청이 나가지 않게 한다.
-- **제출 차단은 컨테이너 몫이다** — `AsyncInput` 은 프레젠테이션 전용이라 스스로 폼 제출을 막지 않는다.
-  백엔드 검사(`resolve`)가 통과했을 때만 제출을 허용하려면, `onStatusChange` 로 상태를 끌어올려
-  `status === "success"` 일 때만 제출 버튼을 활성화한다(아래 발췌).
+
+### 검사 중·검사 실패 시 제출 차단
+
+에러 메시지를 **그리는 것**과 폼이 **유효한지**는 별개다. 표시만 해서는 폼이 그대로 제출된다.
+
+`AsyncInput` 은 기본으로(`blockSubmitWhileInvalid`, 기본 `true`) 내부 `<input>` 에 네이티브 제약 검증
+(`setCustomValidity`)을 걸어 두 구간에서 제출을 막는다.
+
+| 상태 | 막는 이유 | 검증 메시지 |
+| --- | --- | --- |
+| `loading` | 요청을 보냈지만 **응답 전**이다. 아직 통과로 볼 근거가 없다. | `pendingMessage` |
+| `error` | 검사가 실패했다(중복 등). | `getError`/`getRequestError` 가 돌려준 문구 |
+
+```tsx
+// 컨테이너 배선 없이도 검사 중·중복일 때 제출이 막힌다.
+<form onSubmit={handleSubmit}>
+  <AsyncInput value={userId} onChange={setUserId} resolve={checkUserIdAvailable}
+    getError={(res) => (res.available ? null : "이미 사용 중인 아이디입니다.")} />
+  <Button type="submit">가입</Button>
+</form>
+```
+
+- 로컬 에러(`error` prop)는 그 값을 만든 컨테이너가 이미 알고 게이팅하는 자리라 여기서 건드리지 않는다.
+- 메시지가 문자열이 아닌 `ReactNode` 면(엘리먼트 등) 네이티브 메시지는 대체 문구로 떨어진다 —
+  제출 차단 자체는 동일하게 동작한다.
+- **`<form noValidate>` 에서는 네이티브 제약 검증이 통째로 꺼진다.** 이때는 아래처럼 `onStatusChange` 로
+  상태를 끌어올려 직접 막아야 한다.
+
+### 제출 버튼까지 게이팅하기
+
+제출을 막는 것과 별개로, 백엔드 검사가 통과했을 때만 버튼을 **활성화**하려면 `onStatusChange` 로 상태를
+끌어올려 `status === "success"` 일 때만 활성화한다(네이티브 차단은 그대로 안전망으로 남는다).
 
 ```tsx
 const [status, setStatus] = useState<AsyncInputStatus>("idle");
