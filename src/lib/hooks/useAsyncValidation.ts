@@ -38,6 +38,11 @@ export interface AsyncValidation {
    *
    * 참조가 고정돼 있고 최신 상태를 ref 로 읽으므로, 폼 라이브러리가 등록 시점의 함수를
    * 오래 들고 있어도 낡은 상태를 보지 않습니다.
+   *
+   * ⚠️ **`resolver`(zodResolver 등)를 쓰는 폼에서는 이 룰이 무시됩니다.** react-hook-form 은
+   * resolver 가 있으면 필드 레벨 `rules` 를 아예 돌리지 않습니다. 그런 폼에서는
+   * `AsyncInput` 의 기본 제출 차단(`blockSubmitWhileInvalid`)에 맡기고, 버튼은
+   * `isValid`/`isConfirmed` 로 막으세요. 자세한 내용은 `docs/10-form-inputs.md`.
    */
   validate: () => true | string;
 }

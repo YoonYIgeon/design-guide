@@ -530,6 +530,38 @@ const userId = useAsyncValidation({ revalidate: () => void trigger("userId") });
 <Button type="submit" disabled={!isValid || !userId.isConfirmed}>가입</Button>
 ```
 
+#### ⚠️ `resolver`(zodResolver 등)를 쓰면 `validate` 룰은 무시된다
+
+react-hook-form 은 `resolver` 가 지정되면 **필드 레벨 `rules` 를 아예 돌리지 않는다.**
+즉 아래 조합에서 `validate` 는 **조용히 아무 일도 하지 않는다**.
+
+```tsx
+useForm({ resolver: zodResolver(schema) });      // ← rules 를 무시한다
+<Controller rules={{ validate: userId.validate }} … />   // ← 안 돈다
+```
+
+resolver 를 쓰는 폼에서는 이렇게 한다:
+
+- **제출 차단은 `AsyncInput` 기본 동작에 맡긴다** — `blockSubmitWhileInvalid` 가 `<form>`/`<form noValidate>`
+  양쪽에서 제출을 막으므로 별도 배선이 필요 없다.
+- **버튼은 `isValid`/`isConfirmed` 로 막는다**(`validate` 대신).
+- 검사 결과를 RHF 의 `errors` 에까지 넣고 싶다면 resolver 를 감싸 병합한다.
+
+```tsx
+const userId = useAsyncValidation();
+const base = zodResolver(WineApprovalSchema);
+
+const resolver: Resolver<WineApproval> = async (values, ctx, opts) => {
+  const result = await base(values, ctx, opts);
+  const gate = userId.validate();
+  if (gate === true) return result;
+  return {
+    values: {},
+    errors: { ...result.errors, prdNm: { type: "async", message: gate } },
+  };
+};
+```
+
 폼 라이브러리 없이 `useState` 로 관리한다면 `isValid`/`isConfirmed` 로 버튼만 막으면 된다.
 
 ```tsx
@@ -550,7 +582,7 @@ const userId = useAsyncValidation();
 | `<form noValidate>` + `type="submit"` | `submit` 캡처 가로채기 (자동) |
 | 폼 바깥 버튼(`form="id"`) · `requestSubmit()` · 입력에서 Enter | 위와 동일 (자동) |
 | `type="button"` + `onClick` | **`useAsyncValidation`** 으로 버튼을 막아야 함 |
-| `onClick={handleSubmit(...)}` (RHF) | **`useAsyncValidation`** 의 `validate` 룰 |
+| `onClick={handleSubmit(...)}` (RHF) | **`useAsyncValidation`** 의 `validate` 룰 (단, `resolver` 를 쓰면 룰이 무시되므로 버튼을 `isValid`/`isConfirmed` 로 막거나 resolver 를 감싼다) |
 
 > `form.submit()`(DOM 메서드 직접 호출)만은 예외다 — `submit` 이벤트도, 제약 검증도 건너뛰는
 > 브라우저 동작이라 어떤 폼 검증으로도 막히지 않는다. `requestSubmit()` 을 쓰면 정상적으로 막힌다.
