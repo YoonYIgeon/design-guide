@@ -480,29 +480,82 @@ const [userId, setUserId] = useState("");
 - 로컬 에러(`error` prop)는 그 값을 만든 컨테이너가 이미 알고 게이팅하는 자리라 여기서 건드리지 않는다.
 - 메시지가 문자열이 아닌 `ReactNode` 면(엘리먼트 등) 네이티브 메시지는 대체 문구로 떨어진다 —
   제출 차단 자체는 동일하게 동작한다.
-- **`<form noValidate>` 에서는 네이티브 제약 검증이 통째로 꺼진다.** 이때는 아래처럼 `onStatusChange` 로
-  상태를 끌어올려 직접 막아야 한다.
+- `<form noValidate>` 는 네이티브 제약 검증을 통째로 끄므로, 그 경우엔 소속 폼의 `submit` 을
+  캡처 단계에서 가로채 막는다(말풍선 없이 해당 입력으로 초점만 옮긴다).
 
-### 제출 버튼까지 게이팅하기
+#### 네이티브 제출을 거치지 않는 경로는 컨테이너가 막아야 한다
 
-제출을 막는 것과 별개로, 백엔드 검사가 통과했을 때만 버튼을 **활성화**하려면 `onStatusChange` 로 상태를
-끌어올려 `status === "success"` 일 때만 활성화한다(네이티브 차단은 그대로 안전망으로 남는다).
+`setCustomValidity`·`submit` 가로채기는 **폼이 제출될 때** 동작한다. 아래처럼 폼 라이브러리가
+버튼 클릭에서 직접 제출하는 패턴은 `submit` 이벤트 자체가 없어 컴포넌트가 개입할 수 없다.
 
 ```tsx
-const [status, setStatus] = useState<AsyncInputStatus>("idle");
-
-<AsyncInput /* … */ onStatusChange={setStatus} />
-<Button disabled={status !== "success"} onClick={submit}>가입</Button>
+<button type="button" onClick={handleSubmit(onSubmit)}>가입</button>  // ← 컴포넌트가 못 막는다
 ```
 
-### react-hook-form 통합
+이런 경로까지 막으려면 검사 상태가 **폼 라이브러리의 검증 파이프라인**에 들어가야 한다 → `useAsyncValidation`.
 
-RHF 로 폼을 관리한다면 `useState` 게이팅 대신 검증 파이프라인에 통합해 `handleSubmit`/`isValid`
-가 백엔드 검사 결과까지 반영하게 한다. **두 갈래로 나누는 게 핵심**이다:
+### `useAsyncValidation` — 검사 상태를 폼 검증에 연결
+
+검사 상태 보관·재검증 트리거·검증 룰을 한 자리에 묶어주는 훅이다. 특정 폼 라이브러리에 의존하지 않는다.
+
+| 반환값 | 설명 |
+| --- | --- |
+| `onStatusChange` | `AsyncInput` 의 `onStatusChange` 에 그대로 연결. |
+| `validate` | 폼 라이브러리의 검증 룰에 그대로 꽂는다(통과 `true`, 실패 시 문구). 참조가 고정돼 있고 최신 상태를 ref 로 읽어 **stale 클로저가 없다**. |
+| `status` · `isPending` · `isValid` · `isConfirmed` | 각각 원시 상태 / 검사 중 / 막을 이유 없음 / 검사를 실제로 통과(`success`). |
+| 옵션 `revalidate` | 상태가 바뀔 때 호출. RHF 면 `() => trigger("userId")` 를 넘겨 `validate` 가 다시 돌게 한다. |
+
+```tsx
+const userId = useAsyncValidation({ revalidate: () => void trigger("userId") });
+
+<Controller
+  name="userId"
+  control={control}
+  rules={{
+    required: "아이디를 입력하세요.",
+    minLength: { value: 4, message: "4자 이상" },
+    validate: userId.validate,          // ← 검사 중·실패면 폼이 invalid
+  }}
+  render={({ field }) => (
+    <AsyncInput
+      value={field.value}
+      onChange={field.onChange}
+      resolve={checkUserIdAvailable}
+      onStatusChange={userId.onStatusChange}
+      // 로컬 에러만 전달(= resolve 게이팅). async 게이트(validate)는 제외해 교착 방지.
+      error={errors.userId && errors.userId.type !== "validate" ? errors.userId.message : undefined}
+    />
+  )}
+/>
+<Button type="submit" disabled={!isValid || !userId.isConfirmed}>가입</Button>
+```
+
+폼 라이브러리 없이 `useState` 로 관리한다면 `isValid`/`isConfirmed` 로 버튼만 막으면 된다.
+
+```tsx
+const userId = useAsyncValidation();
+<AsyncInput value={v} onChange={setV} resolve={…} onStatusChange={userId.onStatusChange} />
+<Button disabled={!userId.isConfirmed} onClick={submit}>가입</Button>
+```
+
+> `idle`(빈 값·최소 길이 미만·로컬 검증 실패로 검사를 건너뛴 상태)은 `validate` 가 막지 않는다.
+> 손대지 않은 prefill 값까지 막지 않기 위해서다 — 그 값들은 `required`/`minLength` 등 컨테이너
+> 자체 룰이 잡는 자리다. "반드시 확인을 거쳐야 한다"면 `isConfirmed` 로 버튼을 막는다.
+
+### 어떤 제출 경로가 막히나
+
+| 제출 경로 | 무엇이 막나 |
+| --- | --- |
+| `<form>` + `type="submit"` | `setCustomValidity` (자동) |
+| `<form noValidate>` + `type="submit"` | `submit` 캡처 가로채기 (자동) |
+| `type="button"` + `onClick` | **`useAsyncValidation`** 으로 버튼을 막아야 함 |
+| `onClick={handleSubmit(...)}` (RHF) | **`useAsyncValidation`** 의 `validate` 룰 |
+
+### react-hook-form 통합 — 두 갈래로 나눈다
 
 - **로컬 검증**(required/minLength/format)은 `Controller` 의 `rules` → `error` prop 으로 표시.
   `error` 가 있으면 `resolve` 가 건너뛰어지므로(위 항목) 로컬 룰 통과 후에만 네트워크 검사가 돈다.
-- **백엔드 검사 성공 여부**는 `validate` 룰이 `onStatusChange` 로 끌어올린 상태(ref)를 읽어 판정한다.
+- **백엔드 검사 성공 여부**는 `useAsyncValidation` 의 `validate` 룰이 판정한다.
   이 async 게이트 에러는 **`error` prop 으로 되먹이지 않는다** — 되먹이면 `resolve` 가 영영 안 돌아
   교착된다. 그래서 `error` 에는 `type !== "validate"` 인 로컬 에러만 넘긴다.
 

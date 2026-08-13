@@ -12,6 +12,11 @@ export {
   type AsyncInputProps,
   type AsyncInputStatus,
 } from "./components/AsyncInput";
+export {
+  useAsyncValidation,
+  type AsyncValidation,
+  type UseAsyncValidationOptions,
+} from "./hooks/useAsyncValidation";
 export { Textarea, type TextareaProps } from "./components/Textarea";
 export {
   Select,
