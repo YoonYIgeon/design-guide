@@ -223,7 +223,11 @@ export function FileUpload({
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         className={cn(
-          "flex flex-col items-center justify-center gap-2 rounded-md border px-4 py-6 text-center",
+          // `relative` 필수: 아래 파일 input 이 `sr-only`(= position:absolute) 라서
+          // 위치 기준 조상이 없으면 컨테이닝 블록이 문서 루트가 되고,
+          // 스크롤 컨테이너(AdminShell 의 <main>)에 잘리지 않은 채 문서 높이를 늘려
+          // 레이아웃 아래에 빈 여백 + 바깥 스크롤이 생깁니다.
+          "relative flex flex-col items-center justify-center gap-2 rounded-md border px-4 py-6 text-center",
           "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
           disabled
             ? "cursor-not-allowed opacity-60"
