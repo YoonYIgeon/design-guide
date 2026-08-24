@@ -125,18 +125,20 @@ export function DashboardPage({
           <Button
             variant="ghost"
             size="sm"
+            square
             aria-label={`${u.name} 이름 변경`}
             onClick={() => onRenameUser(u.id)}
-            className="h-8 w-8 p-0 text-text-muted hover:text-text"
+            className="text-text-muted hover:text-text"
           >
             <IconPencil width={16} height={16} />
           </Button>
           <Button
             variant="ghost"
             size="sm"
+            square
             aria-label={`${u.name} 삭제`}
             onClick={() => onDeleteUser(u.id)}
-            className="h-8 w-8 p-0 text-text-muted hover:text-danger"
+            className="text-text-muted hover:text-danger"
           >
             <IconTrash width={16} height={16} />
           </Button>

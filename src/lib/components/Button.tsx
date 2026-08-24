@@ -8,6 +8,11 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant;
   size?: Size;
   loading?: boolean;
+  /**
+   * 아이콘만 넣는 정사각형 버튼. 가로 패딩을 없애고 높이와 같은 너비를 줍니다
+   * (sm: 32px, md: 40px). 텍스트 라벨이 없으므로 `aria-label` 을 반드시 주세요.
+   */
+  square?: boolean;
 }
 
 const variantClass: Record<Variant, string> = {
@@ -23,8 +28,22 @@ const sizeClass: Record<Size, string> = {
   md: "h-10 px-4 text-sm gap-2",
 };
 
+/** square 일 때의 크기. 가로 패딩 대신 높이와 같은 너비로 정사각형을 만듭니다. */
+const squareSizeClass: Record<Size, string> = {
+  sm: "h-8 w-8 p-0 text-sm gap-1.5",
+  md: "h-10 w-10 p-0 text-sm gap-2",
+};
+
 /**
  * 액션 버튼. loading 시 중복 클릭을 차단합니다.
+ *
+ * 아이콘만 넣을 때는 `square` 를 켜면 가로 패딩이 사라지고 정사각형이 됩니다.
+ * 이때 버튼에는 읽을 텍스트가 없으므로 `aria-label` 을 함께 주세요.
+ * ```tsx
+ * <Button variant="ghost" size="sm" square aria-label="삭제">
+ *   <IconTrash width={16} height={16} />
+ * </Button>
+ * ```
  *
  * `type` 기본값은 `"button"` 입니다 — HTML 기본값(`"submit"`)을 그대로 두면
  * `<form>` 안에 놓인 모든 버튼(테이블 페이지네이션, 툴바 액션 등)이 클릭만으로
@@ -36,6 +55,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "secondary",
       size = "md",
       loading = false,
+      square = false,
       type = "button",
       disabled,
       className,
@@ -55,7 +75,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           "inline-flex items-center justify-center rounded-md border font-medium",
           "transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60",
           variantClass[variant],
-          sizeClass[size],
+          square ? squareSizeClass[size] : sizeClass[size],
           className,
         )}
         {...rest}
