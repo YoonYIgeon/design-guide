@@ -75,6 +75,14 @@
   표시 열과 정렬 키가 다르면 `Column.sortKey`(서버 필드명 등), 날짜·수량처럼 "큰 값 먼저"가
   자연스러운 열은 `Column.defaultSortDirection: "desc"` 를 준다.
   정렬 해제 단계까지 돌리려면 `sortClearable` 을 켠다(기본은 두 방향 토글).
+- 아이콘만 넣는 버튼은 `Button` 의 `square` 를 켠다. 가로 패딩이 사라지고 높이와 같은 너비가 되어
+  정사각형이 된다(`size="sm"` 32px, `size="md"` 40px). `className="h-8 w-8 !p-0"` 같은 수동 보정 금지.
+  텍스트 라벨이 없으므로 `aria-label` 을 반드시 함께 준다.
+  ```tsx
+  <Button variant="ghost" size="sm" square aria-label="삭제" onClick={onDelete}>
+    <IconTrash width={16} height={16} />
+  </Button>
+  ```
 - `Button` 의 `type` 기본값은 `"button"` 이다. HTML 기본값(`"submit"`)을 그대로 두면 `<form>` 안에
   놓인 모든 버튼(`DataTable` 페이지네이션, 툴바 액션 등)이 클릭만으로 폼을 제출한다.
   제출 버튼에만 `type="submit"` 을 명시한다.
