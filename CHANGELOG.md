@@ -11,6 +11,9 @@
     그룹으로 선택/해제하고 일부만 선택되면 indeterminate 로 표시한다. `value` 는 행 id 단위 그대로.
   - `getRowSpans(rows, groupKey)`: 연속한 같은 그룹 키로 rowSpan 배열을 만드는 순수 헬퍼.
   - 프레젠테이션 전용 원칙대로 병합 대상 계산은 소비 시스템이 현재 페이지 행 기준으로 한다.
+### Changed
+- `Checkbox` `readOnly` 가 밑줄 Input("예/아니오") 대신 **체크박스 그대로** 표시된다.
+  체크 색은 회색(`--au-color-text-muted`)이고 클릭·키보드 토글은 막힌다(`aria-readonly`).
 ### Fixed
 - `AdminShell` 레이아웃 아래에 **빈 여백이 생기고 페이지 전체가 한 번 더 스크롤되던** 문제 수정.
   콘텐츠 스크롤(`<main>`)이 끝난 뒤에도 바깥 스크롤바가 남아, 끝까지 내리면 셸(사이드바·상단바) 전체가

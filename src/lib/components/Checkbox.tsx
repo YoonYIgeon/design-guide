@@ -8,7 +8,6 @@ import {
   type ReactNode,
 } from "react";
 import { cn } from "../utils/cn";
-import { Input } from "./Input";
 
 export interface CheckboxProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"> {
@@ -27,7 +26,20 @@ export interface CheckboxProps
  */
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   (
-    { label, hint, error, indeterminate = false, id, className, disabled, readOnly, checked, ...rest },
+    {
+      label,
+      hint,
+      error,
+      indeterminate = false,
+      id,
+      className,
+      disabled,
+      readOnly,
+      checked,
+      onChange,
+      onClick,
+      ...rest
+    },
     ref,
   ) => {
     const autoId = useId();
@@ -37,14 +49,6 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
       : hint
         ? `${inputId}-hint`
         : undefined;
-
-    // 읽기 전용: 체크 상태를 사람이 읽을 문구로 바꿔 밑줄 Input 으로 표시.
-    if (readOnly) {
-      const display = indeterminate ? "—" : checked ? "예" : "아니오";
-      return (
-        <Input label={label} hint={hint} error={error} id={inputId} value={display} readOnly />
-      );
-    }
 
     const innerRef = useRef<HTMLInputElement | null>(null);
     // indeterminate 는 DOM 프로퍼티라 속성으로 못 주고 ref 로만 설정합니다.
@@ -58,7 +62,11 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           htmlFor={inputId}
           className={cn(
             "flex select-none items-start gap-2 text-sm text-text",
-            disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+            disabled
+              ? "cursor-not-allowed opacity-60"
+              : readOnly
+                ? "cursor-default"
+                : "cursor-pointer",
           )}
         >
           <input
@@ -71,10 +79,20 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             type="checkbox"
             checked={checked}
             disabled={disabled}
+            // 체크박스는 네이티브 readOnly 가 없어 클릭 기본 동작(토글)을 막아 조작만 차단합니다.
+            aria-readonly={readOnly || undefined}
+            onClick={(e) => {
+              if (readOnly) e.preventDefault();
+              onClick?.(e);
+            }}
+            onChange={readOnly ? undefined : onChange}
+            readOnly={readOnly}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedBy}
             className={cn(
-              "mt-0.5 h-4 w-4 shrink-0 rounded border-line accent-primary",
+              "mt-0.5 h-4 w-4 shrink-0 rounded border-line",
+              // 읽기 전용은 값은 보이되 조작 불가임을 회색 체크로 구분합니다.
+              readOnly ? "accent-text-muted" : "accent-primary",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
               className,
             )}
