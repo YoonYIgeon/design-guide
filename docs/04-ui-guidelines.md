@@ -75,6 +75,19 @@
   표시 열과 정렬 키가 다르면 `Column.sortKey`(서버 필드명 등), 날짜·수량처럼 "큰 값 먼저"가
   자연스러운 열은 `Column.defaultSortDirection: "desc"` 를 준다.
   정렬 해제 단계까지 돌리려면 `sortClearable` 을 켠다(기본은 두 방향 토글).
+- `DataTable` 의 세로 셀 병합은 `Column.rowSpan` 으로 연다. 행마다 `n`(병합 셀이 덮는 행 수),
+  `0`(위 병합 셀이 덮는 자리라 생략), `1`(일반)을 반환한다. **무엇을 묶을지는 소비 시스템이 계산한다** —
+  정렬·페이징이 끝난 현재 페이지 행 기준으로 `getRowSpans(rows, groupKey)` 를 쓰면 된다
+  (연속한 같은 값만 묶으므로 먼저 그 키로 정렬한다).
+  선택 열도 묶으려면 `selectionRowSpan` 을 같은 규칙으로 준다. 병합된 체크박스는 덮는 행들을
+  그룹으로 선택/해제하고(일부만 선택이면 indeterminate), `value` 는 여전히 행 id 단위다.
+  다중 선택에서만 적용되며 단일 선택(라디오)에서는 무시된다.
+  ```tsx
+  const spans = getRowSpans(rows, (r) => r.role);
+  const columns = [{ key: "role", header: "권한", rowSpan: (_, i) => spans[i] }, /* ... */];
+  <DataTable columns={columns} rows={rows} checkable selectionRowSpan={(_, i) => spans[i]} /* ... */ />
+  ```
+  병합 셀은 첫 행의 `<tr>` 에 속하므로 `onRowClick` hover 강조·`rowClassName` 은 첫 행 기준으로만 적용된다.
 - 아이콘만 넣는 버튼은 `Button` 의 `square` 를 켠다. 가로 패딩이 사라지고 높이와 같은 너비가 되어
   정사각형이 된다(`size="sm"` 32px, `size="md"` 40px). `className="h-8 w-8 !p-0"` 같은 수동 보정 금지.
   텍스트 라벨이 없으므로 `aria-label` 을 반드시 함께 준다.

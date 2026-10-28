@@ -50,6 +50,7 @@ export { encodeQr, type QrErrorCorrection } from "./utils/qr";
 export { EmptyState, type EmptyStateProps } from "./components/EmptyState";
 export {
   DataTable,
+  getRowSpans,
   type DataTableProps,
   type DataTablePagination,
   type DataTableSelectionChange,

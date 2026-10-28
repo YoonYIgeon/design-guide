@@ -4,6 +4,13 @@
 형식은 [Keep a Changelog](https://keepachangelog.com/ko/) 를, 버전은 [SemVer](https://semver.org/lang/ko/) 를 따릅니다.
 
 ## [Unreleased]
+### Added
+- `DataTable` 세로 셀 병합(rowSpan) 지원.
+  - `Column.rowSpan(row, index)`: `n`=병합, `0`=생략(위 셀이 덮음), `1`=일반.
+  - `selectionRowSpan(row, index)`: 선택 열 병합(다중 선택 전용). 병합된 체크박스는 덮는 행들을
+    그룹으로 선택/해제하고 일부만 선택되면 indeterminate 로 표시한다. `value` 는 행 id 단위 그대로.
+  - `getRowSpans(rows, groupKey)`: 연속한 같은 그룹 키로 rowSpan 배열을 만드는 순수 헬퍼.
+  - 프레젠테이션 전용 원칙대로 병합 대상 계산은 소비 시스템이 현재 페이지 행 기준으로 한다.
 ### Fixed
 - `AdminShell` 레이아웃 아래에 **빈 여백이 생기고 페이지 전체가 한 번 더 스크롤되던** 문제 수정.
   콘텐츠 스크롤(`<main>`)이 끝난 뒤에도 바깥 스크롤바가 남아, 끝까지 내리면 셸(사이드바·상단바) 전체가

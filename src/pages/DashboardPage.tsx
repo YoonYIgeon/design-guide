@@ -3,7 +3,9 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   DataTable,
+  getRowSpans,
   Input,
   Modal,
   StatCard,
@@ -76,6 +78,12 @@ export function DashboardPage({
   const [form, setForm] = useState({ name: "", email: "" });
   // 선택 상태는 하네스(이 페이지)가 보유합니다. DataTable 은 value 로 받아 그리고 onChange 로만 냅니다.
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  // 권한별 묶음 선택(선택 열 병합) 데모 토글. 순수 UI 상태입니다.
+  const [groupSelect, setGroupSelect] = useState(false);
+
+  // 권한으로 정렬됐을 때만 같은 권한끼리 셀을 병합합니다(현재 페이지 행 기준).
+  const groupedByRole = sort?.key === "role";
+  const roleSpans = groupedByRole ? getRowSpans(users, (u) => u.role) : null;
 
   const columns: Column<UserRow>[] = [
     {
@@ -95,6 +103,8 @@ export function DashboardPage({
       key: "role",
       header: "권한",
       size: "fit",
+      sortable: true,
+      rowSpan: roleSpans ? (_, i) => roleSpans[i] : undefined,
       render: (u) => (
         <Badge tone={u.role === "관리자" ? "info" : "neutral"}>{u.role}</Badge>
       ),
@@ -172,6 +182,13 @@ export function DashboardPage({
         title="사용자 관리"
         action={
           <div className="flex items-center gap-2">
+            <Checkbox
+              label="권한별 묶음 선택"
+              checked={groupSelect}
+              disabled={!groupedByRole}
+              title={groupedByRole ? undefined : "권한 열로 정렬하면 사용할 수 있습니다."}
+              onChange={(e) => setGroupSelect(e.target.checked)}
+            />
             <div className="w-52">
               <Input
                 aria-label="사용자 검색"
@@ -213,6 +230,7 @@ export function DashboardPage({
             checkable
             value={selectedIds}
             onChange={(ids) => setSelectedIds(ids as number[])}
+            selectionRowSpan={roleSpans && groupSelect ? (_, i) => roleSpans[i] : undefined}
           />
         </div>
       </Card>

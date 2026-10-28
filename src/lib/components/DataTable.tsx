@@ -60,6 +60,36 @@ export interface Column<T> {
    * 날짜·수량처럼 "큰 값 먼저"가 자연스러운 열은 `"desc"` 를 줍니다.
    */
   defaultSortDirection?: SortDirection;
+  /**
+   * 세로 셀 병합(rowSpan, 선택). 행마다 이 열 셀이 차지할 행 수를 반환합니다.
+   * - `1`(또는 생략): 일반 셀.
+   * - `n >= 2`: 이 행부터 아래로 n 행을 덮는 병합 셀을 그립니다.
+   * - `0`: 셀을 그리지 않습니다(위쪽 병합 셀이 덮고 있는 자리).
+   *
+   * 프레젠테이션 전용 원칙에 따라 무엇을 묶을지는 소비 시스템이 계산합니다.
+   * `rows` 는 이미 정렬·페이징된 상태이므로 **현재 페이지의 행 기준**으로 계산하세요
+   * (`getRowSpans` 헬퍼 참고). `index` 는 현재 페이지 `rows` 안에서의 위치입니다.
+   */
+  rowSpan?: (row: T, index: number) => number;
+}
+
+/**
+ * 연속으로 같은 그룹 키를 가진 행을 묶어 rowSpan 배열을 만듭니다(순수 함수).
+ * 그룹의 첫 행은 그룹 크기, 나머지는 0 을 받습니다. `Column.rowSpan` /
+ * `DataTableProps.selectionRowSpan` 에 `(_, i) => spans[i]` 로 넘기면 됩니다.
+ *
+ * 연속한 행만 묶으므로, 같은 값끼리 모이게 하려면 먼저 그 키로 정렬하세요.
+ */
+export function getRowSpans<T>(rows: T[], groupKey: (row: T) => unknown): number[] {
+  const spans = new Array<number>(rows.length).fill(0);
+  let start = 0;
+  for (let i = 1; i <= rows.length; i++) {
+    if (i === rows.length || !Object.is(groupKey(rows[i]), groupKey(rows[start]))) {
+      spans[start] = i - start;
+      start = i;
+    }
+  }
+  return spans;
 }
 
 /**
@@ -142,6 +172,18 @@ export interface DataTableProps<T> {
    * 비활성화하고 전체 선택 대상에서도 제외합니다. 예: 자기 자신 계정은 선택 못 하게.
    */
   isRowSelectable?: (row: T) => boolean;
+  /**
+   * 선택 열 세로 병합(선택). 규칙은 `Column.rowSpan` 과 같습니다(n=병합, 0=생략, 1=일반).
+   * 병합된 체크박스는 덮고 있는 행들을 **그룹으로** 다룹니다.
+   * - 그룹의 선택 가능한 행이 모두 선택됨 → 체크, 일부만 → indeterminate.
+   * - 누르면 그룹 전체를 선택/해제하고, `changed` 에는 상태가 바뀐 행이 모두 담깁니다.
+   * - `value` 는 여전히 행 id 단위입니다(그룹 id 가 따로 생기지 않습니다).
+   *
+   * 다중 선택(`selectionMode="multiple"`)에서만 적용됩니다. 단일 선택은 한 행만 고를 수 있어
+   * 그룹 선택과 맞지 않으므로 무시하고 행마다 라디오를 그립니다.
+   * 생략하면 기존처럼 행마다 선택 컨트롤을 그립니다.
+   */
+  selectionRowSpan?: (row: T, index: number) => number;
   /**
    * 행별 추가 className(선택). 행 상태에 따라 스타일을 덧입히는 이스케이프 해치입니다.
    * 예: 선택된 행 배경 강조 — `rowClassName={(u) => u.id === selectedId ? "bg-primary/5" : undefined}`.
@@ -342,6 +384,7 @@ export function DataTable<T>({
   value,
   onChange,
   isRowSelectable,
+  selectionRowSpan,
 }: DataTableProps<T>) {
   // 같은 페이지에 여러 테이블이 있어도 라디오 그룹이 섞이지 않도록 고유 name 을 만듭니다.
   const radioName = useId();
@@ -373,14 +416,20 @@ export function DataTable<T>({
     emitChange([{ id, row, checked: !selectedSet.has(id) }]);
   }
 
-  function toggleAll() {
-    const target = !allSelected;
-    // 상태가 실제로 바뀌는 행만 changed 에 담습니다.
-    const changed = selectableRows
+  /** 여러 행을 한꺼번에 target 상태로 맞춥니다. 상태가 실제로 바뀌는 행만 changed 에 담습니다. */
+  function setRows(targetRows: T[], target: boolean) {
+    const changed = targetRows
       .filter((row) => selectedSet.has(rowKey(row)) !== target)
       .map((row) => ({ id: rowKey(row), row, checked: target }));
     emitChange(changed);
   }
+
+  function toggleAll() {
+    setRows(selectableRows, !allSelected);
+  }
+
+  // 선택 열 병합은 다중 모드에서만 씁니다(단일 모드는 한 행만 고르므로 그룹 선택과 맞지 않음).
+  const groupSelection = !single ? selectionRowSpan : undefined;
 
   /** 단일 선택: 고른 행으로 전체를 대체합니다(이전 선택은 selectedIds 로만 해제). */
   function selectSingle(row: T) {
@@ -506,64 +555,98 @@ export function DataTable<T>({
 
             {!loading &&
               !error &&
-              rows.map((row) => (
-                <tr
-                  key={rowKey(row)}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                  className={cn(
-                    "border-b border-line last:border-0",
-                    onRowClick && "cursor-pointer hover:bg-surface-muted",
-                    rowClassName?.(row),
-                  )}
-                >
-                  {checkable && (
-                    <td
-                      className="whitespace-nowrap px-4 py-3 text-center align-middle"
-                      // 선택 컨트롤 클릭이 행 클릭(onRowClick)까지 번지지 않게 막습니다.
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {single ? (
-                        <input
-                          type="radio"
-                          name={radioName}
-                          aria-label="행 선택"
-                          checked={selectedSet.has(rowKey(row))}
-                          disabled={!(isRowSelectable?.(row) ?? true)}
-                          onChange={() => selectSingle(row)}
+              rows.map((row, rowIndex) => {
+                const selectionSpan = groupSelection ? groupSelection(row, rowIndex) : 1;
+                // 병합된 체크박스가 덮는 행들(자기 자신 포함) 중 선택 가능한 행만 그룹으로 다룹니다.
+                const group =
+                  selectionSpan > 1
+                    ? rows
+                        .slice(rowIndex, rowIndex + selectionSpan)
+                        .filter((r) => isRowSelectable?.(r) ?? true)
+                    : [];
+                const groupAll =
+                  group.length > 0 && group.every((r) => selectedSet.has(rowKey(r)));
+                const groupSome = group.some((r) => selectedSet.has(rowKey(r)));
+                return (
+                  <tr
+                    key={rowKey(row)}
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    className={cn(
+                      "border-b border-line last:border-0",
+                      onRowClick && "cursor-pointer hover:bg-surface-muted",
+                      rowClassName?.(row),
+                    )}
+                  >
+                    {checkable && selectionSpan > 0 && (
+                      <td
+                        rowSpan={selectionSpan > 1 ? selectionSpan : undefined}
+                        className={cn(
+                          "whitespace-nowrap px-4 py-3 text-center align-middle",
+                          // 병합 셀은 아래 행들과 맞닿는 쪽에 구분선을 둡니다.
+                          selectionSpan > 1 && "border-r border-line",
+                        )}
+                        // 선택 컨트롤 클릭이 행 클릭(onRowClick)까지 번지지 않게 막습니다.
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {selectionSpan > 1 ? (
+                          <Checkbox
+                            aria-label={`${selectionSpan}개 행 선택`}
+                            checked={groupAll}
+                            indeterminate={groupSome && !groupAll}
+                            disabled={group.length === 0}
+                            onChange={() => setRows(group, !groupAll)}
+                          />
+                        ) : single ? (
+                          <input
+                            type="radio"
+                            name={radioName}
+                            aria-label="행 선택"
+                            checked={selectedSet.has(rowKey(row))}
+                            disabled={!(isRowSelectable?.(row) ?? true)}
+                            onChange={() => selectSingle(row)}
+                            className={cn(
+                              "h-4 w-4 shrink-0 border-line accent-primary",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                              (isRowSelectable?.(row) ?? true)
+                                ? "cursor-pointer"
+                                : "cursor-not-allowed opacity-60",
+                            )}
+                          />
+                        ) : (
+                          <Checkbox
+                            aria-label="행 선택"
+                            checked={selectedSet.has(rowKey(row))}
+                            disabled={!(isRowSelectable?.(row) ?? true)}
+                            onChange={() => toggleRow(row)}
+                          />
+                        )}
+                      </td>
+                    )}
+                    {columns.map((col) => {
+                      const span = col.rowSpan ? col.rowSpan(row, rowIndex) : 1;
+                      // 0 은 위쪽 병합 셀이 덮는 자리라 셀을 그리지 않습니다.
+                      if (span <= 0) return null;
+                      return (
+                        <td
+                          key={col.key}
+                          rowSpan={span > 1 ? span : undefined}
                           className={cn(
-                            "h-4 w-4 shrink-0 border-line accent-primary",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                            (isRowSelectable?.(row) ?? true)
-                              ? "cursor-pointer"
-                              : "cursor-not-allowed opacity-60",
+                            // 셀 내용은 항상 한 줄로 유지합니다(넘치면 컨테이너가 가로 스크롤).
+                            "whitespace-nowrap px-4 py-3 text-text",
+                            alignClass[col.align ?? "left"],
+                            // 병합 셀은 양옆 행들과 맞닿으므로 세로 구분선을 둡니다.
+                            span > 1 && "border-x border-line first:border-l-0 last:border-r-0",
                           )}
-                        />
-                      ) : (
-                        <Checkbox
-                          aria-label="행 선택"
-                          checked={selectedSet.has(rowKey(row))}
-                          disabled={!(isRowSelectable?.(row) ?? true)}
-                          onChange={() => toggleRow(row)}
-                        />
-                      )}
-                    </td>
-                  )}
-                  {columns.map((col) => (
-                    <td
-                      key={col.key}
-                      className={cn(
-                        // 셀 내용은 항상 한 줄로 유지합니다(넘치면 컨테이너가 가로 스크롤).
-                        "whitespace-nowrap px-4 py-3 text-text",
-                        alignClass[col.align ?? "left"],
-                      )}
-                    >
-                      {col.render
-                        ? col.render(row)
-                        : String((row as Record<string, unknown>)[col.key] ?? "")}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+                        >
+                          {col.render
+                            ? col.render(row)
+                            : String((row as Record<string, unknown>)[col.key] ?? "")}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
 
