@@ -1,6 +1,5 @@
 import { useId, type ReactNode } from "react";
 import { cn } from "../utils/cn";
-import { Input } from "./Input";
 
 export interface RadioOption {
   label: ReactNode;
@@ -22,7 +21,7 @@ export interface RadioGroupProps {
   options: RadioOption[];
   required?: boolean;
   disabled?: boolean;
-  /** 읽기 전용: 선택된 옵션 라벨만 밑줄 Input 으로 표시. */
+  /** 읽기 전용: 라디오는 그대로 보이되 선택 색을 회색으로 하고 조작만 막습니다. */
   readOnly?: boolean;
   /** 배치 방향(기본 세로). */
   orientation?: "vertical" | "horizontal";
@@ -55,25 +54,14 @@ export function RadioGroup({
       ? `${groupId}-hint`
       : undefined;
 
-  // 읽기 전용: 선택된 옵션 라벨(문자열)만 밑줄 Input 으로 표시.
-  if (readOnly) {
-    const selected = options.find((o) => o.value === value);
-    const display =
-      selected && typeof selected.label === "string" ? selected.label : (selected?.value ?? "");
-    return (
-      <Input
-        label={label}
-        hint={hint}
-        error={error}
-        value={display}
-        required={required}
-        readOnly
-      />
-    );
-  }
-
   return (
-    <fieldset className="flex flex-col gap-1.5" aria-describedby={describedBy}>
+    <fieldset
+      // aria-readonly 는 radiogroup 역할에서만 유효해 역할을 명시합니다.
+      role="radiogroup"
+      className="flex flex-col gap-1.5"
+      aria-describedby={describedBy}
+      aria-readonly={readOnly || undefined}
+    >
       {label && (
         <legend className="mb-1 text-sm font-medium text-text">
           {label}
@@ -96,7 +84,11 @@ export function RadioGroup({
               key={opt.value}
               className={cn(
                 "flex select-none items-start gap-2 text-sm text-text",
-                optDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+                optDisabled
+                  ? "cursor-not-allowed opacity-60"
+                  : readOnly
+                    ? "cursor-default"
+                    : "cursor-pointer",
               )}
             >
               <input
@@ -107,9 +99,15 @@ export function RadioGroup({
                 disabled={optDisabled}
                 required={required}
                 aria-invalid={error ? true : undefined}
-                onChange={(e) => onChange(e.target.value)}
+                // 라디오는 네이티브 readOnly 가 없어 클릭 기본 동작(선택)을 막아 조작만 차단합니다.
+                onClick={readOnly ? (e) => e.preventDefault() : undefined}
+                onChange={(e) => {
+                  if (!readOnly) onChange(e.target.value);
+                }}
                 className={cn(
-                  "mt-0.5 h-4 w-4 shrink-0 border-line accent-primary",
+                  "mt-0.5 h-4 w-4 shrink-0 border-line",
+                  // 읽기 전용은 값은 보이되 조작 불가임을 회색 선택으로 구분합니다.
+                  readOnly ? "accent-text-muted" : "accent-primary",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                 )}
               />
