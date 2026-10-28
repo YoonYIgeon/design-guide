@@ -14,6 +14,8 @@
 ### Changed
 - `Checkbox` `readOnly` 가 밑줄 Input("예/아니오") 대신 **체크박스 그대로** 표시된다.
   체크 색은 회색(`--au-color-text-muted`)이고 클릭·키보드 토글은 막힌다(`aria-readonly`).
+- `RadioGroup` `readOnly` 도 같은 방식으로 라디오 그대로 표시된다(회색 선택, 조작 차단,
+  `role="radiogroup"` + `aria-readonly`).
 ### Fixed
 - `AdminShell` 레이아웃 아래에 **빈 여백이 생기고 페이지 전체가 한 번 더 스크롤되던** 문제 수정.
   콘텐츠 스크롤(`<main>`)이 끝난 뒤에도 바깥 스크롤바가 남아, 끝까지 내리면 셸(사이드바·상단바) 전체가
