@@ -580,11 +580,7 @@ export function DataTable<T>({
                     {checkable && selectionSpan > 0 && (
                       <td
                         rowSpan={selectionSpan > 1 ? selectionSpan : undefined}
-                        className={cn(
-                          "whitespace-nowrap px-4 py-3 text-center align-middle",
-                          // 병합 셀은 아래 행들과 맞닿는 쪽에 구분선을 둡니다.
-                          selectionSpan > 1 && "border-r border-line",
-                        )}
+                        className="whitespace-nowrap px-4 py-3 text-center align-middle"
                         // 선택 컨트롤 클릭이 행 클릭(onRowClick)까지 번지지 않게 막습니다.
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -634,8 +630,6 @@ export function DataTable<T>({
                             // 셀 내용은 항상 한 줄로 유지합니다(넘치면 컨테이너가 가로 스크롤).
                             "whitespace-nowrap px-4 py-3 text-text",
                             alignClass[col.align ?? "left"],
-                            // 병합 셀은 양옆 행들과 맞닿으므로 세로 구분선을 둡니다.
-                            span > 1 && "border-x border-line first:border-l-0 last:border-r-0",
                           )}
                         >
                           {col.render
