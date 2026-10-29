@@ -99,6 +99,12 @@
 - `Button` 의 `type` 기본값은 `"button"` 이다. HTML 기본값(`"submit"`)을 그대로 두면 `<form>` 안에
   놓인 모든 버튼(`DataTable` 페이지네이션, 툴바 액션 등)이 클릭만으로 폼을 제출한다.
   제출 버튼에만 `type="submit"` 을 명시한다.
+- 화면 이동 버튼은 `onClick={() => navigate(...)}` 대신 `to` 와 `onNavigate` 를 준다. `<a href>` 로
+  그려지므로 일반 클릭은 `onNavigate(to)`(= `navigate`)로 이동하고, Ctrl/Cmd·Shift·Alt·휠 클릭과 우클릭 메뉴는
+  브라우저 기본 동작(새 탭·새 창·다운로드 등)을 따른다. 라이브러리는 라우터를 모르므로 이동은 콜백으로만 위임한다.
+  ```tsx
+  <Button to="/users/new" onNavigate={navigate}>사용자 추가</Button>
+  ```
 
 ## 상태 표현 규칙 (관리자 필수)
 
