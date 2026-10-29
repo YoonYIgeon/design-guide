@@ -6,7 +6,8 @@
 ## [Unreleased]
 ### Added
 - `DataTable` 세로 셀 병합(rowSpan) 지원.
-  - `Column.rowSpan(row, index)`: `n`=병합, `0`=생략(위 셀이 덮음), `1`=일반.
+  - `Column.rowSpan(row, index)`: 그룹 첫 행에 `n` 을 주면 병합. 덮이는 행은 반환값과 상관없이
+    컴포넌트가 생략한다(덮인 행에 `1` 을 줘서 셀이 오른쪽으로 밀리던 문제 방지). 페이지 끝을 넘는 값은 잘린다.
   - `selectionRowSpan(row, index)`: 선택 열 병합(다중 선택 전용). 병합된 체크박스는 덮는 행들을
     그룹으로 선택/해제하고 일부만 선택되면 indeterminate 로 표시한다. `value` 는 행 id 단위 그대로.
   - `getRowSpans(rows, groupKey)`: 연속한 같은 그룹 키로 rowSpan 배열을 만드는 순수 헬퍼.

@@ -62,9 +62,11 @@ export interface Column<T> {
   defaultSortDirection?: SortDirection;
   /**
    * 세로 셀 병합(rowSpan, 선택). 행마다 이 열 셀이 차지할 행 수를 반환합니다.
-   * - `1`(또는 생략): 일반 셀.
-   * - `n >= 2`: 이 행부터 아래로 n 행을 덮는 병합 셀을 그립니다.
-   * - `0`: 셀을 그리지 않습니다(위쪽 병합 셀이 덮고 있는 자리).
+   * - `n >= 2`: 이 행부터 아래로 n 행을 덮는 병합 셀을 그립니다(현재 페이지 끝을 넘으면 잘림).
+   * - 그 외(`1`, `0` 등): 일반 셀.
+   *
+   * 병합 셀이 덮는 아래 행들은 컴포넌트가 알아서 건너뜁니다. 그 행들에서 무엇을 반환하든
+   * 무시되므로 그룹의 첫 행에만 n 을 주면 됩니다(`getRowSpans` 처럼 0 을 줘도 됩니다).
    *
    * 프레젠테이션 전용 원칙에 따라 무엇을 묶을지는 소비 시스템이 계산합니다.
    * `rows` 는 이미 정렬·페이징된 상태이므로 **현재 페이지의 행 기준**으로 계산하세요
@@ -88,6 +90,28 @@ export function getRowSpans<T>(rows: T[], groupKey: (row: T) => unknown): number
       spans[start] = i - start;
       start = i;
     }
+  }
+  return spans;
+}
+
+/**
+ * rowSpan 콜백을 실제로 그릴 값 배열로 정규화합니다.
+ * 병합 셀이 덮는 행은 콜백 반환값과 상관없이 0(생략), 나머지는 1 이상이며
+ * 페이지 끝을 넘지 않게 자릅니다. 덮인 행에 1 을 반환하는 실수로 셀이 밀리는 것을 막습니다.
+ */
+function resolveSpans<T>(
+  rows: T[],
+  fn: ((row: T, index: number) => number) | undefined,
+): number[] | null {
+  if (!fn) return null;
+  const spans = new Array<number>(rows.length).fill(0);
+  let coveredUntil = 0;
+  for (let i = 0; i < rows.length; i++) {
+    if (i < coveredUntil) continue;
+    const raw = Math.floor(fn(rows[i], i));
+    const span = raw > 1 ? Math.min(raw, rows.length - i) : 1;
+    spans[i] = span;
+    coveredUntil = i + span;
   }
   return spans;
 }
@@ -173,7 +197,7 @@ export interface DataTableProps<T> {
    */
   isRowSelectable?: (row: T) => boolean;
   /**
-   * 선택 열 세로 병합(선택). 규칙은 `Column.rowSpan` 과 같습니다(n=병합, 0=생략, 1=일반).
+   * 선택 열 세로 병합(선택). 규칙은 `Column.rowSpan` 과 같습니다(첫 행에 n, 덮이는 행은 자동 생략).
    * 병합된 체크박스는 덮고 있는 행들을 **그룹으로** 다룹니다.
    * - 그룹의 선택 가능한 행이 모두 선택됨 → 체크, 일부만 → indeterminate.
    * - 누르면 그룹 전체를 선택/해제하고, `changed` 에는 상태가 바뀐 행이 모두 담깁니다.
@@ -429,7 +453,8 @@ export function DataTable<T>({
   }
 
   // 선택 열 병합은 다중 모드에서만 씁니다(단일 모드는 한 행만 고르므로 그룹 선택과 맞지 않음).
-  const groupSelection = !single ? selectionRowSpan : undefined;
+  const selectionSpans = resolveSpans(rows, !single ? selectionRowSpan : undefined);
+  const columnSpans = columns.map((col) => resolveSpans(rows, col.rowSpan));
 
   /** 단일 선택: 고른 행으로 전체를 대체합니다(이전 선택은 selectedIds 로만 해제). */
   function selectSingle(row: T) {
@@ -556,7 +581,7 @@ export function DataTable<T>({
             {!loading &&
               !error &&
               rows.map((row, rowIndex) => {
-                const selectionSpan = groupSelection ? groupSelection(row, rowIndex) : 1;
+                const selectionSpan = selectionSpans ? selectionSpans[rowIndex] : 1;
                 // 병합된 체크박스가 덮는 행들(자기 자신 포함) 중 선택 가능한 행만 그룹으로 다룹니다.
                 const group =
                   selectionSpan > 1
@@ -618,10 +643,10 @@ export function DataTable<T>({
                         )}
                       </td>
                     )}
-                    {columns.map((col) => {
-                      const span = col.rowSpan ? col.rowSpan(row, rowIndex) : 1;
+                    {columns.map((col, colIndex) => {
+                      const span = columnSpans[colIndex]?.[rowIndex] ?? 1;
                       // 0 은 위쪽 병합 셀이 덮는 자리라 셀을 그리지 않습니다.
-                      if (span <= 0) return null;
+                      if (span === 0) return null;
                       return (
                         <td
                           key={col.key}
