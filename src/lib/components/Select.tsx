@@ -37,6 +37,10 @@ interface SelectBaseProps {
   readOnly?: boolean;
   /** 선택값 지우기(X) 아이콘 노출 여부(기본 true). 선택된 값이 있을 때만 보입니다. */
   clearable?: boolean;
+  /** 트리거 높이. `sm` 32px, `md` 40px(기본). Button 의 size 와 맞춥니다. */
+  size?: "sm" | "md";
+  /** 보이는 `label` 없이 쓸 때의 접근성 이름. */
+  "aria-label"?: string;
   className?: string;
 }
 
@@ -114,6 +118,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
     disabled,
     readOnly,
     clearable = true,
+    size = "md",
+    "aria-label": ariaLabel,
     className,
     multiple,
     onChange,
@@ -339,6 +345,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
           aria-controls={listboxId}
           aria-activedescendant={open && activeIndex >= 0 ? optionId(activeIndex) : undefined}
           aria-labelledby={labelId}
+          aria-label={labelId ? undefined : ariaLabel}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           aria-required={required || undefined}
@@ -350,7 +357,8 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
           }}
           onKeyDown={handleKeyDown}
           className={cn(
-            "flex h-10 w-full items-center justify-between text-left text-sm text-text",
+            "flex w-full items-center justify-between text-left text-sm text-text",
+            size === "sm" ? "h-8" : "h-10",
             "focus-visible:outline-none",
             // 읽기 전용: 테두리/배경 없이 밑줄만. 그 외: 카드형 테두리+포커스 링.
             readOnly
@@ -409,6 +417,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>((props, ref) =>
               id={listboxId}
               role="listbox"
               aria-labelledby={labelId}
+              aria-label={labelId ? undefined : ariaLabel}
               aria-multiselectable={multiple || undefined}
               style={style ?? { left: -9999, top: -9999 }}
               className={cn(

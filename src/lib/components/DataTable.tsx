@@ -4,6 +4,7 @@ import { IconArrowDown, IconArrowUp, IconArrowUpDown } from "../icons";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { EmptyState } from "./EmptyState";
+import { Select } from "./Select";
 
 export type SortDirection = "asc" | "desc";
 
@@ -324,21 +325,19 @@ function PaginationBar({
       </p>
       <div className="flex items-center gap-2">
         {pageSizeOptions && onPageSizeChange && (
-          <label className="flex items-center gap-1.5 text-text-muted">
-            페이지당
-            <select
-              aria-label="페이지당 행 수"
-              className="h-8 rounded-md border border-line bg-surface px-2 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              value={pageSize}
-              onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            >
-              {pageSizeOptions.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="flex items-center gap-1.5 text-text-muted">
+            <span aria-hidden>페이지당</span>
+            <div className="w-20">
+              <Select
+                aria-label="페이지당 행 수"
+                size="sm"
+                clearable={false}
+                options={pageSizeOptions.map((n) => ({ label: String(n), value: String(n) }))}
+                value={String(pageSize)}
+                onChange={(v) => onPageSizeChange(Number(v))}
+              />
+            </div>
+          </div>
         )}
         <Button
           variant="secondary"

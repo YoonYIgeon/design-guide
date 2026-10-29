@@ -31,6 +31,9 @@
 - `name` 을 주면 네이티브 폼 제출용 hidden input 을 함께 렌더한다.
 - `multiple` 을 주면 **다중 선택 모드**가 된다 — `value`/`onChange` 계약이 `string[]` 로 바뀌고,
   옵션을 토글해도 목록이 닫히지 않는다(연속 선택). 미선택은 빈 배열 `[]`.
+- `size="sm"` 이면 트리거 높이가 32px(Button `sm` 과 동일)이 된다. 기본 `md` 는 40px.
+- 보이는 `label` 없이 쓸 때는 `aria-label` 을 준다(예: `DataTable` 의 "페이지당 행 수").
+- 네이티브 `<select>` 는 라이브러리·하네스 어디서도 쓰지 않는다 — 항상 `Select` 를 쓴다.
 
 ```tsx
 import { Select, type SelectOption } from "@company/admin-ui";
