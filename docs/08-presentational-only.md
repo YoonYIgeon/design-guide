@@ -25,7 +25,9 @@
 
 - `fetch` / `axios` 등 **HTTP 호출**
 - `react-query`, 전역 스토어(Redux 등) 접근, `localStorage`/쿠키 **영속화**
-- 라우팅 이동(`navigate`), URL 조작
+- 라우팅 이동(`navigate`), URL 조작 — 단, `Button` 의 `to` 는 react-router-dom `<Link>` 를 그리는
+  예외다(이동 대상은 props 로 받고 라이브러리가 스스로 이동을 결정하지 않는다). 이 때문에
+  react-router-dom 은 peer 의존성이다.
 - 도메인 규칙 계산(권한 판정, 금액 계산, 검색 필터링 등 **비즈니스 로직**)
 - 환경변수(`import.meta.env`)로 동작 분기
 

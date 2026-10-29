@@ -5,6 +5,7 @@ import {
   type MouseEvent,
   type Ref,
 } from "react";
+import { Link, type To } from "react-router-dom";
 import { cn } from "../utils/cn";
 
 type Variant = "primary" | "secondary" | "danger" | "ghost";
@@ -20,23 +21,20 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
    */
   square?: boolean;
   /**
-   * 이동할 경로. 주면 `<button>` 대신 `<a href={to}>` 로 그려져
-   * Ctrl/Cmd/Shift/Alt·휠 클릭(새 탭·새 창·다운로드 등)과 우클릭 메뉴가 브라우저 기본대로 동작합니다.
-   * 수식키 없는 일반 왼쪽 클릭만 기본 이동을 막고 `onNavigate(to)` 로 넘깁니다.
-   * `onNavigate` 를 안 주면 일반 링크처럼 페이지를 이동합니다.
+   * 이동할 경로. 주면 `<button>` 대신 react-router-dom 의 `<Link to={to}>` 로 그려집니다.
+   * 일반 클릭은 `navigate` 와 같은 클라이언트 이동이고, Ctrl/Cmd/Shift/Alt·휠 클릭과
+   * 우클릭 메뉴는 브라우저 기본 동작(새 탭·새 창·다운로드 등)을 따릅니다.
+   * `<Router>` 안에서만 쓸 수 있습니다.
    */
-  to?: string;
-  /** `to` 의 일반 클릭 시 호출. 라우터의 `navigate` 를 연결하세요. */
-  onNavigate?: (to: string) => void;
-  /** `to` 일 때 `<a>` 의 target. `"_blank"` 등 다른 창이면 `onNavigate` 를 거치지 않습니다. */
+  to?: To;
+  /** `to` 일 때 히스토리를 쌓지 않고 교체합니다(`navigate(to, { replace: true })`). */
+  replace?: boolean;
+  /** `to` 일 때 이동과 함께 넘길 history state. */
+  state?: unknown;
+  /** `to` 일 때 `<a>` 의 target. */
   target?: string;
   /** `to` 일 때 `<a>` 의 rel. */
   rel?: string;
-}
-
-/** 수식키 없는 일반 왼쪽 클릭인지 — 아니면 새 탭 등 브라우저 기본 동작에 맡긴다. */
-function isPlainLeftClick(e: MouseEvent) {
-  return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
 }
 
 const variantClass: Record<Variant, string> = {
@@ -73,10 +71,10 @@ const squareSizeClass: Record<Size, string> = {
  * `<form>` 안에 놓인 모든 버튼(테이블 페이지네이션, 툴바 액션 등)이 클릭만으로
  * 폼을 제출해 버립니다. 제출 버튼은 `type="submit"` 을 명시하세요.
  *
- * 화면 이동 버튼은 `to` 와 `onNavigate` 를 주세요. 링크(`<a>`)로 그려지므로
+ * 화면 이동 버튼은 `to` 를 주세요. react-router-dom 의 `<Link>` 로 그려지므로
  * 일반 클릭은 `navigate` 와 같고, Ctrl/Cmd·Alt·휠 클릭 등은 브라우저 기본 동작을 따릅니다.
  * ```tsx
- * <Button to="/users/new" onNavigate={navigate}>사용자 추가</Button>
+ * <Button to="/users/new">사용자 추가</Button>
  * ```
  */
 export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
@@ -91,7 +89,8 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
       className,
       children,
       to,
-      onNavigate,
+      replace,
+      state,
       target,
       rel,
       onClick,
@@ -121,18 +120,8 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
     );
 
     if (to !== undefined) {
-      // 링크 모드: 비활성이면 href 를 빼서 어떤 클릭으로도 이동하지 않게 한다.
-      const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
-        if (isDisabled) {
-          e.preventDefault();
-          return;
-        }
+      const handleClick = (e: MouseEvent<HTMLAnchorElement>) =>
         onClick?.(e as unknown as MouseEvent<HTMLButtonElement>);
-        if (e.defaultPrevented || !onNavigate) return;
-        if (!isPlainLeftClick(e) || (target && target !== "_self")) return;
-        e.preventDefault();
-        onNavigate(to);
-      };
       const {
         form: _form,
         formAction: _formAction,
@@ -144,22 +133,37 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
         value: _value,
         ...anchorRest
       } = rest;
+      const anchorProps = anchorRest as AnchorHTMLAttributes<HTMLAnchorElement>;
+      // 비활성이면 href 없는 <a> 로 그려 어떤 클릭으로도 이동하지 않게 한다.
+      if (isDisabled) {
+        return (
+          <a
+            ref={ref as Ref<HTMLAnchorElement>}
+            role="link"
+            aria-disabled
+            aria-busy={loading || undefined}
+            tabIndex={-1}
+            className={cn(classes, "no-underline")}
+            {...anchorProps}
+          >
+            {content}
+          </a>
+        );
+      }
       return (
-        <a
+        <Link
           ref={ref as Ref<HTMLAnchorElement>}
-          href={isDisabled ? undefined : to}
+          to={to}
+          replace={replace}
+          state={state}
           target={target}
           rel={rel}
-          role={isDisabled ? "link" : undefined}
-          aria-disabled={isDisabled || undefined}
-          aria-busy={loading || undefined}
-          tabIndex={isDisabled ? -1 : undefined}
           className={cn(classes, "no-underline")}
           onClick={handleClick}
-          {...(anchorRest as AnchorHTMLAttributes<HTMLAnchorElement>)}
+          {...anchorProps}
         >
           {content}
-        </a>
+        </Link>
       );
     }
 
