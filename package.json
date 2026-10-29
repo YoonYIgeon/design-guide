@@ -36,7 +36,8 @@
   },
   "peerDependencies": {
     "react": ">=18",
-    "react-dom": ">=18"
+    "react-dom": ">=18",
+    "react-router-dom": ">=6"
   },
   "devDependencies": {
     "@tanstack/react-query": "^5.90.2",

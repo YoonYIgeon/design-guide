@@ -80,7 +80,7 @@ yarn typecheck  # 타입만 검사
 | --- | --- |
 | `AdminShell` | 사이드바 + 상단바 + 콘텐츠 공통 레이아웃 |
 | `DataTable` | 제네릭 목록 테이블 (loading/empty/error 상태, 정렬·페이지네이션·행 선택은 controlled, rowSpan 셀 병합) |
-| `Button` | primary/secondary/danger/ghost, loading, `to` 링크 모드(수식키 클릭은 브라우저 기본) |
+| `Button` | primary/secondary/danger/ghost, loading, `to` 링크 모드(react-router `Link`) |
 | `Input` | 레이블·힌트·에러를 A11y 속성과 연결 (leading/trailing 슬롯) |
 | `AsyncInput` | 디바운스 비동기 검사 입력 (조회·에러 해석은 주입 콜백, 로딩/성공/에러 표시) |
 | `Select` / `Checkbox` / `RadioGroup` | 선택형 입력 (레이블·힌트·에러·A11y, indeterminate 지원) |
