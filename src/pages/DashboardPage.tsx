@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Badge,
   Button,
@@ -74,6 +75,7 @@ export function DashboardPage({
   sort,
   onSortChange,
 }: DashboardPageProps) {
+  const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "" });
   // 선택 상태는 하네스(이 페이지)가 보유합니다. DataTable 은 value 로 받아 그리고 onChange 로만 냅니다.
@@ -198,6 +200,10 @@ export function DashboardPage({
                 onChange={(e) => onQueryChange(e.target.value)}
               />
             </div>
+            {/* to + onNavigate: 일반 클릭은 navigate, Ctrl/Cmd·휠 클릭은 새 탭 */}
+            <Button variant="secondary" size="md" to="/posts" onNavigate={navigate}>
+              게시글 보기
+            </Button>
             <Button variant="primary" size="md" onClick={openModal}>
               <IconPlus width={16} height={16} />
               사용자 추가
